@@ -127,6 +127,7 @@ function spInitShippingIndex() {
         item.className = "rf-item";
         item.dataset.statusTarget = target;
         item.dataset.statusOid = oid;
+        item.dataset.statusNumber = badge.dataset.orderNumber || oid;
         item.textContent = target === "Delivered" ? "Mark Delivered" : `Move to ${label(target)}`;
         menu.append(item);
       });
@@ -182,7 +183,7 @@ function spInitShippingIndex() {
     if (!form) return;
     form.dataset.oid = oid;
     const now = new Date();
-    $("ship-delivered-date").value = now.toISOString().slice(0, 10);
+    $("ship-delivered-date").value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     $("ship-delivered-time").value =
       String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
     $("ship-delivered-by").value = "";
@@ -261,7 +262,7 @@ function spInitShippingIndex() {
         closeStatusMenu();
         window.StoreProCancel.open({
           title: "Cancel Shipment",
-          context: `Cancelling order ${oid}. A reason is required.`,
+          context: `Cancelling ${statusItem.dataset.statusNumber || oid}. A reason is required.`,
           confirmLabel: "Confirm Cancel",
           onConfirm: (reason) =>
             applyStatus(oid, target, { cancel_reason: reason }).catch((err) =>

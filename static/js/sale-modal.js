@@ -385,5 +385,15 @@ function spInitSaleModal() {
     open: (sid) => openModal(sid),
   };
 }
+// "/sales?selected=ID" (e.g. "View invoice" after saving) opens that invoice.
+function spOpenRequestedSale() {
+  const marker = document.querySelector("[data-open-sale]");
+  if (!marker) return;
+  const sid = marker.dataset.openSale;
+  marker.remove();
+  window.StoreProSaleModal?.open(sid);
+}
 document.addEventListener("DOMContentLoaded", spInitSaleModal);
 document.addEventListener("storepro:content", spInitSaleModal);
+document.addEventListener("DOMContentLoaded", spOpenRequestedSale);
+document.addEventListener("storepro:content", spOpenRequestedSale);

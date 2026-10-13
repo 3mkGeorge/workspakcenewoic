@@ -8,6 +8,7 @@
   const CONTENT = "main.content";
   const scrollPos = new Map();
   let navSeq = 0;
+  let currentPage = location.pathname + location.search;
 
   window.StorePro = window.StorePro || {};
   const StorePro = window.StorePro;
@@ -125,8 +126,6 @@
       if (verdict === false) return false;
       if (typeof verdict === "string" && verdict && !confirm(verdict)) return false;
     }
-    document.dispatchEvent(new CustomEvent("storepro:leave"));
-    closeModals();
     if (!restoreScroll) scrollPos.set(location.pathname + location.search, window.scrollY);
     setLoading(true);
     let response;
@@ -149,6 +148,20 @@
     if (seq !== navSeq) return false;
     const ct = response.headers.get("content-type") || "";
     const cd = response.headers.get("content-disposition") || "";
+    if (ct.includes("application/json") && !cd.includes("attachment")) {
+      setLoading(false);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (data.code === "session_expired") {
+          location.href = "/login";
+          return false;
+        }
+        StorePro.toast?.(data.error || `Request failed (${response.status}).`);
+        return false;
+      }
+      if (data.redirect) return render(data.redirect, { push: true });
+      return render(location.href, { push: false });
+    }
     if (!ct.includes("text/html") || cd.includes("attachment")) {
       setLoading(false);
       location.href = response.url || url;
@@ -157,20 +170,31 @@
     const html = await response.text();
     const doc = new DOMParser().parseFromString(html, "text/html");
     const nextMain = doc.querySelector(CONTENT);
-    if (!doc.getElementById("sidebar") || !nextMain) {
-      // e.g. session expired and server returned the login page
+    const html_ = document.documentElement;
+    const nextHtml = doc.documentElement;
+    if (
+      !doc.getElementById("sidebar") ||
+      !nextMain ||
+      ["lang", "dir", "data-bs-theme"].some((k) => nextHtml.getAttribute(k) !== html_.getAttribute(k))
+    ) {
+      // Login page, or language/theme changed: the shell itself must be re-rendered.
       setLoading(false);
       location.href = response.url || url;
       return false;
     }
     await ensureAssets(doc);
     if (seq !== navSeq) return false;
+    document.dispatchEvent(new CustomEvent("storepro:leave"));
+    closeModals();
     document.title = doc.title;
     const main = document.querySelector(CONTENT);
     main.replaceChildren(...[...nextMain.childNodes].map((n) => document.importNode(n, true)));
-    updateNav(response.url || url);
-    if (push) history.pushState({ sp: true }, "", response.url || url);
-    else history.replaceState({ sp: true }, "", response.url || url);
+    const hash = new URL(url, location.href).hash;
+    const finalUrl = (response.url || url).split("#")[0] + hash;
+    updateNav(finalUrl);
+    if (push) history.pushState({ sp: true }, "", finalUrl);
+    else history.replaceState({ sp: true }, "", finalUrl);
+    currentPage = location.pathname + location.search;
     setLoading(false);
     main.classList.add("sp-enter");
     requestAnimationFrame(() => requestAnimationFrame(() => main.classList.remove("sp-enter")));
@@ -181,7 +205,10 @@
       }
     } catch {}
     document.dispatchEvent(new CustomEvent("storepro:content"));
-    if (restoreScroll) {
+    const anchor = hash && document.getElementById(decodeURIComponent(hash.slice(1)));
+    if (anchor) {
+      anchor.scrollIntoView();
+    } else if (restoreScroll) {
       const y = scrollPos.get(location.pathname + location.search);
       window.scrollTo(0, y === undefined ? 0 : y);
     } else {
@@ -191,7 +218,8 @@
     return true;
   }
 
-  document.addEventListener("click", (e) => {
+  // Registered on window so page scripts' document-level handlers run first and can preventDefault.
+  window.addEventListener("click", (e) => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
       return;
     const a = e.target.closest("a[href]");
@@ -200,7 +228,7 @@
     render(a.href, { push: true });
   });
 
-  document.addEventListener("submit", (e) => {
+  window.addEventListener("submit", (e) => {
     const form = e.target;
     if (!(form instanceof HTMLFormElement) || e.defaultPrevented) return;
     if (form.method.toLowerCase() === "get") {
@@ -219,9 +247,11 @@
   });
 
   window.addEventListener("popstate", () => {
+    if (location.pathname + location.search === currentPage) return; // only the #hash changed
     render(location.href, { push: false, restoreScroll: true });
   });
 
   StorePro.navigate = (url) => render(url, { push: true });
+  StorePro.notePage = () => (currentPage = location.pathname + location.search);
   StorePro.reload = () => render(location.href, { push: false });
 })();

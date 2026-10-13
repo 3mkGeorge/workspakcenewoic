@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" dir="ltr">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8"><link rel="icon" href="/static/images/logo.svg" type="image/svg+xml">
 <title>{{ order.order_number }} · Shipping Label</title>
 <style>
   * { box-sizing: border-box; }
@@ -20,7 +20,7 @@
 <body>
 <div class="label">
   <h1>{{ order.order_number }}</h1>
-  <div class="muted">Shipping Label · {{ order.created_at.strftime('%d/%m/%Y') if order.created_at else '' }}</div>
+  <div class="muted">Shipping Label · {{ order.created_at|date if order.created_at else '' }}</div>
   <dl>
     <dt>Tracking Code</dt><dd class="tracking">{{ order.tracking_code or 'Not assigned yet' }}</dd>
     <dt>Customer</dt><dd>{{ order.customer_name or '—' }}</dd>

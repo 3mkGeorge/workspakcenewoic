@@ -45,10 +45,13 @@ def settings_page():
         )
         flash("Settings saved.", "success")
         return redirect(url_for("admin.settings_page"))
+    from models import BackupLog
+
     return render_template(
         "settings/index.html",
         title="Settings",
         backup_state=current_app.extensions["backups"].snapshot(),
+        backup_logs=BackupLog.query.order_by(BackupLog.id.desc()).limit(20).all(),
     )
 
 

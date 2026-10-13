@@ -156,12 +156,8 @@ function spInitPriceHistory() {
     if (err) err.hidden = true;
     const priceIn = document.getElementById("pm-adjust-price");
     const costIn = document.getElementById("pm-adjust-cost");
-    if (priceIn && currentSummary && currentSummary.current_price !== undefined) {
-      priceIn.value = (Number(currentSummary.current_price || 0) / 100).toFixed(2);
-    }
-    if (costIn && currentSummary && currentSummary.current_cost !== undefined) {
-      costIn.value = (Number(currentSummary.current_cost || 0) / 100).toFixed(2);
-    }
+    if (priceIn) priceIn.value = currentSummary ? (Number(currentSummary.current || 0) / 100).toFixed(2) : "";
+    if (costIn) costIn.value = currentSummary ? (Number(currentSummary.current_cost || 0) / 100).toFixed(2) : "";
     if (priceIn) priceIn.focus();
   }
 
@@ -223,6 +219,7 @@ function spInitPriceHistory() {
   async function openModal(pid, pname) {
     currentId = pid;
     currentName = pname || "";
+    currentSummary = null;
     hideAdjustDrawer();
     currentRange = "30";
     modalEl.querySelectorAll(".price-range a").forEach((a) => a.classList.toggle("active", a.dataset.range === "30"));

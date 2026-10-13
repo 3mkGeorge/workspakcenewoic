@@ -21,7 +21,10 @@
       headers: { Accept: "text/html", "X-Requested-With": "XMLHttpRequest" },
     });
     const ct = response.headers.get("content-type") || "";
-    if (!response.ok || !ct.includes("text/html")) throw new Error(`Request failed (${response.status}).`);
+    if (!response.ok || !ct.includes("text/html")) {
+      const data = ct.includes("application/json") ? await response.json().catch(() => ({})) : {};
+      throw new Error(data.error || `Request failed (${response.status}).`);
+    }
     return new DOMParser().parseFromString(await response.text(), "text/html");
   }
 
@@ -37,9 +40,13 @@
     try {
       const doc = await fetchHtml(url);
       const fresh = region(name, doc);
-      if (!fresh) return false;
+      if (!fresh) {
+        window.StorePro?.navigate ? window.StorePro.navigate(url) : (location.href = url);
+        return false;
+      }
       target.replaceChildren(...[...fresh.childNodes].map((n) => document.importNode(n, true)));
       if (push) history.pushState({ sp: true }, "", url);
+      window.StorePro?.notePage?.();
       try {
         window.StorePro?.refresh?.();
       } catch {}
@@ -74,6 +81,7 @@
       if (a.target && a.target !== "_self") return;
       if (a.hasAttribute("download")) return;
       if (a.pathname.startsWith("/api/")) return;
+      if (url.pathname !== location.pathname) return; // other pages: full router navigation
       if (/(^|\/)(settings\/backups\/|reports\/export\/)/.test(url.pathname)) return;
       e.preventDefault();
       e.stopPropagation();
@@ -107,6 +115,17 @@
       },
       body: new FormData(form),
     });
+    if ((response.headers.get("content-type") || "").includes("application/json")) {
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        toast(data.error || `Request failed (${response.status}).`);
+        return;
+      }
+      if (window.StorePro && window.StorePro.reload) await window.StorePro.reload();
+      else location.reload();
+      if (data.message) toast(data.message);
+      return;
+    }
     const doc = new DOMParser().parseFromString(await response.text(), "text/html");
     if (!response.ok) {
       const err =
@@ -115,14 +134,14 @@
       toast(err);
       return;
     }
-    const flashes = [...doc.querySelectorAll("main.content .alert")].map((el) =>
+    const flashes = [...doc.querySelectorAll("main.content .alert.sp-flash")].map((el) =>
       el.textContent.trim().replace(/\s+/g, " ").slice(0, 200),
     );
     if (window.StorePro && window.StorePro.reload) await window.StorePro.reload();
     else location.reload();
     const ok = flashes.find((t) => /saved|updated|received|completed|success/i.test(t)) || flashes[0];
     if (ok) toast(ok);
-    document.querySelectorAll("main.content .alert").forEach((el) => el.remove());
+    document.querySelectorAll("main.content .alert.sp-flash").forEach((el) => el.remove());
   }
 
   document.addEventListener("submit", (e) => {

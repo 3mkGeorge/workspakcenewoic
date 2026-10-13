@@ -115,6 +115,7 @@ function spInitBackups() {
         };
         const data = await send(false);
         if (data) {
+          syncSettingsForm(destValues());
           message(data.message);
           await refresh();
         }
@@ -157,6 +158,7 @@ function spInitBackups() {
         const data = await postJSON("/api/backups/defaults", {});
         document.querySelector('[data-dest-input="Primary"]').value = "";
         document.querySelector('[data-dest-input="Secondary"]').value = "";
+        syncSettingsForm({ backup_primary: "", backup_secondary: "" });
         message(data.message);
         await refresh();
       } catch (error) {
@@ -166,6 +168,14 @@ function spInitBackups() {
       }
     });
     wireNativePicker();
+  }
+  // The Settings form also posts these paths; keep it in step so "Save Changes" never reverts them.
+  function syncSettingsForm(values) {
+    Object.entries(values).forEach(([name, value]) => {
+      document.querySelectorAll(`form input[name="${name}"]`).forEach((input) => {
+        input.value = value;
+      });
+    });
   }
   // Native OS folder picker (Windows Explorer dialog: all drives, new folders,
   // network locations). Browsers do not expose the absolute path of the

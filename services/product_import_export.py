@@ -9,8 +9,8 @@ import io
 import csv
 from flask import Response
 from models import db, Product, Category, Supplier
-from services.core import audit
-from services.validation import escape_formula, sanitize_formula
+from services.core import audit, move
+from services.validation import cents, escape_formula, integer, sanitize_formula
 
 
 def generate_catalog_csv():
@@ -91,16 +91,19 @@ def process_catalog_import_csv(file):
                     return row[idx].strip()
             return default
 
+        def present(*col_names):
+            return any(c in header_map for c in col_names)
+
         name = sanitize_formula(get_col("name"))
         sku = sanitize_formula(get_col("sku"))
-        barcode = sanitize_formula(get_col("barcode"))
+        barcode = sanitize_formula(get_col("barcode")) or None
         cat_name = sanitize_formula(get_col("category"))
         supp_name = sanitize_formula(get_col("supplier"))
         brand = sanitize_formula(get_col("brand", "description"))
         price_str = get_col("selling price", "price")
-        cost_str = get_col("cost price", "cost", default="0")
-        stock_str = get_col("stock units", "stock", default="0")
-        min_str = get_col("minimum stock", "minimum", default="5")
+        cost_str = get_col("cost price", "cost")
+        stock_str = get_col("stock units", "stock")
+        min_str = get_col("minimum stock", "minimum")
 
         if not name:
             raise ValueError(f"Row {row_num}: Product name is required.")
@@ -111,34 +114,10 @@ def process_catalog_import_csv(file):
             raise ValueError(f"Row {row_num}: Duplicate SKU '{sku}' found in upload file.")
         seen_skus.add(sku.lower())
 
-        # Parse numeric fields
-        try:
-            price = int(round(float(price_str) * 100))
-            if price < 0:
-                raise ValueError
-        except (ValueError, TypeError):
-            raise ValueError(f"Row {row_num}: Invalid selling price '{price_str}'. Must be a positive number.")
-
-        try:
-            cost = int(round(float(cost_str) * 100)) if cost_str else 0
-            if cost < 0:
-                raise ValueError
-        except (ValueError, TypeError):
-            raise ValueError(f"Row {row_num}: Invalid cost price '{cost_str}'.")
-
-        try:
-            stock = int(stock_str) if stock_str else 0
-            if stock < 0:
-                raise ValueError
-        except (ValueError, TypeError):
-            raise ValueError(f"Row {row_num}: Invalid stock quantity '{stock_str}'.")
-
-        try:
-            minimum = int(min_str) if min_str else 5
-            if minimum < 0:
-                raise ValueError
-        except (ValueError, TypeError):
-            raise ValueError(f"Row {row_num}: Invalid minimum stock '{min_str}'.")
+        price = cents(price_str, f"Row {row_num}: Invalid selling price '{price_str}'. Must be a positive number.")
+        cost = cents(cost_str or "0", f"Row {row_num}: Invalid cost price '{cost_str}'.")
+        stock = integer(stock_str or "0", 0, label=f"Row {row_num}: Invalid stock quantity '{stock_str}'.")
+        minimum = integer(min_str or "5", 0, label=f"Row {row_num}: Invalid minimum stock '{min_str}'.")
 
         # Resolve Category (Category is required by foreign key)
         category_id = None
@@ -149,13 +128,6 @@ def process_catalog_import_csv(file):
                 db.session.add(cat)
                 db.session.flush()
             category_id = cat.id
-        else:
-            default_cat = Category.query.first()
-            if not default_cat:
-                default_cat = Category(name="General")
-                db.session.add(default_cat)
-                db.session.flush()
-            category_id = default_cat.id
 
         # Resolve Supplier
         supplier_id = None
@@ -167,39 +139,60 @@ def process_catalog_import_csv(file):
                 db.session.flush()
             supplier_id = supp.id
 
-        # Check existing product
+        if barcode:
+            clash = Product.query.filter(Product.barcode == barcode[:60], Product.sku != sku).first()
+            if clash:
+                raise ValueError(f"Row {row_num}: Barcode '{barcode}' is already used by {clash.sku}.")
+
+        # Existing products: only columns present in the file are updated.
         product = Product.query.filter_by(sku=sku).first()
         if product:
             product.name = name[:120]
-            product.barcode = barcode[:60]
-            product.brand = brand[:80]
             product.price = price
-            product.cost = cost
-            product.stock = stock
-            product.minimum = minimum
+            if present("barcode"):
+                product.barcode = barcode[:60] if barcode else None
+            if present("brand", "description"):
+                product.brand = brand[:80]
+            if present("cost price", "cost"):
+                product.cost = cost
+            if present("minimum stock", "minimum"):
+                product.minimum = minimum
             if category_id:
                 product.category_id = category_id
             if supplier_id:
                 product.supplier_id = supplier_id
             product.active = True
+            db.session.flush()
+            if present("stock units", "stock") and stock != product.stock:
+                move(product, stock - product.stock, "Adjustment", "CSV import")
             updated_count += 1
         else:
+            if not category_id:
+                default_cat = Category.query.first()
+                if not default_cat:
+                    default_cat = Category(name="General")
+                    db.session.add(default_cat)
+                    db.session.flush()
+                category_id = default_cat.id
             product = Product(
                 name=name[:120],
                 sku=sku[:60],
-                barcode=barcode[:60],
+                barcode=barcode[:60] if barcode else None,
                 brand=brand[:80],
                 price=price,
                 cost=cost,
-                stock=stock,
+                stock=0,
                 minimum=minimum,
                 category_id=category_id,
                 supplier_id=supplier_id,
                 active=True,
             )
             db.session.add(product)
+            db.session.flush()
+            if stock:
+                move(product, stock, "Opening stock", "CSV import")
             created_count += 1
 
-    db.session.commit()
     audit("Import products CSV", f"Imported: {created_count} created, {updated_count} updated")
+    db.session.commit()
     return created_count, updated_count

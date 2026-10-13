@@ -70,16 +70,18 @@ def sales():
         per_page=int(g.settings["items_per_page"]),
         error_out=False,
     )
-    selected = (
-        db.get_or_404(Sale, request.args.get("selected", type=int))
-        if request.args.get("selected")
-        else (page.items[0] if page.items else None)
+    requested = (
+        db.session.get(Sale, request.args.get("selected", type=int))
+        if request.args.get("selected", type=int)
+        else None
     )
+    selected = requested or (page.items[0] if page.items else None)
     return render_template(
         "sales/index.html",
         title="Sales",
         page=page,
         selected=selected,
+        open_sale=requested.id if requested else None,
         stats=stats,
         start=start,
         end=end,
@@ -222,8 +224,8 @@ def purchases():
         error_out=False,
     )
     selected = (
-        db.get_or_404(Purchase, request.args.get("selected", type=int))
-        if request.args.get("selected")
+        db.session.get(Purchase, request.args.get("selected", type=int))
+        if request.args.get("selected", type=int)
         else None
     )
     stats = dict(

@@ -514,7 +514,7 @@ function spInitShipmentModal() {
     if (!form) return;
     form.dataset.oid = oid;
     const now = new Date();
-    $("ship-delivered-date").value = now.toISOString().slice(0, 10);
+    $("ship-delivered-date").value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     $("ship-delivered-time").value =
       String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0");
     $("ship-delivered-by").value = "";
@@ -575,7 +575,7 @@ function spInitShipmentModal() {
       say("shipmentShipError", "Enter the tracking code supplied by the courier.", true);
       return;
     }
-    const body = { tracking_code: code };
+    const body = { tracking_code: code, ship: true };
     const url = $("shipmentShipUrl").value.trim();
     if (url) body.tracking_url = url;
     request(`/api/shipping/${encodeURIComponent(oid)}`, "POST", body)
@@ -613,8 +613,7 @@ function spInitShipmentModal() {
     };
     const code = $("shipmentEditTracking").value.trim();
     if (code) body.tracking_code = code;
-    const url = $("shipmentEditUrl").value.trim();
-    if (url) body.tracking_url = url;
+    body.tracking_url = $("shipmentEditUrl").value.trim();
     request(`/api/shipping/${encodeURIComponent(oid)}`, "POST", body)
       .then((data) => {
         updateTableRow(data.order, data.transitions);

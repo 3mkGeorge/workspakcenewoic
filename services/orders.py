@@ -6,6 +6,7 @@ pickup lifecycle queries, cancelled/voided listings, and returned/refunded ledge
 
 from models import (
     PICKUP_TRANSITIONS,
+    SHIPPING_TRANSITIONS,
     Sale,
     ShippingOrder,
     db,
@@ -13,7 +14,7 @@ from models import (
 from services.analytics import bounds
 from sqlalchemy.orm import joinedload
 
-OPEN_SHIPPING = ("Ready For Shipment", "Out For Delivery", "Delivered")
+OPEN_SHIPPING = tuple(status for status, nxt in SHIPPING_TRANSITIONS.items() if nxt)
 TERMINAL_SALES = ("Refunded", "Voided")
 
 

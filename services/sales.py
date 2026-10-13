@@ -236,6 +236,8 @@ def refund_sale_items(sale, items_to_return):
         reverse_sale(sale, "Refunded")
         return sale
 
+    old_subtotal = sale.subtotal
+    old_invoice_discount = max(0, sale.invoice_discount)
     details = []
     for item, qty in to_refund:
         move(item.product, qty, "Partial Refund", sale.invoice)
@@ -244,14 +246,21 @@ def refund_sale_items(sale, items_to_return):
             sale.items.remove(item)
             db.session.delete(item)
         else:
-            unit_discount = item.discount // item.quantity if item.quantity else 0
-            item.quantity -= qty
-            item.discount = max(0, item.discount - unit_discount * qty)
+            remaining = item.quantity - qty
+            item.discount = item.discount * remaining // item.quantity
+            item.quantity = remaining
 
+    # Same arithmetic as the POS: invoice discount pro-rated, VAT on the discounted net.
     sale.subtotal = sum(i.quantity * i.price for i in sale.items)
-    sale.discount = min(sale.subtotal, sum(i.discount for i in sale.items))
-    sale.tax = int(round(sale.subtotal * (sale.tax_rate / 10000)))
-    sale.total = max(0, sale.subtotal - sale.discount + sale.tax)
+    invoice_discount = (
+        old_invoice_discount * sale.subtotal // old_subtotal if old_subtotal else 0
+    )
+    sale.discount = min(sale.subtotal, sum(i.discount for i in sale.items) + invoice_discount)
+    net = sale.subtotal - sale.discount
+    sale.tax = int(
+        (Decimal(net) * sale.tax_rate / 10000).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+    )
+    sale.total = net + sale.tax
     sale.cost = sum(i.cost * i.quantity for i in sale.items)
     sale.revision += 1
 

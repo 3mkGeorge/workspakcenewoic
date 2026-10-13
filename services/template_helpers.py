@@ -49,6 +49,14 @@ def register_template_helpers(app):
         fmt = "%d/%m/%Y" if g.settings["date_format"] == "DD/MM/YYYY" else "%Y-%m-%d"
         return value.strftime(fmt + (" %I:%M %p" if time else ""))
 
+    @app.template_filter("weekday")
+    def weekday(value):
+        try:
+            value = value.replace(tzinfo=timezone.utc).astimezone(ZoneInfo("Africa/Cairo"))
+        except ZoneInfoNotFoundError:
+            value = value + timedelta(hours=3)
+        return value.strftime("%A")
+
     @app.context_processor
     def context():
         count = (

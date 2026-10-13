@@ -11,6 +11,8 @@
       return;
     }
     window.__spPosBooted = true;
+    const posListeners = new AbortController();
+    const posSignal = { signal: posListeners.signal };
   const cfg = JSON.parse(root.dataset.config),
     $ = (id) => document.getElementById(id);
   const csrf = document.querySelector('meta[name="csrf-token"]').content;
@@ -1102,9 +1104,9 @@
         "This draft changed in another tab. Automatic draft saving is paused here. Finish this invoice in one tab only; refresh to load the latest saved draft.",
       );
     }
-  });
-  window.addEventListener("pagehide", saveDraft);
-  window.addEventListener("beforeunload", saveDraft);
+  }, posSignal);
+  window.addEventListener("pagehide", saveDraft, posSignal);
+  window.addEventListener("beforeunload", saveDraft, posSignal);
   window.__spPosDraftTimer = setInterval(saveDraft, 10000);
   function finishSaved(result) {
     saved = true;
@@ -1260,15 +1262,19 @@
         scanBuffer = "";
       } else if (!["Shift", "CapsLock"].includes(event.key)) scanBuffer = "";
     },
-    true,
+    { capture: true, signal: posListeners.signal },
   );
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".pos-search-wrap")) closeSearch();
-    if (!e.target.closest(".pos-customer-search")) {
-      $("customer-results").hidden = true;
-      $("customer-search").setAttribute("aria-expanded", "false");
-    }
-  });
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!e.target.closest(".pos-search-wrap")) closeSearch();
+      if (!e.target.closest(".pos-customer-search")) {
+        $("customer-results").hidden = true;
+        $("customer-search").setAttribute("aria-expanded", "false");
+      }
+    },
+    posSignal,
+  );
   window.__spPosQuoteTimer = setInterval(() => {
     if (
       !document.hidden &&
@@ -1279,9 +1285,13 @@
     )
       validateQuote();
   }, 10000);
-  window.addEventListener("focus", () => {
-    if (state.items.length && !busy && !saved) validateQuote();
-  });
+  window.addEventListener(
+    "focus",
+    () => {
+      if (state.items.length && !busy && !saved) validateQuote();
+    },
+    posSignal,
+  );
   const heldKey = `storepro-pos-held-v1:${cfg.draft_scope}`;
   function esc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
   function getHeldSales() {
@@ -1326,6 +1336,7 @@
     localStorage.removeItem(draftKey);
     dirty = false;
     $("invoice-discount").value = "0.00";
+    $("invoice-discount").setCustomValidity("");
     if ($("sale-note")) $("sale-note").value = "";
     setCustomer(null);
     renderFulfillment();
@@ -1385,6 +1396,7 @@
     const list = getHeldSales();
     const idx = list.findIndex(h => h.id === holdId);
     if (idx === -1) return;
+    if (state.items.length && !window.confirm("Replace the items currently in this invoice with the held sale?")) return;
     const hold = list[idx];
     list.splice(idx, 1);
     saveHeldSales(list);
@@ -1398,6 +1410,7 @@
     if (hold.fulfillment) state.fulfillment = hold.fulfillment;
 
     $("invoice-discount").value = decimal(state.invoice_discount);
+    $("invoice-discount").setCustomValidity("");
     if ($("sale-note")) $("sale-note").value = state.note;
     setCustomer(state.customer);
     renderFulfillment();
@@ -1420,12 +1433,16 @@
   if (holdBtn) holdBtn.onclick = holdCurrentSale;
   const resumeBtn = $("resume-sale");
   if (resumeBtn) resumeBtn.onclick = showHeldModal;
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "F6") {
+  window.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key !== "F6") return;
       e.preventDefault();
+      if (busy || saved || root.querySelector(".modal.show")) return;
       holdCurrentSale();
-    }
-  });
+    },
+    posSignal,
+  );
 
   async function initialize() {
     if (cfg.initial) state = { ...state, ...cfg.initial, token: cfg.token };
@@ -1478,14 +1495,19 @@
     dirty && !saved && state.items.length
       ? "Unsaved invoice items will be lost. Leave anyway?"
       : null;
-  document.addEventListener("storepro:leave", () => {
-    clearInterval(window.__spPosDraftTimer);
-    clearInterval(window.__spPosQuoteTimer);
-    try {
-      saveDraft();
-    } catch {}
-    window.__storeproGuard = null;
-  });
+  document.addEventListener(
+    "storepro:leave",
+    () => {
+      clearInterval(window.__spPosDraftTimer);
+      clearInterval(window.__spPosQuoteTimer);
+      try {
+        saveDraft();
+      } catch {}
+      window.__storeproGuard = null;
+      posListeners.abort();
+    },
+    posSignal,
+  );
   }
   if (document.readyState !== "loading") bootPOS();
   else document.addEventListener("DOMContentLoaded", bootPOS);

@@ -25,6 +25,15 @@ def bounds(start, end):
     return a, b
 
 
+def day_bounds(value):
+    """UTC (start, end) of a YYYY-MM-DD store-local day, or None if the value is not a date."""
+    try:
+        day = datetime.strptime((value or "").strip()[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None
+    return bounds(day, day)
+
+
 def date_range(default_days=30):
     today = local_today()
     try:

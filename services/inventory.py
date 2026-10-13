@@ -139,6 +139,7 @@ def get_adjustment_page_data(selected_id, user, currency):
             "id": p.id,
             "name": p.name,
             "sku": p.sku,
+            "barcode": p.barcode or "",
             "stock": p.stock,
             "minimum": p.minimum,
             "category": p.category.name if p.category else "",

@@ -631,9 +631,12 @@ h3 {
 }
 .segmented {
   display: flex;
+  flex-wrap: wrap;
   gap: 5px;
+  max-width: 100%;
 }
 .segmented a {
+  white-space: nowrap;
   padding: 6px 12px;
   background: var(--soft);
   color: var(--muted);

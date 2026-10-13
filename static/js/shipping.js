@@ -274,10 +274,6 @@ function spInitShipping() {
     if (toggle) toggle.hidden = edit;
   }
   document.getElementById("courier-edit-toggle")?.addEventListener("click", () => setCourierMode(true));
-  document.getElementById("ship-header-edit")?.addEventListener("click", () => {
-    setCourierMode(true);
-    document.getElementById("courier-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
   document.getElementById("courier-cancel")?.addEventListener("click", () => setCourierMode(false));
   if (courierForm)
     courierForm.addEventListener("submit", async (event) => {
@@ -296,7 +292,7 @@ function spInitShipping() {
         const codeInput = document.getElementById("courier-tracking");
         if (codeInput && codeInput.value.trim()) body.tracking_code = codeInput.value;
         const urlInput = document.getElementById("courier-tracking-url");
-        if (urlInput && urlInput.value.trim()) body.tracking_url = urlInput.value;
+        if (urlInput) body.tracking_url = urlInput.value.trim();
         const data = await post(`/api/shipping/${orderId}`, body);
         if (!data.changed.length) {
           message("No changes to save.");
@@ -332,7 +328,7 @@ function spInitShipping() {
         return;
       }
       try {
-        const body = { tracking_code: code };
+        const body = { tracking_code: code, ship: true };
         if (shipUrlInput?.value.trim()) body.tracking_url = shipUrlInput.value;
         const data = await post(`/api/shipping/${orderId}`, body);
         bootstrap.Modal.getInstance(document.getElementById("ship-modal"))?.hide();
@@ -356,7 +352,7 @@ function spInitShipping() {
       const target = btn.dataset.status;
       if (target === "Delivered") {
         const now = new Date();
-        document.getElementById("delivered-date").value = now.toISOString().slice(0, 10);
+        document.getElementById("delivered-date").value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
         document.getElementById("delivered-time").value =
           String(now.getHours()).padStart(2, "0") +
           ":" +

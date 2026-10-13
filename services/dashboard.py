@@ -16,7 +16,7 @@ from services.shipping import stats as shipping_stats
 def _delta(cur, prev):
     if not prev:
         return ("New", "up") if cur else ("—", "flat")
-    pct = round((cur - prev) * 100 / prev, 1)
+    pct = round((cur - prev) * 100 / abs(prev), 1)
     arrow = "▲" if pct > 0 else "▼" if pct < 0 else "■"
     cls = "up" if pct > 0 else "down" if pct < 0 else "flat"
     return (f"{arrow} {abs(pct)}%", cls)
@@ -74,7 +74,12 @@ def get_system_health_metrics():
         backup_service = current_app.extensions.get("backups")
         backup_snap = backup_service.snapshot() if backup_service else {}
 
-        failed_backups_count = BackupLog.query.filter_by(status="Failed").count()
+        last_success_id = db.session.scalar(
+            db.select(db.func.max(BackupLog.id)).where(BackupLog.status == "Success")
+        )
+        failed_backups_count = BackupLog.query.filter(
+            BackupLog.status == "Failed", BackupLog.id > (last_success_id or 0)
+        ).count()
 
         last_backup_val = backup_snap.get("last_backup")
         last_backup_dt = None
@@ -207,7 +212,9 @@ def get_dashboard_data(days=7, perm_can_settings=False, perm_can_sales=False):
 
     prev = {
         "sales": _delta(stats["total"], y_stats["total"]),
-        "profit": _delta(stats["profit"], y_stats["profit"]),
+        "profit": _delta(
+            stats["profit"] - stats["expenses"], y_stats["profit"] - y_stats["expenses"]
+        ),
         "expenses": _delta(stats["expenses"], y_stats["expenses"]),
         "purchases": _delta(stats["purchases"], y_stats["purchases"]),
     }

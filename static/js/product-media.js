@@ -330,6 +330,18 @@ function spInitMedia() {
         if (ev.lengthComputable) setProgress(ev.loaded / ev.total, "Saving product with images…");
       };
       xhr.onload = () => {
+        if (xhr.status >= 400) {
+          let message = "";
+          try {
+            message = JSON.parse(xhr.responseText).error || "";
+          } catch {
+            const doc = new DOMParser().parseFromString(xhr.responseText, "text/html");
+            message = doc.querySelector("section.error-panel p")?.textContent.trim() || "";
+          }
+          progress.hidden = true;
+          showError(message || `Save failed (${xhr.status}).`);
+          return;
+        }
         setProgress(1, "Saved");
         const target = xhr.responseURL || "/products";
         if (window.StorePro && window.StorePro.navigate) window.StorePro.navigate(target);

@@ -41,7 +41,11 @@ def render_pos(sale=None):
                 }
                 for i in sale.items
             ],
-            "customer": {"id": sale.customer_id, "name": sale.customer_name},
+            "customer": (
+                {"id": sale.customer_id, "name": sale.customer_name}
+                if sale.customer_id
+                else None
+            ),
             "invoice_discount": sale.invoice_discount,
             "note": sale.note,
             "payments": [
