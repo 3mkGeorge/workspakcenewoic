@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import icon %}
+{% block content %}
+<div style="max-width:760px; margin:40px auto; padding:0 16px;">
+  <div class="panel" style="padding:32px; border-radius:12px; border:1px solid var(--line); background:var(--panel); box-shadow:var(--shadow);">
+    <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+      <span style="display:flex; align-items:center; justify-content:center; width:52px; height:52px; border-radius:12px; background:#ffebeb; color:#e02424; font-size:28px;">
+        {{ icon('shield-alert') }}
+      </span>
+      <div>
+        <h1 style="font-size:22px; font-weight:700; margin:0 0 4px 0;">{{ t("Application Crash Protection &amp; Recovery") }}</h1>
+        <p style="margin:0; color:var(--muted); font-size:13px;">{{ t("An unexpected exception was safely intercepted by StorePro's crash recovery supervisor.") }}</p>
+      </div>
+    </div>
+
+    <div style="background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:24px;">
+      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; font-size:13px; margin-bottom:8px;">
+        <span><strong>{{ t("Incident Correlation ID:") }}</strong> <code style="background:var(--panel); padding:2px 6px; border-radius:4px; font-weight:600;">{{ req_id }}</code></span>
+        <span><strong>{{ t("Transaction State:") }}</strong> <span style="color:#00a14f; font-weight:600;">{{ t("Rolled Back (No Data Lost)") }}</span></span>
+      </div>
+      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; font-size:13px;">
+        <span><strong>{{ t("Storage Health:") }}</strong> <span style="color:{{ 'var(--green)' if db_healthy else 'var(--red)' }}; font-weight:600;">{{ 'Verified Online' if db_healthy else 'Attention Required' }}</span></span>
+        <span><strong>{{ t("Timestamp:") }}</strong> {{ timestamp }}</span>
+      </div>
+    </div>
+
+    {% if not db_healthy %}
+    <div class="alert alert-danger" style="margin-bottom:20px;">
+      <strong>{{ icon('triangle-alert') }} {{ t("Storage Integrity Alert:") }}</strong>
+      {{ t("Storage inconsistency was detected during crash verification. We recommend restoring from a verified backup snapshot immediately.") }}
+      <div style="margin-top:10px;">
+        <a href="/recovery" class="btn btn-danger btn-sm">{{ t("Open Emergency Recovery Vault") }} &rarr;</a>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if details and is_admin %}
+    <details style="margin-bottom:24px; background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:12px 16px;">
+      <summary style="cursor:pointer; font-weight:600; font-size:13px; color:var(--muted);">
+        {{ t("Technical Diagnostics (Administrator Only)") }}
+      </summary>
+      <pre style="margin-top:12px; padding:12px; background:var(--panel); border:1px solid var(--line); border-radius:6px; font-size:11px; overflow-x:auto; white-space:pre-wrap; max-height:220px;">{{ details }}</pre>
+    </details>
+    {% endif %}
+
+    <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+      <a href="/" class="btn btn-primary">{{ icon('home') }} {{ t("Return to Dashboard") }}</a>
+      <button class="btn btn-light" onclick="window.history.back()">{{ icon('arrow-left') }} {{ t("Go Back") }}</button>
+      {% if can("settings.view") %}
+      <a href="/settings/telemetry" class="btn btn-light">{{ icon('activity') }} {{ t("View System Telemetry") }}</a>
+      {% endif %}
+      <a href="/recovery" class="btn btn-light" style="margin-left:auto;">{{ icon('life-buoy') }} {{ t("Emergency Restore") }}</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block public %}
+<div style="max-width:600px; margin:60px auto; padding:0 16px;">
+  <div class="panel" style="padding:32px; border-radius:12px; border:1px solid var(--line); background:var(--panel); text-align:center;">
+    <h1 style="font-size:20px; font-weight:700;">{{ t("Temporary Service Interruption") }}</h1>
+    <p style="color:var(--muted); margin:12px 0 20px;">{{ t("StorePro encountered an unexpected condition. Changes were rolled back.") }}</p>
+    <p style="font-size:12px; color:var(--muted); margin-bottom:20px;">{{ t("Incident ID:") }} <code>{{ req_id }}</code></p>
+    <a href="/login" class="btn btn-primary">{{ t("Return to Login") }}</a>
+  </div>
+</div>
+{% endblock %}

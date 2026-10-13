@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<title>{{ order.order_number }} · Shipping Label</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #111; margin: 0; padding: 24px; }
+  .label { max-width: 560px; margin: 0 auto; border: 2px dashed #111; border-radius: 12px; padding: 24px 28px; }
+  .label h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: 1px; }
+  .label .muted { color: #555; font-size: 13px; }
+  .label dl { display: grid; grid-template-columns: 130px 1fr; gap: 6px 12px; margin: 18px 0 0; font-size: 14px; }
+  .label dt { color: #555; }
+  .label dd { margin: 0; font-weight: bold; }
+  .label .tracking { font-size: 22px; letter-spacing: 2px; }
+  .label .foot { margin-top: 18px; font-size: 12px; color: #555; }
+  @media print { body { padding: 0; } .label { border-style: solid; } .no-print { display: none; } }
+</style>
+</head>
+<body>
+<div class="label">
+  <h1>{{ order.order_number }}</h1>
+  <div class="muted">Shipping Label · {{ order.created_at.strftime('%d/%m/%Y') if order.created_at else '' }}</div>
+  <dl>
+    <dt>Tracking Code</dt><dd class="tracking">{{ order.tracking_code or 'Not assigned yet' }}</dd>
+    <dt>Customer</dt><dd>{{ order.customer_name or '—' }}</dd>
+    <dt>Phone</dt><dd>{{ order.phone or '—' }}</dd>
+    <dt>Address</dt><dd>{{ address_lines or '—' }}</dd>
+    <dt>City</dt><dd>{{ order.city or '—' }}</dd>
+    <dt>Courier</dt><dd>{{ order.courier or 'Not assigned yet' }}</dd>
+    <dt>Tracking URL</dt><dd>{{ order.tracking_url or 'Not assigned yet' }}</dd>
+    <dt>Invoice</dt><dd>{{ order.sale.invoice if order.sale else '—' }}</dd>
+  </dl>
+  <div class="foot no-print"><button type="button" onclick="window.print()">Print</button></div>
+</div>
+<script>window.addEventListener('load', () => setTimeout(() => window.print(), 300));</script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+/* SPA router transitions: fade between views + loading skeleton. */
+main.content {
+  transition: opacity 0.16s ease;
+}
+main.content.sp-enter {
+  opacity: 0;
+}
+main.content.sp-loading {
+  min-height: 40vh;
+}
+.sp-skeleton {
+  border-radius: 7px;
+  margin-bottom: 12px;
+  min-height: 220px;
+  background: linear-gradient(
+    100deg,
+    var(--soft) 30%,
+    var(--panel) 50%,
+    var(--soft) 70%
+  );
+  background-size: 200% 100%;
+  animation: sp-shimmer 1.1s linear infinite;
+  border: 1px solid var(--line);
+}
+@keyframes sp-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+[data-partial] {
+  position: relative;
+}
+[data-partial].sp-region-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    var(--soft) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: sp-shimmer 1.1s linear infinite;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  main.content {
+    transition: none;
+  }
+  .sp-skeleton {
+    animation: none;
+  }
+}

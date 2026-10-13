@@ -1,0 +1,93 @@
+{% from 'macros.html' import icon with context %}
+{# Product Price Analytics popup. Loaded on Products + Inventory. Data comes from /api/products/<id>/price-history. #}
+<div class="modal fade" id="priceAnalyticsModal" data-business-modal tabindex="-1" aria-labelledby="priceAnalyticsTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content price-modal">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="priceAnalyticsTitle">{{ icon('chart-no-axes-combined') }}{{ t('Product Price Analytics') }}</h5>
+          <small class="text-muted" id="price-modal-subtitle">{{ t('Price History') }} · {{ t('Price Trend') }}</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button>
+      </div>
+      <div class="modal-body" id="price-modal-body" data-history-url-base="/api/products" data-currency="{{ config.currency }}">
+        <div id="price-modal-loading" class="ph-history-empty">
+          {{ icon('history') }}<strong>{{ t('Loading price history…') }}</strong>
+        </div>
+        <div id="price-modal-content" hidden>
+          <div class="ph-alert" id="price-modal-alert" role="status" hidden>{{ icon('triangle-alert') }}<span>{{ t('Latest price change exceeds 20%') }}</span></div>
+          <h6 class="mb-0" id="price-modal-product-name"></h6>
+          <div class="ph-analytics price-modal-stats">
+            <div class="ph-kpi ph-blue"><i data-lucide="tag"></i><span>{{ t('Current Selling Price') }}</span><strong id="pm-current"></strong></div>
+            <div class="ph-kpi ph-orange"><i data-lucide="wallet"></i><span>{{ t('Current Cost Price') }}</span><strong id="pm-cost"></strong></div>
+            <div class="ph-kpi ph-green"><i data-lucide="trending-up"></i><span>{{ t('Highest Price') }}</span><strong id="pm-high"></strong></div>
+            <div class="ph-kpi ph-red"><i data-lucide="trending-down"></i><span>{{ t('Lowest Price') }}</span><strong id="pm-low"></strong></div>
+            <div class="ph-kpi ph-purple"><i data-lucide="chart-no-axes-column"></i><span>{{ t('Average Price') }}</span><strong id="pm-avg"></strong></div>
+            <div class="ph-kpi ph-cyan"><i data-lucide="history"></i><span>{{ t('Last Price Change') }}</span><strong id="pm-last"></strong><small class="ph-trend" id="pm-last-trend" hidden></small></div>
+            <div class="ph-kpi ph-emerald"><i data-lucide="percent"></i><span>{{ t('Price Change Percentage') }}</span><strong id="pm-pct"></strong><small class="ph-trend" id="pm-pct-trend" hidden></small></div>
+            <div class="ph-kpi ph-slate"><i data-lucide="images"></i><span>{{ t('Product Images') }}</span><strong class="ph-gallery-line"><span id="pm-image-count">0</span></strong><button type="button" class="btn btn-light btn-sm" id="pm-view-gallery">{{ t('View Gallery') }}</button></div>
+          </div>
+          <div class="ph-chart-card">
+            <div class="ph-section-heading">
+              <h4>{{ t('Price Trend') }}</h4>
+              <div class="segmented price-range" role="group" aria-label="{{ t('Price Trend') }}">
+                <a href="#" data-range="7">7 {{ t('days') }}</a>
+                <a href="#" data-range="30" class="active">30 {{ t('days') }}</a>
+                <a href="#" data-range="90">90 {{ t('days') }}</a>
+                <a href="#" data-range="all">{{ t('All time') }}</a>
+              </div>
+            </div>
+            <div class="ph-chart price-modal-chart"><canvas id="price-modal-trend" role="img" aria-label="{{ t('Selling and cost price trend') }}"></canvas>
+              <div class="ph-chart-empty" id="price-modal-chart-empty" hidden>{{ icon('chart-no-axes-combined') }}<p>{{ t('Your price trend will appear after the first change.') }}</p></div>
+            </div>
+            <p class="ph-note">{{ t('Analytics include the first recorded old price and every saved price change.') }}</p>
+          </div>
+          <div class="ph-section-heading ph-history-heading">
+            <h4>{{ t('Price History') }} <span class="ph-count" id="pm-count">0</span></h4>
+            <div class="ph-export">
+              <a href="#" id="pm-export-xlsx">{{ icon('sheet') }}Excel</a>
+              <a href="#" id="pm-export-pdf">{{ icon('file-down') }}PDF</a>
+            </div>
+          </div>
+          <div class="ph-adjust-drawer panel" id="pm-adjust-drawer" hidden style="background:var(--bg-elevated, #f8fafc);border:1px solid var(--border-color, #e2e8f0);border-radius:8px;padding:16px;margin:16px 0;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+              <h5 style="margin:0;font-size:1rem;display:flex;align-items:center;gap:6px;">{{ icon('tag') }}{{ t('Quick Price Adjustment') }}</h5>
+              <button type="button" class="btn-close" id="pm-adjust-close" aria-label="{{ t('Close') }}"></button>
+            </div>
+            <div class="form-grid two">
+              <label class="field">
+                <span>{{ t('New Selling Price') }} ({{ config.currency }}) *</span>
+                <input class="form-control" type="number" step="0.01" min="0" id="pm-adjust-price" placeholder="0.00" required>
+              </label>
+              <label class="field">
+                <span>{{ t('New Cost Price') }} ({{ config.currency }})</span>
+                <input class="form-control" type="number" step="0.01" min="0" id="pm-adjust-cost" placeholder="0.00">
+              </label>
+            </div>
+            <p id="pm-adjust-error" class="ph-error" role="alert" hidden style="margin-top:10px;"></p>
+            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px;">
+              <button type="button" class="btn btn-light btn-sm" id="pm-adjust-cancel">{{ t('Cancel') }}</button>
+              <button type="button" class="btn btn-primary btn-sm" id="pm-adjust-submit">{{ icon('check') }}{{ t('Save Price Now') }}</button>
+            </div>
+          </div>
+          <div class="ph-table-scroll price-modal-table">
+            <table class="table ph-table">
+              <thead><tr><th>{{ t('Date') }}</th><th>{{ t('Old Price') }}</th><th>{{ t('New Price') }}</th><th>{{ t('Change %') }}</th><th>{{ t('User who changed it') }}</th></tr></thead>
+              <tbody id="price-modal-rows"></tbody>
+            </table>
+          </div>
+          <p class="ph-note">{{ t('N/A means the previous price was zero. Dates use Cairo time.') }}</p>
+          <button class="btn btn-light ph-more" id="price-modal-more" type="button" hidden>{{ t('Load older changes') }}</button>
+          <div id="price-modal-error" class="ph-error" role="alert" hidden></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        {% if can("products.price_change") %}
+        <button type="button" class="btn btn-outline-primary" id="pm-adjust-toggle">{{ icon('pencil') }}{{ t('Adjust Price Now') }}</button>
+        {% endif %}
+        <a class="btn btn-light" id="pm-export-history" href="#">{{ icon('download') }}{{ t('Export History') }}</a>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{{ t('Close') }}</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,108 @@
+/* Archived Products Center — StorePro light/dark theme. */
+.archived-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  margin-inline-start: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(105deg, #126cff, #0055f5);
+  border-radius: 999px;
+}
+#archivedProductsModal .modal-dialog,
+#categoryManagerModal .modal-dialog {
+  transition: transform 0.22s ease-out;
+}
+.arch-card {
+  align-items: flex-start;
+}
+.arch-thumb {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+}
+.arch-thumb-empty {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+}
+.arch-details-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.arch-details-head h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.arch-details-img {
+  margin-bottom: 12px;
+}
+.arch-details-img img {
+  max-width: 220px;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+}
+@media (max-width: 700px) {
+  .arch-card {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #archivedProductsModal .modal-dialog,
+  #categoryManagerModal .modal-dialog {
+    transition: none;
+  }
+}
+/* Archived Products toolbar button: hover / active / loading / disabled. */
+#archived-products-btn {
+  position: relative;
+  transition: border-color 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
+}
+#archived-products-btn:hover:not(:disabled) {
+  border-color: var(--blue);
+  transform: translateY(-1px);
+}
+#archived-products-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+#archived-products-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+#archived-products-btn.is-loading {
+  color: transparent;
+}
+#archived-products-btn.is-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--muted);
+  border-top-color: var(--blue);
+  animation: arch-spin 0.7s linear infinite;
+}
+@keyframes arch-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #archived-products-btn,
+  #archived-products-btn.is-loading::after {
+    transition: none;
+    animation: none;
+  }
+}

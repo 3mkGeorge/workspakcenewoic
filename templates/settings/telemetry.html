@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import heading, icon, badge, empty with context %}
+{% block page_assets %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>{{ t('System Telemetry & Performance') }}</h1>
+    <p>{{ t('Real-time operational metrics, background worker registry, slow query analysis, and database maintenance.') }}</p>
+  </div>
+  <div style="display:flex; gap:10px;">
+    <a href="/settings" class="btn btn-light">{{ icon('settings') }}{{ t('Back to Settings') }}</a>
+    <a href="/settings/audit" class="btn btn-light">{{ icon('history') }}{{ t('Audit Logs') }}</a>
+  </div>
+</div>
+
+<div class="erp-dash">
+  <!-- System KPI Cards -->
+  <h2 class="dash-section-title">{{ t('Host & Storage Telemetry') }}</h2>
+  <div class="erp-row erp-kpis">
+    <div class="kpi-card erp-span-3">
+      <span class="kpi-icon blue">{{ icon('cpu') }}</span>
+      <div>
+        <span class="kpi-label">{{ t('Server Uptime') }}</span>
+        <strong class="kpi-value" style="font-size:22px">{{ snapshot.system.uptime }}</strong>
+        <small>{{ snapshot.system.platform }} &bull; Python {{ snapshot.system.python_version }}</small>
+      </div>
+    </div>
+    <div class="kpi-card erp-span-3">
+      <span class="kpi-icon purple">{{ icon('activity') }}</span>
+      <div>
+        <span class="kpi-label">{{ t('Process Memory (RSS)') }}</span>
+        <strong class="kpi-value" style="font-size:22px">{{ snapshot.system.memory_mb }} MB</strong>
+        <small>{{ snapshot.system.threads_count }} active background threads</small>
+      </div>
+    </div>
+    <div class="kpi-card erp-span-3">
+      <span class="kpi-icon green">{{ icon('database') }}</span>
+      <div>
+        <span class="kpi-label">{{ t('Database Footprint') }}</span>
+        <strong class="kpi-value" style="font-size:22px">{{ snapshot.database.db_size }}</strong>
+        <small>WAL: {{ snapshot.database.wal_size }} &bull; {{ snapshot.database.page_count }} pages</small>
+      </div>
+    </div>
+    <div class="kpi-card erp-span-3">
+      <span class="kpi-icon {{ 'red' if snapshot.queries.slow_queries_count > 0 else 'cyan' }}">
+        {{ icon('zap') }}
+      </span>
+      <div>
+        <span class="kpi-label">{{ t('Query Performance') }}</span>
+        <strong class="kpi-value" style="font-size:22px">{{ snapshot.queries.avg_query_time_ms }} ms</strong>
+        <small>{{ snapshot.queries.slow_queries_count }} queries &gt; {{ snapshot.queries.slow_query_threshold_ms }}ms</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Background Jobs Registry -->
+  <h2 class="dash-section-title">{{ t('Background Job Registry & Worker Status') }}</h2>
+  <section class="panel">
+    <div class="panel-header">
+      <h2>{{ icon('refresh-cw') }}{{ t('Monitored Background Workers') }}</h2>
+      <span class="badge-status success">{{ jobs|length }} {{ t('Registered Jobs') }}</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{{ t('Worker Name') }}</th>
+            <th>{{ t('Schedule') }}</th>
+            <th>{{ t('Status') }}</th>
+            <th>{{ t('Last Run') }}</th>
+            <th>{{ t('Next Run') }}</th>
+            <th>{{ t('Duration') }}</th>
+            <th>{{ t('Runs / Failures') }}</th>
+            <th>{{ t('Last Error') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for j in jobs %}
+          <tr>
+            <td><strong>{{ j.name }}</strong><br><small class="muted">{{ j.description }}</small></td>
+            <td><code>{{ j.frequency }}</code></td>
+            <td>
+              <span class="badge-status {{ 'success' if j.status == 'Completed' else 'warning' if j.status == 'Running' else 'danger' if j.status == 'Failed' else 'info' }}">
+                {{ j.status }}
+              </span>
+            </td>
+            <td>{{ j.last_run }}</td>
+            <td>{{ j.next_run }}</td>
+            <td>{{ j.last_duration_ms }} ms</td>
+            <td>{{ j.run_count }} / <span class="{{ 'text-danger' if j.failure_count > 0 else 'muted' }}">{{ j.failure_count }}</span></td>
+            <td><small class="text-danger">{{ j.last_error or 'None' }}</small></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Database Maintenance Control Center -->
+  <h2 class="dash-section-title">{{ t('Database Maintenance & Optimization') }}</h2>
+  <section class="panel" style="padding:20px;">
+    <p class="muted" style="margin-top:0;">
+      {{ t('Execute safe background maintenance operations to reclaim unused space, rebuild index trees, and flush WAL journals.') }}
+    </p>
+    <div style="display:flex; flex-wrap:wrap; gap:12px;">
+      <form method="post" action="/settings/maintenance/run" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="checkpoint">
+        <button type="submit" class="btn btn-light">{{ icon('layers') }} {{ t('Truncate WAL Journal') }}</button>
+      </form>
+      <form method="post" action="/settings/maintenance/run" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="optimize">
+        <button type="submit" class="btn btn-light">{{ icon('zap') }} {{ t('Optimize Query Planner') }}</button>
+      </form>
+      <form method="post" action="/settings/maintenance/run" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="reindex">
+        <button type="submit" class="btn btn-light">{{ icon('list-tree') }} {{ t('Rebuild Indexes') }}</button>
+      </form>
+      <form method="post" action="/settings/maintenance/run" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="vacuum">
+        <button type="submit" class="btn btn-light">{{ icon('sparkles') }} {{ t('Run VACUUM') }}</button>
+      </form>
+      <form method="post" action="/settings/backup/verify-all" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-primary">{{ icon('shield-check') }} {{ t('Verify All Backups Now') }}</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Slow Query Monitoring Panel -->
+  <h2 class="dash-section-title">{{ t('Slow Query Log (> 25 ms)') }}</h2>
+  <section class="panel">
+    <div class="panel-header">
+      <h2>{{ icon('clock') }}{{ t('Detected Slow Queries') }}</h2>
+      <span class="badge-status {{ 'warning' if snapshot.queries.slow_queries else 'success' }}">
+        {{ snapshot.queries.slow_queries|length }} {{ t('Recorded') }}
+      </span>
+    </div>
+    {% if snapshot.queries.slow_queries %}
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{{ t('Timestamp') }}</th>
+            <th>{{ t('Duration') }}</th>
+            <th>{{ t('Endpoint') }}</th>
+            <th>{{ t('SQL Statement') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in snapshot.queries.slow_queries[:15] %}
+          <tr>
+            <td>{{ q.timestamp }}</td>
+            <td><strong class="text-danger">{{ q.duration_ms }} ms</strong></td>
+            <td><code>{{ q.path }}</code></td>
+            <td><code style="font-size:11px; white-space:pre-wrap;">{{ q.statement }}</code></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    {{ empty('All queries executing within normal baseline limits (< 25 ms)', 'StorePro database indexes and query plans are optimized.', 'check-circle') }}
+    {% endif %}
+  </section>
+
+  <!-- Live Log Stream Buffer -->
+  <h2 class="dash-section-title">{{ t('Live Application Event Log') }}</h2>
+  <section class="panel">
+    <div class="panel-header">
+      <h2>{{ icon('file-text') }}{{ t('Recent Structured Logs') }}</h2>
+      <small class="muted">{{ t('Showing recent log events in memory buffer') }}</small>
+    </div>
+    <div style="padding:12px; max-height:280px; overflow-y:auto; font-family:monospace; font-size:12px; background:var(--soft); border-radius:8px;">
+      {% for l in recent_logs %}
+      <div style="padding:3px 0; border-bottom:1px solid var(--line); display:flex; gap:10px;">
+        <span class="muted">{{ l.timestamp }}</span>
+        <strong style="color:{{ '#e02424' if l.level == 'ERROR' else '#e7b400' if l.level == 'WARNING' else '#00a14f' }};">[{{ l.level }}]</strong>
+        <span>{{ l.message }}</span>
+      </div>
+      {% endfor %}
+      {% if not recent_logs %}
+      <div class="muted">{{ t('No log entries recorded yet.') }}</div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}

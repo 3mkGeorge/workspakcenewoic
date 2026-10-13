@@ -1,0 +1,509 @@
+/* Shipping Orders — logistics styling on the StorePro theme. */
+.ship-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.ship-grid .panel {
+  padding: 20px;
+  border-radius: 12px;
+}
+.ship-grid .detail-list {
+  margin: 0;
+}
+.ship-grid .panel-header {
+  margin-bottom: 12px;
+}
+@media (min-width: 1200px) {
+  .ship-wide {
+    grid-column: span 2;
+  }
+}
+/* Shipment workflow progress strip. */
+.ship-workflow {
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.ship-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+.ship-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--soft);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 0;
+}
+.ship-step-dot {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 2px solid var(--line);
+  font-size: 11px;
+  font-weight: 800;
+}
+.ship-step.done {
+  color: var(--ink);
+  border-color: #00a14f55;
+}
+.ship-step.done .ship-step-dot {
+  background: #00a14f;
+  border-color: #00a14f;
+  color: #fff;
+}
+.ship-step.current {
+  color: var(--ink);
+  border-color: var(--pos-blue, #1266ed);
+  box-shadow: 0 0 0 3px #1266ed22;
+}
+.ship-step.current .ship-step-dot {
+  background: var(--pos-blue, #1266ed);
+  border-color: var(--pos-blue, #1266ed);
+  color: #fff;
+}
+.ship-step-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ship-exception {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #ae690c;
+}
+.ship-exception .lucide {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+[data-bs-theme="dark"] .ship-exception {
+  color: #f3bd69;
+}
+/* Shipment status actions. */
+.ship-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.ship-ship-btn {
+  font-weight: 700;
+  box-shadow: 0 4px 14px #1266ed44;
+}
+/* Courier view/edit modes. */
+.ship-courier-form {
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.ship-courier-form .toolbar {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.ship-courier-form .muted.small {
+  margin-top: 10px;
+}
+.ship-error {
+  color: #ed6e7e;
+  font-size: 12px;
+  margin-top: 10px;
+}
+#shipmentModalMessage.ship-error,
+#shipmentModal .cat-message.ship-error {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+@media (max-width: 1100px) {
+  .ship-steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .ship-info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 768px) {
+  .ship-steps {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ship-info-grid {
+    grid-template-columns: 1fr;
+  }
+  .ship-grid .panel,
+  .ship-workflow,
+  .ship-info-strip {
+    padding: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ship-step {
+    transition: none;
+  }
+}
+/* Centralized semantic badge system (aligned with app.css) */
+.badge.text-bg-purple {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+.badge.text-bg-orange {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.badge.text-bg-cyan {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.badge.text-bg-darkred {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+[data-bs-theme="dark"] .badge.text-bg-purple {
+  background: rgba(109, 40, 217, 0.16);
+  color: #c4b5fd;
+  border: 1px solid rgba(109, 40, 217, 0.35);
+}
+[data-bs-theme="dark"] .badge.text-bg-orange {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+[data-bs-theme="dark"] .badge.text-bg-cyan {
+  background: rgba(59, 130, 246, 0.16);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+[data-bs-theme="dark"] .badge.text-bg-darkred {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+.ship-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+.ship-timeline::before {
+  content: "";
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  inset-inline-start: 5px;
+  width: 2px;
+  background: var(--line);
+}
+.ship-timeline li {
+  position: relative;
+  padding: 0 0 14px 24px;
+}
+.ship-timeline li:last-child {
+  padding-bottom: 0;
+}
+.ship-timeline li::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  inset-inline-start: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--panel);
+  border: 3px solid var(--pos-blue, #1266ed);
+}
+.ship-timeline b {
+  display: block;
+  font-size: 12px;
+}
+.ship-timeline small {
+  color: var(--muted);
+  font-size: 11px;
+}
+#ship-message {
+  margin-bottom: 12px;
+}
+code {
+  direction: ltr;
+}
+/* Unified table-link component: every clickable identifier in Orders
+ * (order, invoice, customer) shares color, weight, hover, focus, cursor. */
+.ship-link,
+.ship-customer-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--blue);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: 4px;
+}
+.ship-link:hover,
+.ship-customer-link:hover {
+  text-decoration: underline;
+}
+.ship-link:focus-visible,
+.ship-customer-link:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+/* Compact shipment identity strip. */
+.ship-info-strip {
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.ship-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 20px;
+  margin: 0;
+}
+.ship-info-grid > div {
+  min-width: 0;
+}
+.ship-info-grid dt {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  margin: 0;
+}
+.ship-info-grid dd {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+.ship-incomplete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ae690c;
+}
+.ship-incomplete .lucide {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+[data-bs-theme="dark"] .ship-incomplete {
+  color: #f3bd69;
+}
+.ship-confirm-list {
+  margin: 0 0 12px;
+}
+.ship-event-note b {
+  color: var(--muted);
+  font-weight: 600;
+}
+.ship-event-note::before {
+  border-color: var(--muted) !important;
+}
+/* Interactive shipping table (ERP-style). */
+.ship-table .ship-link,
+.ship-table .ship-customer-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--blue);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+.ship-table .ship-link:hover,
+.ship-table .ship-customer-link:hover {
+  text-decoration: underline;
+  filter: brightness(0.9);
+}
+.ship-table .ship-tracking {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  color: inherit;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.ship-table .ship-tracking:hover {
+  border-color: var(--blue);
+  transform: translateY(-1px);
+}
+.ship-table .ship-tracking .lucide {
+  width: 13px;
+  height: 13px;
+  color: var(--muted);
+}
+.ship-table .ship-status-btn {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.ship-table .ship-status-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+.ship-table .ship-link:focus-visible,
+.ship-table .ship-customer-link:focus-visible,
+.ship-table .ship-tracking:focus-visible,
+.ship-table .ship-status-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+/* Floating status menu (body-absolute, never clipped, never in layout). */
+.ship-status-menu {
+  position: absolute;
+  z-index: 9999;
+  min-width: 200px;
+  max-width: min(250px, calc(100vw - 16px));
+  max-height: min(320px, calc(100vh - 32px));
+  overflow-y: auto;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(10, 25, 50, 0.22);
+  padding: 6px;
+}
+.ship-status-menu[hidden] {
+  display: none;
+}
+.ship-status-menu .rf-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+.ship-status-menu .rf-item:hover {
+  background: var(--soft);
+  color: var(--blue);
+}
+.ship-status-empty {
+  display: block;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+[data-bs-theme="dark"] .ship-status-menu {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ship-table .ship-tracking,
+  .ship-table .ship-status-btn {
+    transition: none;
+  }
+}
+/* Orders hub: counters + tabs. */
+.orders-counters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.orders-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.16s ease, transform 0.16s ease;
+}
+.orders-counter:hover {
+  border-color: var(--blue);
+  transform: translateY(-1px);
+  color: inherit;
+}
+.orders-counter b {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+.orders-counter span {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.orders-counter.active {
+  border-color: var(--blue);
+}
+.orders-tabs {
+  margin-bottom: 12px;
+}
+.orders-tabs a {
+  text-decoration: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .orders-counter {
+    transition: none;
+  }
+}
+
+/* Fulfillment pipeline scroll indicator for narrow screens */
+.fulfillment-pipeline-panel {
+  position: relative;
+}
+@media (max-width: 768px) {
+  .fulfillment-pipeline-panel {
+    overflow: hidden;
+  }
+  .fulfillment-pipeline {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
+  }
+  [dir="rtl"] .fulfillment-pipeline {
+    mask-image: linear-gradient(to left, black calc(100% - 32px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to left, black calc(100% - 32px), transparent 100%);
+  }
+}
+

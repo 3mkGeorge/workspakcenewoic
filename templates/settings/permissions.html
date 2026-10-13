@@ -1,0 +1,12 @@
+{% extends 'base.html' %}{% from 'macros.html' import heading with context %}
+{% block page_assets %}<link rel="stylesheet" href="/static/css/permissions.css"><script src="/static/js/permissions.js" defer></script>{% endblock %}
+{% block content %}
+{{ heading('User Details',person.name~' · @'~person.username) }}
+<div id="permission-editor" data-editable="{{ '1' if can('users.permissions') else '0' }}">
+<script type="application/json" id="policy-data">{{ {'user':policy,'permissions':permissions,'roles':roles}|tojson }}</script>
+<div class="panel permission-toolbar"><label>Assigned Role<select id="assigned-role" class="form-select" {{ 'disabled' if not can('users.permissions') }}></select></label>{% if can('users.permissions') %}<button id="save-role" class="btn btn-primary">Save Role</button><button id="reset-policy" class="btn btn-light">Reset To Role Defaults</button><a href="/settings/permissions" class="btn btn-light">Manage Roles &amp; Permissions</a>{% endif %}<a href="/settings/users" class="btn btn-light">All Users</a></div>
+<p id="permission-message" role="status" aria-live="polite"></p>
+<div class="permission-summary" id="permission-summary"></div>
+<div class="permission-panels"><section class="panel"><h2>Role Permissions</h2><div id="role-permissions"></div></section><section class="panel"><h2>Additional Permissions</h2><div id="grant-permissions"></div></section><section class="panel"><h2>Denied Permissions</h2><div id="deny-permissions"></div></section></div>
+<section class="panel mt-3"><div class="panel-header"><h2>Effective Permissions</h2><span class="muted">Denied → Additional → Role</span></div><div class="permission-toolbar"><input id="permission-search" type="search" class="form-control" placeholder="Search permissions…" aria-label="Search permissions"><select id="permission-category" class="form-select" aria-label="Permission category"><option value="">All categories</option></select></div><div class="table-responsive"><table class="table"><thead><tr><th>Permission</th><th>Category</th><th>Effective Access</th><th>Source</th><th>Overrides</th></tr></thead><tbody id="effective-permissions"></tbody></table></div></section></div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import heading, pagination, icon, empty with context %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>{{ t('Audit Logs') }}</h1>
+    <p>{{ t('Permanent, immutable audit trail for security events, administrative changes, and store transactions.') }}</p>
+  </div>
+  <div style="display:flex; gap:10px;">
+    <a href="{{ url_for('admin.export_audit_logs', **request.args) }}" class="btn btn-light">
+      {{ icon('download') }}{{ t('Export to CSV') }}
+    </a>
+    <a href="/settings" class="btn btn-light">{{ icon('settings') }}{{ t('Settings') }}</a>
+  </div>
+</div>
+
+<!-- Filters Bar -->
+<section class="panel" style="margin-bottom:16px; padding:16px;">
+  <form method="get" action="/settings/audit" style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+    <div style="flex:2; min-width:200px;">
+      <label for="audit-q" style="font-size:11px; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">{{ t('Search Details & IP') }}</label>
+      <input type="text" id="audit-q" name="q" value="{{ request.args.get('q', '') }}" placeholder="{{ t('Search details or IP...') }}" class="form-control">
+    </div>
+    <div style="flex:1; min-width:140px;">
+      <label for="audit-actor" style="font-size:11px; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">{{ t('User / Actor') }}</label>
+      <select id="audit-actor" name="actor" class="form-select">
+        <option value="">{{ t('All Users') }}</option>
+        {% for a in actors %}
+        <option value="{{ a }}" {{ 'selected' if request.args.get('actor') == a else '' }}>{{ a }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="flex:1; min-width:140px;">
+      <label for="audit-action" style="font-size:11px; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">{{ t('Action Type') }}</label>
+      <select id="audit-action" name="action" class="form-select">
+        <option value="">{{ t('All Actions') }}</option>
+        {% for act in actions %}
+        <option value="{{ act }}" {{ 'selected' if request.args.get('action') == act else '' }}>{{ act }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div style="flex:1; min-width:130px;">
+      <label for="audit-date-from" style="font-size:11px; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">{{ t('Date From') }}</label>
+      <input type="date" id="audit-date-from" name="date_from" value="{{ request.args.get('date_from', '') }}" class="form-control">
+    </div>
+    <div style="flex:1; min-width:130px;">
+      <label for="audit-date-to" style="font-size:11px; font-weight:600; color:var(--muted); display:block; margin-bottom:4px;">{{ t('Date To') }}</label>
+      <input type="date" id="audit-date-to" name="date_to" value="{{ request.args.get('date_to', '') }}" class="form-control">
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button type="submit" class="btn btn-primary">{{ icon('filter') }} {{ t('Filter') }}</button>
+      <a href="/settings/audit" class="btn btn-light">{{ icon('rotate-ccw') }} {{ t('Reset') }}</a>
+    </div>
+  </form>
+</section>
+
+<!-- Table -->
+<section class="panel">
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:180px;">{{ t('Timestamp') }}</th>
+          <th style="width:140px;">{{ t('User') }}</th>
+          <th style="width:180px;">{{ t('Action') }}</th>
+          <th>{{ t('Event Details') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in page.items %}
+        <tr>
+          <td><small class="muted">{{ log.created_at|date(true) }}</small></td>
+          <td><strong>{{ log.actor }}</strong></td>
+          <td>
+            <span class="badge-status {{ 'danger' if 'delete' in log.action.lower() or 'failed' in log.action.lower() or 'drop' in log.action.lower() else 'warning' if 'update' in log.action.lower() or 'edit' in log.action.lower() or 'permission' in log.action.lower() else 'success' if 'login' in log.action.lower() or 'create' in log.action.lower() or 'add' in log.action.lower() else 'info' }}">
+              {{ log.action }}
+            </span>
+          </td>
+          <td style="max-width:400px; overflow-wrap:break-word;">
+            <span>{{ log.details }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if not page.items %}
+  {{ empty('No audit records found', 'Try adjusting your filters or search keywords above.', 'scroll-text') }}
+  {% endif %}
+  {{ pagination(page) }}
+</section>
+{% endblock %}

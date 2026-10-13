@@ -1,0 +1,41 @@
+{% from 'macros.html' import icon with context %}
+{# Archived Products Center. Data via /api/archived. #}
+<div class="modal fade" id="archivedProductsModal" data-business-modal tabindex="-1" aria-labelledby="archivedProductsTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content cat-modal" id="archived-manager" data-currency="{{ config.currency }}" data-can-restore="{{ 1 if can('products.edit') else 0 }}" data-can-delete="{{ 1 if can('products.delete') else 0 }}">
+      <div class="modal-header cat-manage-head">
+        <div>
+          <h5 class="modal-title" id="archivedProductsTitle">{{ t('Archived Products') }} (<span class="cat-count-badge" id="arch-total">0</span>)</h5>
+          <p class="cat-subtitle muted">{{ t('Manage products that have been archived.') }}</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p id="arch-message" class="cat-message" role="status" aria-live="polite" hidden></p>
+        <div id="arch-list-view">
+          <div class="cat-toolbar">
+            <div class="search-input cat-search"><i data-lucide="search"></i><input id="arch-search" type="search" class="form-control" placeholder="{{ t('Search archived products…') }}" aria-label="{{ t('Search archived products') }}"></div>
+            <select id="arch-category" class="form-select" aria-label="{{ t('Category') }}"><option value="">{{ t('Category') }}</option>{% for c in categories %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select>
+            <select id="arch-supplier" class="form-select" aria-label="{{ t('Supplier') }}"><option value="">{{ t('Supplier') }}</option>{% for s in suppliers %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select>
+            <input id="arch-from" type="date" class="form-control" aria-label="{{ t('Archived from') }}" title="{{ t('Archived from') }}">
+            <input id="arch-to" type="date" class="form-control" aria-label="{{ t('Archived to') }}" title="{{ t('Archived to') }}">
+            <select id="arch-sort" class="form-select" aria-label="{{ t('Sort By') }}"><option value="newest">{{ t('Newest first') }}</option><option value="name">{{ t('Name A-Z') }}</option><option value="oldest">{{ t('Oldest first') }}</option><option value="stock">{{ t('Stock') }}</option></select>
+          </div>
+          <div class="cat-cards" id="arch-cards"></div>
+          <div class="cat-empty" id="arch-empty" hidden><div class="cat-empty-icon" aria-hidden="true">📦</div><h3>{{ t('No Archived Products') }}</h3><p>{{ t('Products you archive will appear here.') }}</p></div>
+        </div>
+        <div id="arch-delete-view" class="cat-subview" hidden>
+          <h3>{{ t('Delete Product Permanently?') }}</h3>
+          <p class="muted" id="arch-delete-text"></p>
+          <div id="arch-delete-blockers" class="cat-blocking" hidden><strong>{{ t('Referenced by:') }}</strong><ul id="arch-blockers-list"></ul></div>
+          <p class="cat-warn">{{ t('This action cannot be undone.') }}</p>
+          <div class="cat-form-footer"><button type="button" class="btn btn-light" id="arch-delete-cancel">{{ t('Cancel') }}</button><button type="button" class="btn btn-danger" id="arch-delete-confirm">{{ t('Delete Forever') }}</button></div>
+        </div>
+      </div>
+      <div class="modal-footer cat-modal-foot">
+        <span class="muted small">{{ t('Archived products never affect dashboard or inventory totals.') }}</span>
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ t('Close') }}</button>
+      </div>
+    </div>
+  </div>
+</div>

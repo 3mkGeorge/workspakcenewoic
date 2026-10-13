@@ -1,0 +1,3 @@
+{% extends 'base.html' %}{% from 'macros.html' import icon,csrf,field with context %}
+{% block page_assets %}<link rel="stylesheet" href="/static/css/backups.css"><script src="/static/js/backups.js" defer></script>{% endblock %}
+{% block content %}<h1>Backup &amp; Restore</h1>{% include 'settings/backup_panel.html' %}{% endblock %}

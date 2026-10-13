@@ -1,0 +1,70 @@
+{% from 'macros.html' import icon with context %}
+{# Invoice Details modal. Opened from the Sales Invoices table via [data-sale-modal].
+   Data comes from /api/sales/<id>; footer gated by existing sales permissions. #}
+<div class="modal fade" id="saleDetailsModal" data-business-modal tabindex="-1" aria-labelledby="saleDetailsTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable sale-modal-dialog">
+    <div class="modal-content sale-modal" id="sale-modal" data-currency="{{ config.currency }}">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="saleDetailsTitle">{{ t('Invoice Details') }} - <span id="sale-modal-inv">…</span> <span id="sale-modal-status"></span></h5>
+          <p class="cat-subtitle muted" id="sale-modal-sub">…</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p id="sale-modal-message" class="cat-message" role="status" aria-live="polite" hidden></p>
+        <div id="sale-modal-loading" class="ph-history-empty">
+          {{ icon('history') }}<strong>{{ t('Loading invoice…') }}</strong>
+        </div>
+        <div id="sale-modal-content" hidden>
+          <section aria-label="{{ t('Invoice Information') }}">
+            <div class="ph-section-heading"><h4>{{ t('Invoice Information') }}</h4></div>
+            <dl class="detail-list sale-info-grid" id="sale-modal-info"></dl>
+          </section>
+          <div class="sale-main-grid">
+          <section aria-label="{{ t('Products') }}">
+            <div class="ph-section-heading"><h4>{{ t('Products') }} <span class="ph-count" id="sale-modal-count">0</span></h4></div>
+            <div class="table-responsive"><table class="table sale-items-table">
+              <thead><tr>
+                <th class="sale-select-col" hidden style="width:36px"><input type="checkbox" id="sale-select-all" title="Select all items" aria-label="Select all items"></th>
+                <th></th>
+                <th>{{ t('Product Name') }}</th>
+                <th class="num">{{ t('Qty') }}</th>
+                <th class="num">{{ t('Unit Price') }}</th>
+                <th class="num">{{ t('Discount') }}</th>
+                <th class="num">{{ t('Total') }}</th>
+                <th class="sale-return-qty-col num" hidden style="width:90px">{{ t('Return Qty') }}</th>
+              </tr></thead>
+              <tbody id="sale-modal-rows"></tbody>
+            </table></div>
+          </section>
+          <aside aria-label="{{ t('Financial Summary') }}">
+            <div class="ph-section-heading"><h4>{{ t('Financial Summary') }}</h4></div>
+            <div class="sale-summary-card">
+            <dl class="detail-list totals" id="sale-modal-totals"></dl>
+            <div class="grand-total"><b>{{ t('Grand Total') }}</b><b id="sale-modal-grand">…</b></div>
+            </div>
+          </aside>
+          </div>
+          <section aria-label="{{ t('Notes') }}">
+            <div class="ph-section-heading"><h4>{{ t('Notes') }}</h4></div>
+            <dl class="detail-list" id="sale-modal-notes"></dl>
+          </section>
+        </div>
+      </div>
+      <div class="modal-footer sale-modal-foot">
+        {% if can("sales.print") %}<a class="btn btn-light" id="sale-modal-print" href="#" target="_blank" rel="noopener">{{ icon('printer') }}{{ t('Print Invoice') }}</a>{% endif %}
+        {% if can("sales.print") %}<a class="btn btn-light" id="sale-modal-receipt" href="#" target="_blank" rel="noopener">{{ icon('receipt') }}{{ t('Receipt') }}</a>{% endif %}
+        {% if can("sales.edit") %}<a class="btn btn-primary" id="sale-modal-edit" href="#">{{ icon('pencil') }}{{ t('Edit') }}</a>{% endif %}
+        {% if can("sales.refund") %}
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-light" id="sale-modal-refund">{{ icon('rotate-ccw') }}{{ t('Return All') }}</button>
+          <button type="button" class="btn btn-light" id="sale-modal-refund-selected" title="{{ t('Select items to return') }}">{{ icon('check-square') }}{{ t('Return Selected') }}</button>
+        </div>
+        {% endif %}
+        {% if can("sales.delete") %}<button type="button" class="btn btn-danger-soft" id="sale-modal-delete">{{ icon('trash-2') }}{{ t('Delete') }}</button>{% endif %}
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ t('Close') }}</button>
+      </div>
+    </div>
+  </div>
+</div>

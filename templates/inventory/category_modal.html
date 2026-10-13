@@ -1,0 +1,58 @@
+{% from 'macros.html' import icon with context %}
+{# Category Management — first-class ERP-style administration. Data via /api/categories. #}
+<div class="modal fade" id="categoryManagerModal" data-business-modal tabindex="-1" aria-labelledby="categoryManagerTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content cat-modal" id="category-manager" data-currency="{{ config.currency }}" data-can-create="{{ 1 if can('products.create') else 0 }}" data-can-edit="{{ 1 if can('products.edit') else 0 }}" data-can-delete="{{ 1 if can('products.delete') else 0 }}">
+      <div class="modal-header cat-manage-head">
+        <div>
+          <h5 class="modal-title" id="categoryManagerTitle">{{ t('Category Management') }}</h5>
+          <p class="cat-subtitle muted">{{ t('Create, organize, edit and remove product categories.') }}</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p id="cat-message" class="cat-message" role="status" aria-live="polite" hidden></p>
+        <div id="cat-list-view">
+          <div class="cat-toolbar">
+            <div class="search-input cat-search"><i data-lucide="search"></i><input id="cat-search" type="search" class="form-control" placeholder="{{ t('Search Categories…') }}" aria-label="{{ t('Search categories') }}"></div>
+            <select id="cat-sort" class="form-select" aria-label="{{ t('Sort categories') }}"><option value="name">{{ t('Sorting A-Z') }}</option><option value="count">{{ t('Sorting by product count') }}</option></select>
+            {% if can("products.create") %}<button type="button" class="btn btn-primary" id="cat-add-open">{{ icon('plus') }}{{ t('New Category') }}</button>{% endif %}
+          </div>
+          <h6 class="cat-section-title">{{ t('Categories') }} <span class="cat-count-badge" id="cat-total">0</span></h6>
+          <div class="cat-cards" id="cat-cards"></div>
+          <div class="cat-empty" id="cat-empty" hidden><div class="cat-empty-icon">📦</div><h3>{{ t('No Categories Yet') }}</h3><p>{{ t('Create your first category to organize products.') }}</p>{% if can("products.create") %}<button type="button" class="btn btn-primary" id="cat-empty-add">{{ t('Create Category') }}</button>{% endif %}</div>
+          <nav class="cat-pagination" id="cat-pagination" aria-label="{{ t('Category pages') }}" hidden><button type="button" class="btn btn-light btn-sm" id="cat-prev">‹ {{ t('Prev') }}</button><span id="cat-page-info" class="muted small"></span><button type="button" class="btn btn-light btn-sm" id="cat-next">{{ t('Next') }} ›</button></nav>
+        </div>
+        <form id="cat-form-view" class="cat-subview" hidden>
+          <h3 id="cat-form-title">{{ t('New Category') }}</h3>
+          <p class="muted small" id="cat-assigned-info" hidden></p>
+          <label class="field"><span>{{ t('Category Name') }} *</span><input class="form-control" id="cat-name" maxlength="100" required autocomplete="off"></label>
+          <label class="field"><span>{{ t('Description') }}</span><textarea class="form-control" id="cat-description" rows="2" maxlength="500"></textarea></label>
+          <label class="field" for="cat-color"><span>{{ t('Color Tag') }} <small class="muted">({{ t('optional') }})</small></span><div class="cat-swatches" id="cat-swatches"></div><input class="form-control form-control-sm" id="cat-color" maxlength="7" placeholder="#3b82f6" dir="ltr" aria-label="{{ t('Color Tag') }}"></label>
+          <label class="field"><span>{{ t('Icon') }} <small class="muted">({{ t('optional') }})</small></span><input class="form-control" id="cat-icon" maxlength="40" placeholder="tag" dir="ltr"><small>{{ t('Lucide icon name, e.g. tag, cpu, shirt') }}</small></label>
+          <div class="cat-form-footer"><button type="button" class="btn btn-light" id="cat-form-cancel">{{ t('Cancel') }}</button><button type="submit" class="btn btn-primary" id="cat-form-save">{{ t('Create Category') }}</button></div>
+        </form>
+        <div id="cat-delete-view" class="cat-subview" hidden>
+          <h3>{{ t('Delete Category?') }}</h3>
+          <dl class="detail-list"><dt>{{ t('Category') }}</dt><dd id="cat-delete-name">—</dd><dt>{{ t('Active Products') }}</dt><dd id="cat-delete-active">—</dd><dt>{{ t('Archived Products') }}</dt><dd id="cat-delete-archived-count">—</dd></dl>
+          <p class="muted small" id="cat-delete-archived" hidden></p>
+          <div><button type="button" class="btn btn-light btn-sm" id="cat-open-archived" hidden>{{ t('Open Archived Products') }}</button></div>
+          <div class="cat-blocking" id="cat-delete-blocking" hidden><strong>{{ t('Products blocking deletion:') }}</strong><ul id="cat-blocking-list"></ul></div>
+          <div id="cat-delete-options">
+            <label class="cat-radio"><input type="radio" name="cat-delete-mode" value="move" checked> {{ t('Move products to another category') }}</label>
+            <select class="form-select" id="cat-delete-target" aria-label="{{ t('Target category for moved products') }}"></select>
+            <label class="cat-radio" id="cat-purge-option" hidden><input type="radio" name="cat-delete-mode" value="purge"> {{ t('Delete archived products and category') }}</label>
+            <p class="cat-warn" id="cat-purge-warn" hidden>{{ t('Permanently removes archived products with no sales, purchase, stock-movement or price history, then deletes the category. Cannot be undone.') }}</p>
+            <label class="cat-radio"><input type="radio" name="cat-delete-mode" value="only" id="cat-delete-only-radio"> {{ t('Delete category only') }}</label>
+            <p class="cat-warn" id="cat-delete-warn">{{ t('Deleting a category with products requires moving them first — products are never orphaned.') }}</p>
+          </div>
+          <div class="cat-form-footer"><button type="button" class="btn btn-light" id="cat-delete-cancel">{{ t('Cancel') }}</button><button type="button" class="btn btn-danger" id="cat-delete-confirm">{{ t('Delete') }}</button></div>
+        </div>
+      </div>
+      <div class="modal-footer cat-modal-foot">
+        <span class="muted small">{{ t('Products stay linked automatically.') }}</span>
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ t('Close') }}</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,210 @@
+/* Invoice Details modal — enterprise ERP/POS density, dark-theme native. */
+.sale-modal-dialog {
+  width: 86vw;
+  max-width: 1400px;
+}
+#saleDetailsModal .modal-content {
+  max-height: 90vh;
+}
+#saleDetailsModal .modal-body {
+  overflow-y: auto;
+  padding: 20px 22px;
+}
+#saleDetailsModal .modal-title .badge-status {
+  font-size: 11px;
+  vertical-align: middle;
+  margin-inline-start: 6px;
+}
+.sale-invoice-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--blue);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: 4px;
+}
+.sale-invoice-link:hover {
+  text-decoration: underline;
+}
+.sale-invoice-link:focus-visible,
+.sale-modal-foot .btn:focus-visible,
+.sale-modal .btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+/* Invoice Information: responsive density grid. */
+.sale-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 20px;
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+.sale-info-grid dt {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  margin: 0;
+}
+.sale-info-grid dd {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 2px 0 0;
+  min-width: 0;
+  word-break: normal;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+/* Explicit label-value units: a value can never drift under another label. */
+.sale-info-grid .ipair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  min-width: 0;
+}
+.sale-info-grid dd .badge-status {
+  font-size: 11px;
+}
+/* Products + summary: two-column enterprise layout. */
+.sale-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 20px;
+  align-items: start;
+}
+.sale-items-table {
+  min-width: 560px;
+}
+.sale-items-table thead th {
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  padding: 10px 12px;
+}
+.sale-items-table tbody td {
+  padding: 12px;
+  vertical-align: middle;
+}
+.sale-items-table .num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.sale-item-name {
+  font-weight: 700;
+}
+.sale-item-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--soft);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sale-item-thumb-empty {
+  font-size: 1.5rem;
+}
+/* Dedicated financial summary card. */
+.sale-summary-card {
+  background: var(--soft);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 18px;
+  position: sticky;
+  top: 0;
+}
+.sale-summary-card .detail-list.totals {
+  margin: 0;
+}
+.sale-summary-card .detail-list.totals dt {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.sale-summary-card .detail-list.totals dd {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.sale-summary-card .grand-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  background: #0b5fff14;
+  border: 1px solid #0b5fff35;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: 12px;
+  font-size: 16px;
+  font-weight: 800;
+}
+.sale-summary-card .grand-total b:last-child {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.4px;
+}
+[data-bs-theme="dark"] .sale-summary-card .grand-total {
+  background: #7fb3ff14;
+  border-color: #7fb3ff40;
+}
+/* Notes. */
+.sale-note-empty {
+  color: var(--muted);
+  font-style: italic;
+}
+.sale-modal-foot {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sale-modal section + section,
+.sale-modal .sale-main-grid + section {
+  margin-top: 22px;
+}
+.sale-modal .sale-main-grid {
+  margin-top: 22px;
+}
+#saleDetailsModal .modal-dialog {
+  transition: transform 0.22s ease-out;
+}
+/* Tablet: adaptive. */
+@media (max-width: 991px) {
+  .sale-main-grid {
+    grid-template-columns: 1fr;
+  }
+  .sale-summary-card {
+    position: static;
+  }
+  .sale-info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+/* Mobile: stacked. */
+@media (max-width: 768px) {
+  .sale-modal-dialog {
+    width: calc(100vw - 20px);
+    margin-inline: auto;
+  }
+  #saleDetailsModal .modal-body {
+    padding: 16px;
+  }
+  .sale-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #saleDetailsModal .modal-dialog {
+    transition: none;
+  }
+}
+#sale-modal-message.sale-modal-error {
+  color: #ed6e7e;
+  font-weight: 600;
+}

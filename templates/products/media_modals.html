@@ -1,0 +1,83 @@
+{% from 'macros.html' import icon with context %}
+{# Product Preview + shared Gallery modals. Data loaded from /api/products/<id>/preview. #}
+<div class="modal fade" id="productPreviewModal" tabindex="-1" aria-labelledby="productPreviewTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content media-modal">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="productPreviewTitle">{{ icon('eye') }}<span id="pp-name">{{ t('Product Preview') }}</span></h5>
+          <small class="text-muted" id="pp-subtitle"></small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <div id="pp-loading" class="ph-history-empty">{{ icon('loader-circle') }}<strong>{{ t('Loading product…') }}</strong></div>
+        <div id="pp-content" hidden>
+          <dl class="detail-list pp-details">
+            <dt>{{ t('Product Name') }}</dt><dd id="pp-d-name">—</dd>
+            <dt>SKU</dt><dd id="pp-d-sku">—</dd>
+            <dt>{{ t('Category') }}</dt><dd id="pp-d-cat">—</dd>
+            <dt>{{ t('Cost Price') }}</dt><dd id="pp-d-cost">—</dd>
+            <dt>{{ t('Selling Price') }}</dt><dd id="pp-d-price">—</dd>
+            <dt>{{ t('Current Stock') }}</dt><dd id="pp-d-stock">—</dd>
+            <dt>{{ t('Status') }}</dt><dd id="pp-d-status">—</dd>
+          </dl>
+          <div class="gal-wrap" id="pp-gallery">
+            <div class="gal-main" id="pp-main">
+              <button class="gal-nav gal-prev" id="pp-prev" type="button" aria-label="{{ t('Previous image') }}">{{ icon('chevron-left') }}</button>
+              <img id="pp-image" alt="" loading="lazy">
+              <button class="gal-nav gal-next" id="pp-next" type="button" aria-label="{{ t('Next image') }}">{{ icon('chevron-right') }}</button>
+              <span class="gal-counter" id="pp-counter"></span>
+              <div class="gal-tools">
+                <button type="button" class="icon-button" id="pp-zoom" aria-label="{{ t('Zoom') }}">{{ icon('zoom-in') }}</button>
+                <button type="button" class="icon-button" id="pp-full" aria-label="{{ t('Fullscreen') }}">{{ icon('maximize') }}</button>
+              </div>
+            </div>
+            <div class="gal-empty" id="pp-empty" hidden>{{ icon('image-off') }}<p>{{ t('No images yet. Add them from the product edit page.') }}</p></div>
+            <div class="gal-thumbs" id="pp-thumbs" role="listbox" aria-label="{{ t('Product images') }}"></div>
+          </div>
+        </div>
+        <div id="pp-error" class="ph-error" role="alert" hidden></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-light" id="pp-open-gallery">{{ icon('images') }}{{ t('View Gallery') }}</button>
+        <a class="btn btn-light" id="pp-edit" href="#">{{ icon('pencil') }}{{ t('Edit Product') }}</a>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{{ t('Close') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="productGalleryModal" tabindex="-1" aria-labelledby="productGalleryTitle" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content media-modal">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="productGalleryTitle">{{ icon('images') }}<span id="gal-title">{{ t('Product Gallery') }}</span></h5>
+          <small class="text-muted" id="gal-counter-top"></small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <div class="gal-wrap">
+          <div class="gal-main gal-large" id="gal-main">
+            <button class="gal-nav gal-prev" id="gal-prev" type="button" aria-label="{{ t('Previous image') }}">{{ icon('chevron-left') }}</button>
+            <img id="gal-image" alt="" loading="lazy">
+            <button class="gal-nav gal-next" id="gal-next" type="button" aria-label="{{ t('Next image') }}">{{ icon('chevron-right') }}</button>
+            <span class="gal-counter" id="gal-counter"></span>
+            <div class="gal-tools">
+              <button type="button" class="icon-button" id="gal-zoom" aria-label="{{ t('Zoom') }}">{{ icon('zoom-in') }}</button>
+              <button type="button" class="icon-button" id="gal-full" aria-label="{{ t('Fullscreen') }}">{{ icon('maximize') }}</button>
+            </div>
+          </div>
+          <div class="gal-empty" id="gal-empty" hidden>{{ icon('image-off') }}<p>{{ t('No images for this product yet.') }}</p></div>
+          <div class="gal-thumbs" id="gal-thumbs" role="listbox" aria-label="{{ t('Product images') }}"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <span class="text-muted small" id="gal-counter-bottom"></span>
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{{ t('Close') }}</button>
+      </div>
+    </div>
+  </div>
+</div>

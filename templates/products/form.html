@@ -1,0 +1,64 @@
+{% extends 'base.html' %}{% from 'macros.html' import heading,field,csrf,icon,badge with context %}
+{% block page_assets %}<link rel="stylesheet" href="{{ url_for('static',filename='css/product-media.css') }}"><script src="{{ url_for('static',filename='js/product-media.js') }}" defer></script>{% endblock %}
+{% block content %}{{ heading(title,'Product prices are entered excluding VAT. Stock changes are recorded in the inventory ledger.') }}
+<form method="post" enctype="multipart/form-data" class="panel edit-form" id="product-form" data-product-id="{{ product.id if product else '' }}">
+{{ csrf() }}
+<div class="form-grid three">
+{{ field('Name','name',product.name if product else '',required=true) }}
+<label class="field"><span>{{ t('SKU') }} <span class="required-indicator">*</span></span><div class="input-group"><input class="form-control" name="sku" id="product-sku" value="{{ product.sku if product else '' }}" required maxlength="60"><button type="button" class="btn btn-light" id="btn-generate-sku" title="{{ t('Generate unique SKU') }}">{{ icon('sparkles') }}<span class="btn-text">{{ t('Generate SKU') }}</span></button></div></label>
+<label class="field"><span>{{ t('Barcode') }}</span><div class="input-group"><input class="form-control" name="barcode" id="product-barcode" value="{{ product.barcode if product else '' }}" maxlength="80"><button type="button" class="btn btn-light" id="btn-generate-barcode" title="{{ t('Generate barcode') }}">{{ icon('scan-barcode') }}<span class="btn-text">{{ t('Generate Barcode') }}</span></button></div></label>
+{{ field('Brand','brand',product.brand if product else '') }}
+<label class="field"><span>{{ t('Category') }} <span class="required-indicator">*</span></span><div class="input-group"><select name="category_id" id="product-category-id" class="form-select" required><option value="">{{ t("Choose category") }}</option>{% for c in categories %}<option value="{{ c.id }}" {{ 'selected' if product and product.category_id==c.id else '' }}>{{ c.name }}</option>{% endfor %}</select>{% if can("products.create") %}<button type="button" class="btn btn-light" id="btn-new-category" data-bs-toggle="modal" data-bs-target="#quickCategoryModal">{{ icon('plus') }}{{ t('+ New Category') }}</button>{% endif %}</div><a class="small" href="/categories">{{ t("Manage categories") }}</a></label>
+<label class="field"><span>{{ t('Supplier') }}</span><div class="input-group"><select name="supplier_id" id="product-supplier-id" class="form-select"><option value="">{{ t("No supplier") }}</option>{% for s in suppliers %}<option value="{{ s.id }}" {{ 'selected' if product and product.supplier_id==s.id else '' }}>{{ s.name }}</option>{% endfor %}</select>{% if can("suppliers.create") %}<button type="button" class="btn btn-light" id="btn-new-supplier" data-bs-toggle="modal" data-bs-target="#quickSupplierModal">{{ icon('plus') }}{{ t('+ New Supplier') }}</button>{% endif %}</div><a class="small" href="/suppliers">{{ t("Manage suppliers") }}</a></label>
+{{ field('Cost Price','cost',product.cost/100 if product else '0','number',true,'0.01') }}
+{{ field('Selling Price','price',product.price/100 if product else '0','number',true,'0.01') }}
+{{ field('Minimum Stock','minimum',product.minimum if product else config.low_stock_default,'number',true) }}
+{{ field('Location','location',product.location if product else '') }}
+</div>
+{% if product %}
+{% set prev_stock = last_movement.balance - last_movement.quantity if last_movement else product.stock %}
+{% set stock_diff = product.stock - prev_stock %}
+<section class="panel inv-card" aria-labelledby="inv-heading">
+<div class="media-heading"><h2 id="inv-heading">{{ icon('warehouse') }}{{ t('Inventory & Stock') }}</h2>{{ badge(product.status) }}</div>
+<div class="inv-grid">
+<label class="field inv-current"><span>{{ t('Current Stock Count') }}</span><input class="form-control" type="number" name="current_stock" id="current_stock" value="{{ product.stock }}" min="0" step="1" required><small class="inv-error" id="stock-error" hidden></small></label>
+<dl class="detail-list inv-history">
+<dt>{{ t('Current Stock') }}</dt><dd>{{ product.stock }}</dd>
+<dt>{{ t('Previous Stock') }}</dt><dd>{{ prev_stock }}</dd>
+<dt>{{ t('Difference') }}</dt><dd class="{{ 'text-success' if stock_diff>0 else 'text-danger' if stock_diff<0 else 'muted' }}">{{ '%+d'|format(stock_diff) }}</dd>
+<dt>{{ t('Last Updated') }}</dt><dd>{{ last_movement.created_at|date(true) if last_movement else '—' }}</dd>
+</dl>
+</div>
+<p class="ph-note">{{ t('Stock edits write an inventory movement (Manual Product Edit) to the audit trail.') }}</p>
+</section>
+{% else %}
+<section class="panel inv-card" aria-labelledby="inv-heading">
+<div class="media-heading"><h2 id="inv-heading">{{ icon('warehouse') }}{{ t('Inventory & Stock') }}</h2></div>
+{{ field('Opening stock','stock','0','number',true) }}
+</section>
+{% endif %}
+<section class="media-section" aria-labelledby="media-heading">
+<div class="media-heading"><h2 id="media-heading">{{ icon('images') }}{{ t('Product Images') }}</h2><small>{{ t('JPG, PNG, WebP · up to 20 megapixels each · first image is Primary') }}</small></div>
+<div class="media-dropzone" id="media-dropzone" role="button" tabindex="0" aria-label="{{ t('Upload product images') }}">
+{{ icon('cloud-upload') }}
+<div><strong>{{ t('Drag & drop images here') }}</strong><p>{{ t('or browse files · select multiple at once') }}</p></div>
+<button type="button" class="btn btn-light btn-sm" id="media-browse">{{ t('Browse Files') }}</button>
+<input type="file" id="media-input" name="images" accept="image/png,image/jpeg,image/webp" multiple hidden aria-label="{{ t('Upload product images') }}">
+<input type="hidden" id="media-primary-index" name="primary_index" value="0">
+</div>
+<div class="media-progress" id="media-progress" hidden><div class="media-progress-bar"><span id="media-progress-fill"></span></div><small id="media-progress-label"></small></div>
+<div id="media-error" class="ph-error" role="alert" hidden></div>
+{% if product %}
+<div class="media-grid" id="media-grid" data-existing="{{ gallery|tojson|forceescape }}"></div>
+<p class="ph-note">{{ t('Drag cards to reorder · star sets the Primary image used in tables, inventory, sales and previews · replacing keeps the same slot with a new unique file.') }}</p>
+{% else %}
+<div class="media-grid" id="media-grid"></div>
+<p class="ph-note">{{ t('Preview before saving · drag to reorder · star marks the Primary image · images upload with the product.') }}</p>
+{% endif %}
+</section>
+<div class="form-footer"><a class="btn btn-light" href="/products">{{ t('Cancel') }}</a><button class="btn btn-primary" id="product-save">{{ icon('save') }}{{ t('Save') }}</button></div>
+</form>
+<div class="modal fade" id="quickCategoryModal" tabindex="-1" aria-labelledby="quickCatTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="quick-category-form"><div class="modal-header"><h5 class="modal-title" id="quickCatTitle">{{ t('Create New Category') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><label class="field"><span>{{ t('Category Name') }} *</span><input class="form-control" id="quick-category-name" required maxlength="100"></label><div id="quick-cat-error" class="text-danger small mt-2" hidden></div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ t('Cancel') }}</button><button type="submit" class="btn btn-primary">{{ t('Create Category') }}</button></div></form></div></div></div>
+<div class="modal fade" id="quickSupplierModal" tabindex="-1" aria-labelledby="quickSupTitle" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form id="quick-supplier-form"><div class="modal-header"><h5 class="modal-title" id="quickSupTitle">{{ t('Create New Supplier') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><label class="field"><span>{{ t('Supplier Name') }} *</span><input class="form-control" id="quick-supplier-name" required maxlength="100"></label><label class="field mt-2"><span>{{ t('Phone') }}</span><input class="form-control" id="quick-supplier-phone" maxlength="40"></label><div id="quick-sup-error" class="text-danger small mt-2" hidden></div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ t('Cancel') }}</button><button type="submit" class="btn btn-primary">{{ t('Create Supplier') }}</button></div></form></div></div></div>
+<script src="{{ url_for('static', filename='js/products.js') }}"></script>
+{% endblock %}

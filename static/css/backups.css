@@ -1,0 +1,222 @@
+.backup-center {
+  --border: var(--line);
+}
+.backup-center .backup-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+  gap: 14px;
+  margin: 22px 0;
+}
+.backup-metrics > div,
+.backup-locations > div {
+  border: 1px solid var(--border, var(--line));
+  border-radius: var(--radius-lg, 12px);
+  padding: 18px;
+  background: var(--soft);
+}
+.backup-metrics small {
+  display: block;
+  color: var(--bs-secondary-color);
+  margin-bottom: 8px;
+}
+.backup-metrics strong {
+  display: block;
+  font-size: 1.05rem;
+}
+.backup-locations {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 14px;
+}
+.backup-locations strong {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.backup-locations p {
+  overflow-wrap: anywhere;
+  margin: 0;
+  font-size: 0.88rem;
+}
+.backup-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  padding: 22px 0;
+  border-bottom: 1px solid var(--border, #dce5f1);
+}
+.backup-toolbar form {
+  margin: 0;
+}
+.backup-toolbar #backup-message {
+  flex: 1;
+  min-width: 200px;
+}
+.backup-file-list {
+  max-height: 430px;
+  overflow: auto;
+}
+.backup-file-list th {
+  position: sticky;
+  top: 0;
+  background: var(--bs-tertiary-bg);
+  z-index: 1;
+}
+.backup-file-list td {
+  vertical-align: middle;
+}
+.backup-file-list button,
+.backup-file-list a {
+  white-space: nowrap;
+}
+.backup-file-list .backup-id {
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.backup-center h3 {
+  font-size: 1.05rem;
+}
+.backup-destinations {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border, #dce5f1);
+}
+.backup-destinations .panel-header {
+  margin-bottom: 12px;
+}
+.dest-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 14px;
+}
+.dest-card {
+  border: 1px solid var(--border, var(--line));
+  border-radius: var(--radius-lg, 12px);
+  padding: 18px;
+  background: var(--soft);
+}
+.dest-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.dest-path-row {
+  display: flex;
+  gap: 8px;
+}
+.dest-path-row .form-control {
+  flex: 1;
+  min-width: 0;
+  direction: ltr;
+  text-align: start;
+}
+.dest-path-row .btn {
+  white-space: nowrap;
+}
+.dest-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(170px, 100%), 1fr));
+  gap: 8px 14px;
+  margin: 14px 0 0;
+}
+.dest-meta > div {
+  min-width: 0;
+}
+.dest-meta dt {
+  font-size: 0.72rem;
+  color: var(--bs-secondary-color);
+  font-weight: 500;
+}
+.dest-meta dd {
+  margin: 0;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+.dest-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.dest-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.backup-retention {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border, var(--line));
+}
+.retention-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+  gap: 14px;
+}
+.retention-card {
+  border: 1px solid var(--border, var(--line));
+  border-radius: var(--radius-lg, 12px);
+  padding: 18px;
+  background: var(--soft);
+}
+.retention-card .panel-header {
+  margin-bottom: 10px;
+}
+.recovery-panel {
+  max-width: 760px;
+  width: 100%;
+  margin: auto;
+}
+.backup-center .btn {
+  min-height: 42px;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.backup-center .btn:hover {
+  transform: translateY(-1px);
+}
+#backup-warnings .alert {
+  overflow-wrap: anywhere;
+}
+.backup-center .field {
+  max-width: 100%;
+}
+@media (max-width: 900px) {
+  .backup-center .backup-metrics {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .backup-locations,
+  .dest-grid,
+  .retention-grid {
+    grid-template-columns: 1fr;
+  }
+  .backup-center .backup-metrics {
+    gap: 8px;
+  }
+  .backup-metrics > div {
+    padding: 12px;
+  }
+  .backup-toolbar .btn-lg {
+    width: 100%;
+  }
+  .backup-toolbar form {
+    width: 100%;
+  }
+  .recovery-panel {
+    padding: 20px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .backup-center .btn {
+    transition: none;
+    transform: none !important;
+  }
+}

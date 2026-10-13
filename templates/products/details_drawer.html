@@ -1,0 +1,12 @@
+{% from 'macros.html' import icon with context %}
+{# Reusable ProductDetailsDrawer: slide-in product details, no page reloads. #}
+<div class="pd-backdrop" id="product-details-backdrop" hidden></div>
+<aside class="product-details-drawer" id="product-details-drawer" role="dialog" aria-modal="true" aria-labelledby="pd-name" aria-hidden="true">
+  <div class="pd-header">
+    <h2>{{ icon('box') }}{{ t('Product Details') }}</h2>
+    <button type="button" class="icon-button" id="product-details-close" aria-label="{{ t('Close') }}">{{ icon('x') }}</button>
+  </div>
+  <div class="pd-body" id="product-details-body">
+    <p class="muted">{{ t('Loading…') }}</p>
+  </div>
+</aside>

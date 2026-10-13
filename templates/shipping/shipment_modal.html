@@ -1,0 +1,135 @@
+{% from 'macros.html' import icon with context %}
+{# Shipment Details workspace modal. The single order_detail payload drives
+   every section: header, info, address, courier, products, summary, steps. #}
+<div class="modal fade" id="shipmentModal" data-business-modal tabindex="-1" aria-labelledby="shipmentModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable ship-modal-wide">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="shipmentModalTitle">{{ t('Shipment') }} - <span id="shipmentModalNo">…</span> <span id="shipmentModalStatus"></span></h5>
+          <p class="cat-subtitle muted" id="shipmentModalSub">…</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p id="shipmentModalMessage" class="cat-message" role="status" aria-live="polite" hidden></p>
+        <div id="shipmentModalLoading" class="ph-history-empty">
+          {{ icon('history') }}<strong>{{ t('Loading shipment…') }}</strong>
+        </div>
+        <div id="shipmentModalContent" hidden>
+          <div class="sm-grid">
+            <section class="sm-card sm-span-12" aria-label="{{ t('Shipment Information') }}">
+              <div class="sm-card-head"><h4>{{ icon('circle-info') }}{{ t('Shipment Information') }}</h4><button type="button" class="btn btn-light btn-sm" id="shipmentModalInfoEdit">{{ icon('pencil') }}{{ t('Edit') }}</button></div>
+              <dl class="sm-info" id="shipmentModalInfo"></dl>
+            </section>
+            <section class="sm-card sm-span-8" aria-label="{{ t('Delivery Address') }}">
+              <div class="sm-card-head"><h4>{{ icon('map-pin') }}{{ t('Delivery Address') }}</h4><button type="button" class="btn btn-light btn-sm" id="shipmentModalAddressEdit">{{ icon('pencil') }}{{ t('Edit') }}</button></div>
+              <p class="sm-address-full" id="shipmentModalAddress"></p>
+              <dl class="sm-pairs" id="shipmentModalAddressList"></dl>
+            </section>
+            <section class="sm-card sm-span-4" aria-label="{{ t('Courier Information') }}">
+              <div class="sm-card-head"><h4>{{ icon('truck') }}{{ t('Courier Information') }}</h4><button type="button" class="btn btn-light btn-sm" id="shipmentModalCourierEdit">{{ icon('pencil') }}{{ t('Edit') }}</button></div>
+              <div class="sm-pairs" id="shipmentModalCourier"></div>
+              <p class="sm-note">{{ icon('circle-info') }}{{ t('Tracking code will be provided by the courier after the shipment is handed over.') }}</p>
+            </section>
+            <section class="sm-card sm-span-8" aria-label="{{ t('Products') }}">
+              <div class="sm-card-head"><h4>{{ icon('package') }}{{ t('Products (From Invoice)') }}</h4><button type="button" class="btn btn-light btn-sm" id="shipmentModalOpenInvoice">{{ icon('receipt') }}{{ t('Open Invoice') }}</button></div>
+              <div class="table-responsive"><table class="table sm-items-table">
+                <thead><tr><th>#</th><th>{{ t('Product') }}</th><th>SKU</th><th class="num">{{ t('Qty') }}</th><th class="num">{{ t('Unit Price') }}</th><th class="num">{{ t('Discount') }}</th><th class="num">{{ t('Total') }}</th></tr></thead>
+                <tbody id="shipmentModalRows"></tbody>
+              </table></div>
+            </section>
+            <aside class="sm-card sm-span-4" aria-label="{{ t('Invoice Summary') }}">
+              <div class="sm-card-head"><h4>{{ icon('receipt') }}{{ t('Invoice Summary') }}</h4><button type="button" class="btn btn-light btn-sm" id="shipmentModalOpenSummary">{{ icon('receipt') }}{{ t('Open Invoice') }}</button></div>
+              <div id="shipmentModalSummary"></div>
+            </aside>
+            <section class="sm-card sm-span-12" aria-label="{{ t('Timeline') }}">
+              <div class="sm-card-head"><h4>{{ icon('history') }}{{ t('Timeline') }}</h4></div>
+              <ol class="sm-progress" id="shipmentModalSteps"></ol>
+              <div class="sm-actions" id="shipmentModalActions"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer sm-foot">
+        <button type="button" class="btn btn-light" id="shipmentModalPrev">{{ icon('arrow-left') }}{{ t('Previous') }}</button>
+        <div class="sm-foot-actions">
+          <button type="button" class="btn btn-light" id="shipmentModalEdit">{{ icon('pencil') }}{{ t('Edit Shipment') }}</button>
+          <a class="btn btn-light" id="shipmentModalLabel" href="#" target="_blank" rel="noopener">{{ icon('printer') }}{{ t('Print Shipping Label') }}</a>
+          <a class="btn btn-light" id="shipmentModalInvoice" href="#" target="_blank" rel="noopener">{{ icon('receipt') }}{{ t('Print Invoice') }}</a>
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ t('Close') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="shipmentShipModal" tabindex="-1" aria-labelledby="shipmentShipTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="shipmentShipTitle">{{ t('Mark as Shipped') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button></div>
+      <form id="shipmentShipForm">
+      <div class="modal-body">
+        <dl class="sm-pairs sm-ship-confirm">
+          <div class="fld"><span class="flabel">{{ t('Courier Company') }}</span><span class="fvalue" id="shipmentShipCourier">…</span></div>
+          <div class="fld"><span class="flabel">{{ t('Shipping Cost') }}</span><span class="fvalue" id="shipmentShipCost">…</span></div>
+          <div class="fld"><span class="flabel">{{ t('Shipment Date') }}</span><span class="fvalue" id="shipmentShipDate">…</span></div>
+        </dl>
+        <label class="field"><span>{{ t('Tracking Code') }} *</span><input class="form-control" id="shipmentShipTracking" maxlength="40" dir="ltr" autocomplete="off" placeholder="{{ t('Provided by the courier') }}"></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('Tracking URL') }} ({{ t('optional') }})</span><input class="form-control" id="shipmentShipUrl" maxlength="300" dir="ltr" autocomplete="off" placeholder="https://…"></label>
+        <p id="shipmentShipError" class="ship-error" role="alert" hidden></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" type="button" data-bs-dismiss="modal">{{ t('Cancel') }}</button>
+        <button class="btn btn-primary">{{ t('Save & Ship') }}</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="shipmentEditModal" tabindex="-1" aria-labelledby="shipmentEditTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="shipmentEditTitle">{{ t('Edit Shipment') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button></div>
+      <form id="shipmentEditForm">
+      <div class="modal-body">
+        <label class="field"><span>{{ t('Courier Company') }}</span><input class="form-control" id="shipmentEditCourier" maxlength="80" list="shipment-courier-list" autocomplete="off"><datalist id="shipment-courier-list">{% for courier in shipping_couriers %}<option value="{{ courier }}">{% endfor %}</datalist></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('Tracking Code') }}</span><input class="form-control" id="shipmentEditTracking" maxlength="40" dir="ltr" autocomplete="off" placeholder="{{ t('Provided by the courier') }}"></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('Tracking URL') }} ({{ t('optional') }})</span><input class="form-control" id="shipmentEditUrl" maxlength="300" dir="ltr" autocomplete="off" placeholder="https://…"></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('Shipping Cost') }}</span><input class="form-control" id="shipmentEditCost" inputmode="decimal" autocomplete="off"></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('Shipment Date') }}</span><input class="form-control" id="shipmentEditDate" type="date"></label>
+        <p id="shipmentEditError" class="ship-error" role="alert" hidden></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" type="button" data-bs-dismiss="modal">{{ t('Cancel') }}</button>
+        <button class="btn btn-primary">{{ t('Save Changes') }}</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="shipmentAddressModal" tabindex="-1" aria-labelledby="shipmentAddressTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="shipmentAddressTitle">{{ t('Edit Delivery Address') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button></div>
+      <form id="shipmentAddressForm">
+      <div class="modal-body">
+        <label class="field"><span>{{ t('Governorate') }}</span><input class="form-control" id="shipmentAddrGov" maxlength="80" autocomplete="off"></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('City') }}</span><input class="form-control" id="shipmentAddrCity" maxlength="80" autocomplete="off"></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('District') }}</span><input class="form-control" id="shipmentAddrDistrict" maxlength="80" autocomplete="off"></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('Street') }}</span><input class="form-control" id="shipmentAddrStreet" maxlength="160" autocomplete="off"></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('Landmark') }}</span><input class="form-control" id="shipmentAddrLandmark" maxlength="80" autocomplete="off"></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('Building') }}</span><input class="form-control" id="shipmentAddrBuilding" maxlength="40" autocomplete="off"></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('Floor') }}</span><input class="form-control" id="shipmentAddrFloor" maxlength="20" autocomplete="off"></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('Apartment') }}</span><input class="form-control" id="shipmentAddrApt" maxlength="20" autocomplete="off"></label>
+        <label class="field" style="margin-top:10px"><span>{{ t('Postal Code') }}</span><input class="form-control" id="shipmentAddrPostal" maxlength="20" autocomplete="off"></label>
+        <p id="shipmentAddressError" class="ship-error" role="alert" hidden></p>
+        <p class="muted small">{{ t('Changes update the shipment destination only.') }}</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" type="button" data-bs-dismiss="modal">{{ t('Cancel') }}</button>
+        <button class="btn btn-primary">{{ t('Save Changes') }}</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>

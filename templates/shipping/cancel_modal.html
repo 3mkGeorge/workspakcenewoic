@@ -1,0 +1,23 @@
+{% from 'macros.html' import icon with context %}
+{# Shared cancellation-reason dialog. Opened via window.StoreProCancel.open()
+   from any cancel flow (shipment or invoice). Transient confirm: not tagged
+   as a business modal, so it layers over the active one by design. #}
+<div class="modal fade" id="cancelReasonModal" tabindex="-1" aria-labelledby="cancelReasonTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="cancelReasonTitle">{{ t('Cancel') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button></div>
+      <form id="cancel-reason-form">
+      <div class="modal-body">
+        <p class="muted" id="cancel-reason-context"></p>
+        <label class="field"><span>{{ t('Cancellation Reason') }} *</span><select class="form-select" id="cancel-reason-preset" required><option value="">{{ t('Choose a reason') }}</option><option>{{ t('Customer Request') }}</option><option>{{ t('Wrong Order') }}</option><option>{{ t('Duplicate Order') }}</option><option>{{ t('Payment Issue') }}</option><option>{{ t('Out Of Stock') }}</option><option>{{ t('Courier Problem') }}</option><option value="__other">{{ t('Other') }}</option></select></label>
+        <label class="field" style="margin-top:10px" id="cancel-reason-other-wrap" hidden><span>{{ t('Describe the reason') }} *</span><input class="form-control" id="cancel-reason-other" maxlength="200" autocomplete="off"></label>
+        <p id="cancel-reason-error" class="ship-error" role="alert" hidden></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-light" type="button" data-bs-dismiss="modal">{{ t('Back') }}</button>
+        <button class="btn btn-danger" id="cancel-reason-confirm">{{ t('Confirm Cancel') }}</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>

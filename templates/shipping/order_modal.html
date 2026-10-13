@@ -1,0 +1,49 @@
+{% from 'macros.html' import icon with context %}
+{# Shipping Orders supporting modals (customer profile, delivery confirm).
+   The workspace modal lives in shipment_modal.html. Data via API. #}
+<div class="modal fade" id="shipCustomerModal" data-business-modal tabindex="-1" aria-labelledby="shipCustomerTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="shipCustomerTitle">{{ t('Customer Profile') }}</h5>
+          <p class="cat-subtitle muted" id="ship-customer-sub">…</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button>
+      </div>
+      <div class="modal-body">
+        <p id="ship-customer-message" class="cat-message" role="status" aria-live="polite" hidden></p>
+        <div id="ship-customer-content" hidden>
+          <dl class="detail-list" id="ship-customer-info"></dl>
+          <div class="ph-section-heading" style="margin-top:16px"><h4>{{ t('Shipping Activity') }}</h4></div>
+          <dl class="detail-list" id="ship-customer-stats"></dl>
+        </div>
+      </div>
+      <div class="modal-footer sale-modal-foot">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ t('Close') }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="shipDeliverModal" tabindex="-1" aria-labelledby="shipDeliverTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="shipDeliverTitle">{{ t('Confirm Delivery?') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ t('Close') }}"></button></div>
+      <form id="ship-deliver-form">
+      <div class="modal-body">
+        <p>{{ t('Customer received package') }}</p>
+        <div class="form-grid two">
+          <label class="field"><span>{{ t('Delivered By') }} *</span><input class="form-control" id="ship-delivered-by" required maxlength="120"></label>
+          <label class="field"><span>{{ t('Delivered Date') }} *</span><input class="form-control" id="ship-delivered-date" type="date" required></label>
+          <label class="field"><span>{{ t('Delivered Time') }} *</span><input class="form-control" id="ship-delivered-time" type="time" required></label>
+        </div>
+        <p id="ship-deliver-error" class="cat-message cat-error" role="alert" hidden></p>
+      </div>
+      <div class="modal-footer sale-modal-foot">
+        <button class="btn btn-light" type="button" data-bs-dismiss="modal">{{ t('Cancel') }}</button>
+        <button class="btn btn-primary">{{ t('Confirm Delivery') }}</button>
+      </div>
+      </form>
+    </div>
+  </div>
+</div>
