@@ -194,6 +194,32 @@ class ProductImage(db.Model):
     )
 
 
+class WebListing(db.Model):
+    """Opt-in publication of a product to the Next Chip website.
+
+    Absent row or published=False means the product is not offered online.
+    Optional web names/descriptions fall back to the product name / empty.
+    Only public, approved fields are ever exported (services/web_catalog_sync.py).
+    """
+
+    __tablename__ = "web_listings"
+    product_id = db.Column(
+        db.Integer, db.ForeignKey("products.id", ondelete="CASCADE"), primary_key=True
+    )
+    published = db.Column(db.Boolean, nullable=False, default=False, server_default="0")
+    name_en = db.Column(db.String(160), nullable=False, default="", server_default="")
+    name_ar = db.Column(db.String(160), nullable=False, default="", server_default="")
+    description_en = db.Column(db.String(4000), nullable=False, default="", server_default="")
+    description_ar = db.Column(db.String(4000), nullable=False, default="", server_default="")
+    max_per_order = db.Column(db.Integer, nullable=False, default=0, server_default="0")
+    updated_at = db.Column(db.DateTime, nullable=False, default=now, onupdate=now)
+    product = db.relationship(
+        Product,
+        backref=db.backref("web_listing", uselist=False, cascade="all, delete-orphan"),
+    )
+    __table_args__ = (CheckConstraint("max_per_order >= 0 AND max_per_order <= 99"),)
+
+
 class PriceHistory(db.Model):
     __tablename__ = "price_history"
     id = db.Column(db.Integer, primary_key=True)

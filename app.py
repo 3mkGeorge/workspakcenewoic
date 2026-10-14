@@ -181,6 +181,7 @@ def create_app(test_config=None):
     from routes.archive import archive
     from routes.shipping import shipping
     from routes.orders import orders_hub
+    from routes.website import website
 
     for bp in (
         auth,
@@ -198,6 +199,7 @@ def create_app(test_config=None):
         orders_hub,
         backup_admin,
         access,
+        website,
     ):
         app.register_blueprint(bp)
     initialize(app, start=False)
@@ -253,6 +255,10 @@ if __name__ == "__main__":
         handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
         app.logger.addHandler(handler)
         start_backups(app)
+        # Website catalog publisher: only this locked server process schedules it.
+        from services.web_catalog_sync import start_web_sync
+
+        start_web_sync(app)
         port = int(os.environ.get("STOREPRO_PORT", "5000"))
         host = os.environ.get("STOREPRO_HOST", "127.0.0.1")
         print_startup_banner(app, host=host, port=port)

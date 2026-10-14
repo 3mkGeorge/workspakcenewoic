@@ -369,3 +369,34 @@ The existing product edit and purchase receipt routes automatically invoke track
 ## Hybrid employee permissions
 
 Open Users → Permissions to assign a role and individual grants or denials. Denials always win, including for administrators. See [PERMISSIONS.md](PERMISSIONS.md) for the editor, configurable role policies, APIs, migration, and access boundaries.
+
+## Next Chip website catalog sync
+
+StorePro can publish selected products to the Next Chip website (`next-chip-storefront/`). StorePro pushes signed snapshots over outbound HTTPS, so the shop PC never accepts incoming connections and the website never opens `instance\store.db`. Only public fields are sent: SKU, web name and description, category, brand, selling price, availability status and photos. Cost, suppliers, barcodes, locations and exact stock stay in the store.
+
+This is Stage 1, catalog only. The website's checkout is still a labelled demo and never creates invoices here.
+
+1. **Configure.** Copy the values from `.env.example` into `instance\web-sync.env`, or into the Windows environment of the account that runs StorePro:
+   - `NEXT_CHIP_SYNC_URL`: the website address, `https://` only;
+   - `NEXT_CHIP_SYNC_SECRET`: the same secret as on the website, at least 32 characters;
+   - `NEXT_CHIP_SYNC_ENABLED=true` when you're ready.
+
+   Restart StorePro.
+2. **Choose products.** Open **Settings › Website**, tick the products to show online and save. Use **Web details** for an Arabic or English web name, descriptions and a per-order limit.
+3. **Sync.** Press **Sync now**. While StorePro runs, it syncs again every `NEXT_CHIP_SYNC_INTERVAL_MINUTES` (default 15).
+
+The same page shows:
+- whether sync is enabled and configured;
+- the last success and the last failure, with its reason;
+- the number of products published;
+- the snapshot version;
+- the website's own report (**Check website**).
+
+From a console with StorePro stopped:
+- `python manage.py web-sync` runs one sync;
+- `--dry-run` checks the snapshot without sending it;
+- `--status` shows the current state.
+
+**Upgrade note:** this update adds one new table, `web_listings` (schema version 6). Nothing in your existing data changes. As with earlier updates, StorePro saves a copy of the database (`instance\pre-*.sqlite3`) before upgrading it.
+
+Details are in `next-chip-storefront/STStorePro_INTEGRATION.md`.

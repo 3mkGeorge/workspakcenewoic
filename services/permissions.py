@@ -123,6 +123,9 @@ STATIC = {
     "admin.telemetry": "settings.view",
     "admin.run_maintenance": "settings.edit",
     "admin.verify_backups_now": "backups.approve",
+    "website.page": "settings.view",
+    "website.sync_now": "settings.edit",
+    "website.publish": "products.edit",
     "catalog.export_products_csv": "products.export",
     "catalog.import_products_csv": "products.import",
 }
@@ -353,6 +356,8 @@ def required_action():
             if request.form.get("id")
             else "users.create"
         )
+    if endpoint == "website.listing":
+        return "products.edit" if request.method == "POST" else "products.view"
     if endpoint == "admin.expenses":
         return "reports.create" if request.method == "POST" else "reports.view"
     return None

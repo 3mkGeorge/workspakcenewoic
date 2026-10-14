@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import icon, csrf with context %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>{{ t('Website listing') }}</h1>
+    <p>{{ product.name }} · <span dir="ltr">{{ product.sku }}</span></p>
+  </div>
+  <a href="/settings/website" class="btn btn-light">{{ icon('arrow-left') }}{{ t('Back to Website') }}</a>
+</div>
+<form method="post" class="panel">{{ csrf() }}
+  <label class="form-check form-switch">
+    <input class="form-check-input" type="checkbox" role="switch" name="published" value="1" {{ 'checked' if listing and listing.published else '' }}>
+    <span>{{ t('Show this product on the website') }}</span>
+  </label>
+  <p class="text-muted">{{ t('Leave a name empty to use the StorePro product name. Descriptions are optional.') }}</p>
+  <div class="form-grid two">
+    <label class="field"><span>{{ t('Website name (English)') }}</span><input class="form-control" name="name_en" maxlength="160" dir="ltr" value="{{ listing.name_en if listing else '' }}" placeholder="{{ product.name }}"></label>
+    <label class="field"><span>{{ t('Website name (Arabic)') }}</span><input class="form-control" name="name_ar" maxlength="160" dir="rtl" value="{{ listing.name_ar if listing else '' }}" placeholder="{{ product.name }}"></label>
+    <label class="field"><span>{{ t('Description (English)') }}</span><textarea class="form-control" name="description_en" rows="5" maxlength="4000" dir="ltr">{{ listing.description_en if listing else '' }}</textarea></label>
+    <label class="field"><span>{{ t('Description (Arabic)') }}</span><textarea class="form-control" name="description_ar" rows="5" maxlength="4000" dir="rtl">{{ listing.description_ar if listing else '' }}</textarea></label>
+    <label class="field"><span>{{ t('Per-order limit') }}</span><input class="form-control" type="number" name="max_per_order" min="0" max="99" step="1" value="{{ listing.max_per_order if listing else 0 }}"><small class="text-muted">{{ t('0 uses the store default') }} ({{ default_max }})</small></label>
+  </div>
+  {% if can('products.edit') %}<button class="btn btn-primary mt-2" type="submit">{{ icon('save') }}{{ t('Save') }}</button>{% endif %}
+</form>
+{% endblock %}
