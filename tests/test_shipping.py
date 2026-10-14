@@ -453,6 +453,47 @@ def test_landmark_migration_repairs_pre_landmark_db(app, tmp_path):
     assert len(list(tmp_path.glob("pre-*.sqlite3"))) == 1
 
 
+def test_pre_v3_shipping_table_upgrades_without_losing_orders(app, client, tmp_path):
+    """Old backups: tracking_code NOT NULL and no tracking_url/cancel_* columns yet."""
+    from services.migrations import SCHEMA_VERSION, SHIPPING_TRACKING_REBUILD, upgrade_sqlite
+
+    assert client.post("/api/pos/sales", json=invoice()).status_code == 200
+    path = tmp_path / "pre-v3.db"
+    with app.app_context():
+        src = sqlite3.connect(db.engine.url.database)
+        with closing(sqlite3.connect(path)) as dst:
+            src.backup(dst)
+        src.close()
+    later = ("tracking_url", "cancel_reason", "cancelled_at")
+    old_ddl = "\n".join(
+        line
+        for line in SHIPPING_TRACKING_REBUILD.replace("shipping_orders_new", "shipping_orders_old")
+        .replace("tracking_code VARCHAR(40) UNIQUE", "tracking_code VARCHAR(40) NOT NULL UNIQUE")
+        .splitlines()
+        if not line.strip().startswith(later)
+    )
+    with closing(sqlite3.connect(path)) as c:
+        c.execute("UPDATE shipping_orders SET tracking_code = 'TRK-OLD-1', city = 'Maadi'")
+        before = c.execute("SELECT id, order_number, sale_id, tracking_code, city, status FROM shipping_orders").fetchall()
+        cols = [r[1] for r in c.execute("PRAGMA table_info(shipping_orders)") if r[1] not in later]
+        c.execute(old_ddl)
+        c.execute(f"INSERT INTO shipping_orders_old ({', '.join(cols)}) SELECT {', '.join(cols)} FROM shipping_orders")
+        c.execute("DROP TABLE shipping_orders")
+        c.execute("ALTER TABLE shipping_orders_old RENAME TO shipping_orders")
+        c.execute("PRAGMA user_version = 2")
+        c.commit()
+        assert not set(later) & {r[1] for r in c.execute("PRAGMA table_info(shipping_orders)")}
+    upgrade_sqlite(path)
+    upgrade_sqlite(path)  # second run must be a no-op
+    with closing(sqlite3.connect(path)) as c:
+        info = {r[1]: r for r in c.execute("PRAGMA table_info(shipping_orders)")}
+        assert set(later) <= set(info) and info["tracking_code"][3] == 0
+        assert c.execute("SELECT id, order_number, sale_id, tracking_code, city, status FROM shipping_orders").fetchall() == before
+        assert c.execute("SELECT tracking_url, cancel_reason, cancelled_at FROM shipping_orders").fetchall() == [("", "", None)] * len(before)
+        assert c.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+        assert c.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
+
+
 def test_shipping_permissions(client):
     client.post("/logout")
     client.post(

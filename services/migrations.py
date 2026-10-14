@@ -334,13 +334,26 @@ def upgrade_sqlite(path, backup=False):
             if "shipping_orders" in tables and not tracking_nullable:
                 # One-way rebuild for nullable tracking_code (data-preserving;
                 # indexes recreated explicitly: SQLite drops them with the table).
-                cols = (
-                    "id, order_number, sale_id, tracking_code, tracking_url, status, customer_id,"
-                    " customer_name, phone, alt_phone, governorate, city, district,"
-                    " landmark, street, building, floor, apartment, postal_code,"
-                    " address_snapshot, notes, courier, cancel_reason, cancelled_at,"
-                    " shipping_cost, shipment_date,"
-                    " delivered_by, delivered_at, user_id, created_at, updated_at"
+                # Pre-v3 tables lack columns that later steps add (tracking_url,
+                # cancel_reason, cancelled_at): copy the columns that exist and
+                # let the new table's defaults fill the rest, as those steps would.
+                existing = {
+                    r[1]
+                    for r in connection.execute("PRAGMA table_info(shipping_orders)")
+                }
+                cols = ", ".join(
+                    c
+                    for c in (
+                        "id", "order_number", "sale_id", "tracking_code", "tracking_url",
+                        "status", "customer_id", "customer_name", "phone", "alt_phone",
+                        "governorate", "city", "district", "landmark", "street",
+                        "building", "floor", "apartment", "postal_code",
+                        "address_snapshot", "notes", "courier", "cancel_reason",
+                        "cancelled_at", "shipping_cost", "shipment_date",
+                        "delivered_by", "delivered_at", "user_id", "created_at",
+                        "updated_at",
+                    )
+                    if c in existing
                 )
                 connection.execute(SHIPPING_TRACKING_REBUILD)
                 connection.execute(
