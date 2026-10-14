@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { Gallery } from "@/components/client/gallery";
 import { BuyBox } from "@/components/client/product-actions";
@@ -7,9 +7,10 @@ import { JsonLd } from "@/components/JsonLd";
 import { Price, ProductGrid, purchasableQuantity, StockLabel } from "@/components/Product";
 import { getDictionary } from "@/i18n";
 import { localePath } from "@/i18n/config";
-import { dateLocale, fill, pick } from "@/i18n/format";
+import { dateLocale, fill, pick, relativeTime } from "@/i18n/format";
 import { discountPercent, effectiveSale } from "@/lib/commerce/pricing";
-import { safeImageSrc } from "@/lib/commerce/safe-image";
+import { PLACEHOLDER_IMAGE, safeImageSrc } from "@/lib/commerce/safe-image";
+import { isStale } from "@/lib/freshness";
 import { absoluteUrl, alternates, liveStorefront, resolveLocale } from "@/lib/page";
 
 export async function generateMetadata({ params }: PageProps<"/[locale]/products/[slug]">): Promise<Metadata> {
@@ -20,12 +21,12 @@ export async function generateMetadata({ params }: PageProps<"/[locale]/products
   const { item } = data;
   const image = item.images[0];
   return {
-    title: item.name,
-    description: pick(item.summary, locale),
+    title: pick(item.name, locale),
+    description: pick(item.summary, locale) || pick(item.description, locale).slice(0, 160) || undefined,
     alternates: alternates(locale, `/products/${item.slug}`),
     openGraph: {
-      title: item.name,
-      description: pick(item.summary, locale),
+      title: pick(item.name, locale),
+      description: pick(item.summary, locale) || undefined,
       images: image ? [{ url: safeImageSrc(image.src), width: image.width, height: image.height, alt: pick(image.alt, locale) }] : undefined,
     },
   };
@@ -35,20 +36,25 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/produ
   const locale = await resolveLocale(params);
   const { slug } = await params;
   const t = getDictionary(locale);
-  const data = await (await liveStorefront()).getProduct(slug);
+  const sf = await liveStorefront();
+  const data = await sf.getProduct(slug);
   if (!data) notFound();
+  // Renamed products keep resolving by their StorePro id; send visitors to the current URL.
+  if (data.item.slug !== slug) permanentRedirect(localePath(locale, `/products/${data.item.slug}`));
+  const freshness = await sf.freshness();
   const { item, related } = data;
   const sale = effectiveSale(item.price);
   const percent = discountPercent(item.price);
   const max = purchasableQuantity(item);
   const url = absoluteUrl(localePath(locale, `/products/${item.slug}`));
   const categoryName = pick(item.category.name, locale);
+  const name = pick(item.name, locale);
   const dateFmt = new Intl.DateTimeFormat(dateLocale(locale), { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Cairo" });
 
   const crumbs = [
     { href: localePath(locale), label: t.product.home },
     { href: localePath(locale, `/categories/${item.category.slug}`), label: categoryName },
-    { label: item.name },
+    { label: name },
   ];
 
   return (
@@ -57,11 +63,11 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/produ
         data={{
           "@context": "https://schema.org",
           "@type": "Product",
-          name: item.name,
+          name,
           sku: item.sku,
-          description: pick(item.description, locale),
+          ...(pick(item.description, locale) ? { description: pick(item.description, locale) } : {}),
           image: item.images.map((img) => absoluteUrl(safeImageSrc(img.src))),
-          brand: { "@type": "Brand", name: item.brand.name },
+          ...(item.brand ? { brand: { "@type": "Brand", name: item.brand.name } } : {}),
           category: categoryName,
           url,
           offers: {
@@ -93,13 +99,18 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/produ
         </div>
         <div className="pdp">
           <Gallery
-            name={item.name}
-            images={item.images.map((img) => ({ src: safeImageSrc(img.src), alt: pick(img.alt, locale), width: img.width, height: img.height }))}
+            name={name}
+            demoArt={sf.capabilities.catalog === "demo"}
+            images={
+              item.images.length
+                ? item.images.map((img) => ({ src: safeImageSrc(img.src), alt: pick(img.alt, locale), width: img.width, height: img.height }))
+                : [{ src: PLACEHOLDER_IMAGE, alt: name, width: 800, height: 800 }]
+            }
           />
           <div className="pdp-buy">
             <div>
-              <span className="pdp-brand">{item.brand.name}</span>
-              <h1>{item.name}</h1>
+              {item.brand && <span className="pdp-brand">{item.brand.name}</span>}
+              <h1>{name}</h1>
             </div>
             <p className="pdp-summary">{pick(item.summary, locale)}</p>
             <div className="pdp-meta">
@@ -108,6 +119,13 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/produ
                 {t.product.sku}: <span className="mono" dir="ltr">{item.sku}</span>
               </span>
             </div>
+            {freshness?.lastSuccessAt && (
+              <p className={isStale(freshness.lastSuccessAt) ? "stock-note is-stale" : "stock-note"} data-testid="stock-freshness">
+                {fill(isStale(freshness.lastSuccessAt) ? t.product.stockStale : t.product.stockUpdated, {
+                  time: relativeTime(freshness.lastSuccessAt, locale),
+                })}
+              </p>
+            )}
             <div className="pdp-price">
               <Price price={item.price} locale={locale} t={t} size="lg" />
               {percent !== null && (
@@ -121,7 +139,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/produ
                 </div>
               )}
             </div>
-            <BuyBox productId={item.id} name={item.name} max={max} maxPerOrder={item.maxPerOrder} />
+            <BuyBox productId={item.id} name={name} max={max} maxPerOrder={item.maxPerOrder} />
           </div>
         </div>
 
@@ -137,10 +155,12 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/produ
               <h2 id="specs">{t.product.specs}</h2>
               <table className="specs">
                 <tbody>
-                  <tr>
-                    <th scope="row">{t.product.brand}</th>
-                    <td>{item.brand.name}</td>
-                  </tr>
+                  {item.brand && (
+                    <tr>
+                      <th scope="row">{t.product.brand}</th>
+                      <td>{item.brand.name}</td>
+                    </tr>
+                  )}
                   {item.specs.map((spec, i) => (
                     <tr key={i}>
                       <th scope="row">{pick(spec.label, locale)}</th>

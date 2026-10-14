@@ -28,3 +28,14 @@ export function countText(forms: Plural, count: number, locale: Locale): string 
   const rule = new Intl.PluralRules(locale === "ar" ? "ar-EG" : "en").select(count);
   return fill(forms[rule] ?? forms.other, { count });
 }
+
+/** "5 minutes ago" / "منذ 5 دقائق" for a past timestamp. */
+export function relativeTime(iso: string, locale: Locale, now = Date.now()): string {
+  const seconds = Math.round((Date.parse(iso) - now) / 1000);
+  const rtf = new Intl.RelativeTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en", { numeric: "auto" });
+  const abs = Math.abs(seconds);
+  if (abs < 60) return rtf.format(seconds, "second");
+  if (abs < 3600) return rtf.format(Math.round(seconds / 60), "minute");
+  if (abs < 86400) return rtf.format(Math.round(seconds / 3600), "hour");
+  return rtf.format(Math.round(seconds / 86400), "day");
+}

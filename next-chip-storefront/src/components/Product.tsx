@@ -42,7 +42,7 @@ export function StockLabel({ availability, t }: { availability: Availability; t:
       return (
         <span className="stock stock-low">
           <span className="dot" aria-hidden="true" />
-          {fill(t.product.lowStock, { count: availability.quantity })}
+          {t.product.lowStock}
         </span>
       );
     default:
@@ -104,6 +104,7 @@ export function ProductCard({
   const percent = discountPercent(item.price);
   const max = purchasableQuantity(item);
   const Heading = headingLevel === 2 ? "h2" : "h3";
+  const name = pick(item.name, locale);
   return (
     <article className="pcard" data-testid="product-card" data-slug={item.slug}>
       <div className="pcard-media">
@@ -113,22 +114,22 @@ export function ProductCard({
             <span className="badge badge-accent">{fill(t.product.save, { percent })}</span>
           </div>
         )}
-        <WishlistButton productId={item.id} name={item.name} className="icon-btn pcard-wish" />
+        <WishlistButton productId={item.id} name={name} className="icon-btn pcard-wish" />
       </div>
       <div className="pcard-body">
         <div className="pcard-info">
-          <span className="pcard-brand">{item.brand.name}</span>
+          {item.brand && <span className="pcard-brand">{item.brand.name}</span>}
           <Heading className="pcard-title">
-            <Link href={href}>{item.name}</Link>
+            <Link href={href}>{name}</Link>
           </Heading>
-          <p className="pcard-summary">{pick(item.summary, locale)}</p>
+          {pick(item.summary, locale) && <p className="pcard-summary">{pick(item.summary, locale)}</p>}
         </div>
         <div className="pcard-foot">
           <div>
             <Price price={item.price} locale={locale} t={t} />
             <StockLabel availability={item.availability} t={t} />
           </div>
-          <QuickAdd productId={item.id} name={item.name} max={max} />
+          <QuickAdd productId={item.id} name={name} max={max} />
         </div>
       </div>
     </article>

@@ -37,7 +37,7 @@ export function priceLines(
       return {
         productId: line.productId,
         sku: "",
-        name: "",
+        name: { en: "", ar: "" },
         slug: "",
         quantity: line.quantity,
         unitPrice: 0,

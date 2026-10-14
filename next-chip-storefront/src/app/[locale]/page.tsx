@@ -41,9 +41,10 @@ function HeroCard({ item, locale, t }: { item: CatalogItem; locale: Locale; t: D
       <div className="hero-card-info">
         <div>
           <small>
-            {item.brand.name} · {pick(item.category.name, locale)}
+            {item.brand ? `${item.brand.name} · ` : ""}
+            {pick(item.category.name, locale)}
           </small>
-          <strong>{item.name}</strong>
+          <strong>{pick(item.name, locale)}</strong>
           <Price price={item.price} locale={locale} t={t} />
         </div>
         <span className="go" aria-hidden="true">
@@ -64,6 +65,23 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
   const served = new Set(zones.flatMap((z) => z.governorates)).size;
   const cod = payments.some((m) => m.id === "cod");
   const dateFmt = new Intl.DateTimeFormat(dateLocale(locale), { day: "numeric", month: "long", timeZone: "Africa/Cairo" });
+
+  // A synchronized catalog that StorePro hasn't published yet (or emptied) is shown as such, never padded with samples.
+  if (productCount === 0) {
+    return (
+      <section className="container section" aria-labelledby="empty-title">
+        <div className="card empty" data-testid="catalog-empty">
+          <span className="empty-icon">
+            <Icon name="box" />
+          </span>
+          <h1 id="empty-title" style={{ fontSize: "var(--fs-2xl)" }}>
+            {t.home.emptyTitle}
+          </h1>
+          <p>{t.home.emptyBody}</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>

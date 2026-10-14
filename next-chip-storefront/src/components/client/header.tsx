@@ -220,7 +220,7 @@ export function SearchBox({ autoFocus = false, defaultValue = "", onNavigate }: 
     }
     const ctrl = new AbortController();
     setLoading(true);
-    fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal: ctrl.signal })
+    fetch(`/api/search?q=${encodeURIComponent(query)}&locale=${locale}`, { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
       .then((data: { items: Suggestion[] }) => {
         setResults(data.items);
@@ -233,7 +233,7 @@ export function SearchBox({ autoFocus = false, defaultValue = "", onNavigate }: 
         if (!ctrl.signal.aborted) setLoading(false);
       });
     return () => ctrl.abort();
-  }, [query]);
+  }, [query, locale]);
 
   const searchHref = (q: string) => `${localePath(locale, "/search")}?q=${encodeURIComponent(q)}`;
   const productHref = (slug: string) => localePath(locale, `/products/${slug}`);
@@ -346,7 +346,8 @@ export function SearchBox({ autoFocus = false, defaultValue = "", onNavigate }: 
               <span className="s-name">
                 {item.name}
                 <span className="s-meta">
-                  {item.brand} · <span className="mono">{item.sku}</span>
+                  {item.brand ? `${item.brand} · ` : ""}
+                  <span className="mono">{item.sku}</span>
                 </span>
               </span>
               <span className="num">{formatEGP(item.price, locale)}</span>

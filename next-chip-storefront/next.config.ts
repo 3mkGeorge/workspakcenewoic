@@ -30,6 +30,11 @@ const nextConfig: NextConfig = {
     globalNotFound: true,
   },
   images: {
+    // Only demo art (/images) and synchronized product photos (/media) may be optimized.
+    localPatterns: [
+      { pathname: "/images/**", search: "" },
+      { pathname: "/media/**", search: "" },
+    ],
     remotePatterns: imageHosts.map((hostname) => ({ protocol: "https" as const, hostname })),
   },
   async headers() {

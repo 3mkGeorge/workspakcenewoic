@@ -23,6 +23,11 @@ const en = {
     or: "or",
   },
   demo: {
+    syncedBadge: "Preview",
+    syncedBanner: "Live catalog from Next Chip's store system. Online ordering isn't open yet: checkout is a demo and places no orders.",
+    staleNotice: "Prices and availability were last updated {time} and may have changed.",
+    neverSynced: "The catalog hasn't been published yet.",
+    catalogUnavailable: "The catalog can't be reached right now.",
     banner: "Demo store: sample products and prices. Checkout is a simulation — no order is sent to StorePro or fulfilled.",
     badge: "Demo",
   },
@@ -52,6 +57,8 @@ const en = {
     browseAll: "Browse the full catalog",
   },
   home: {
+    emptyTitle: "Catalog coming soon",
+    emptyBody: "Products will appear here as soon as Next Chip publishes them from the store.",
     itemsCount: plural({ one: "1 product", other: "{count} products" }),
     eyebrow: "Gaming gear for Egypt",
     heroTitle: "Gear that keeps up with your aim.",
@@ -124,6 +131,8 @@ const en = {
     searchEmpty: "Type a product name, brand or SKU to search.",
   },
   product: {
+    stockUpdated: "Availability last updated {time}.",
+    stockStale: "Availability last updated {time} — it may have changed.",
     saleEnds: "Sale ends",
     zoomIn: "Zoom in",
     zoomOut: "Zoom out",
@@ -136,7 +145,7 @@ const en = {
     sku: "SKU",
     brand: "Brand",
     inStock: "In stock",
-    lowStock: "Only {count} left",
+    lowStock: "Low stock — order soon",
     outOfStock: "Out of stock",
     unavailable: "Unavailable",
     save: "Save {percent}%",
@@ -281,6 +290,7 @@ const en = {
     noOrders: "No demo orders yet.",
   },
   footer: {
+    synced: "Live catalog · online ordering opens soon",
     tagline: "Gaming gear and accessories for players in Egypt.",
     shop: "Shop",
     help: "Help",

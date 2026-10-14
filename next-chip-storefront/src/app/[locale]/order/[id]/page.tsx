@@ -63,7 +63,7 @@ export default async function OrderPage({ params }: PageProps<"/[locale]/order/[
                   <Image src={safeImageSrc(line.image?.src)} alt="" width={52} height={52} sizes="52px" />
                   <div style={{ minWidth: 0 }}>
                     <Link className="name" href={localePath(locale, `/products/${line.slug}`)} style={{ display: "block" }}>
-                      {line.name}
+                      {pick(line.name, locale)}
                     </Link>
                     <span className="qty-x">
                       {line.quantity} × {formatEGP(line.unitPrice, locale)} · <span className="mono" dir="ltr">{line.sku}</span>

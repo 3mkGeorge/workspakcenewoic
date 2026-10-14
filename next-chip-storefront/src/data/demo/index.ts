@@ -71,7 +71,7 @@ function toProduct(p: RawProduct): Product {
     id: p.id,
     sku: p.sku,
     slug: p.slug,
-    name: p.name,
+    name: { en: p.name, ar: p.name },
     brandId: p.brand,
     categoryId: p.category,
     summary: p.summary,

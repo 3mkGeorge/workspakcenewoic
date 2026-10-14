@@ -18,7 +18,7 @@ export default async function ShippingPolicyPage({ params }: PageProps<"/[locale
   const sf = await liveStorefront();
   const [zones, govs] = await Promise.all([sf.listShippingZones(), sf.listGovernorates()]);
   const govName = new Map(govs.map((g) => [g.id, pick(g.name, locale)]));
-  const demo = sf.mode === "demo";
+  const demo = sf.capabilities.shipping === "demo";
   return (
     <ContentPage locale={locale} t={t} title={t.pages.shippingTitle} draft>
       <section>

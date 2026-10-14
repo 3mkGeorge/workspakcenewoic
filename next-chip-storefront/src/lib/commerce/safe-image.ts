@@ -10,13 +10,16 @@ const ALLOWED_HOSTS = (process.env.NEXT_PUBLIC_IMAGE_HOSTS ?? "")
   .filter(Boolean);
 
 /**
- * Only same-site paths under /images/ or https URLs on allow-listed hosts are
+ * Only same-site paths under /images/, synchronized /media/<sha256>.<ext>
+ * files, or https URLs on allow-listed hosts are
  * rendered; anything else (javascript:, data:, unknown hosts, traversal) falls
  * back to the placeholder.
  */
 export function safeImageSrc(src: unknown, allowedHosts: string[] = ALLOWED_HOSTS): string {
   if (typeof src !== "string" || src.length > 500) return PLACEHOLDER_IMAGE;
   if (src.startsWith("/images/") && !src.includes("..") && !src.includes("//") && /^[\w\-./]+$/.test(src)) return src;
+  // Synchronized product photos, served from the catalog database by content hash.
+  if (/^\/media\/[0-9a-f]{64}\.(jpg|png|webp)$/.test(src)) return src;
   try {
     const url = new URL(src);
     if (url.protocol === "https:" && allowedHosts.includes(url.hostname.toLowerCase())) return url.toString();

@@ -11,22 +11,26 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "art": "node scripts/generate-product-art.mjs"
+    "art": "node scripts/generate-product-art.mjs",
+    "db:migrate": "node scripts/db-migrate.ts"
   },
   "engines": {
-    "node": ">=20.9.0"
+    "node": ">=22.18.0"
   },
   "dependencies": {
     "@fontsource-variable/inter": "5.3.0",
     "@fontsource-variable/space-grotesk": "5.3.0",
     "@fontsource/ibm-plex-sans-arabic": "5.3.0",
     "next": "16.3.7",
+    "pg": "8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@types/node": "22.20.4",
+    "@types/pg": "8.23.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "typescript": "5.9.3",

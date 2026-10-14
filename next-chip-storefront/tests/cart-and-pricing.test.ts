@@ -26,7 +26,7 @@ describe("sale prices", () => {
 
 describe("cart math", () => {
   const line = (p: Partial<PricedLine>): PricedLine => ({
-    productId: "p", sku: "S", name: "N", slug: "n", quantity: 1, unitPrice: 0, regularUnitPrice: 0, lineTotal: 0, maxQuantity: 9, ...p,
+    productId: "p", sku: "S", name: { en: "N", ar: "N" }, slug: "n", quantity: 1, unitPrice: 0, regularUnitPrice: 0, lineTotal: 0, maxQuantity: 9, ...p,
   });
 
   it("total = subtotal − discount + shipping, counting only purchasable lines", () => {

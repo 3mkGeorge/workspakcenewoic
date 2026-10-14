@@ -464,3 +464,7 @@ dialog.drawer.from-end[open] {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.demo-bar.is-stale {
+  border-bottom-color: rgb(255 181 71 / 0.45);
+  background: linear-gradient(90deg, rgb(255 181 71 / 0.12), rgb(255 181 71 / 0.04));
+}

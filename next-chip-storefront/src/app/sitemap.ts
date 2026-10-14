@@ -16,7 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
   let dynamicPaths: MetadataRoute.Sitemap = [];
   try {
-    const sf = storefront();
+    const sf = await storefront();
     const [categories, catalog] = await Promise.all([sf.listCategories(), sf.queryCatalog({ perPage: 1000 })]);
     dynamicPaths = [
       ...categories.map((c) => entry(`/categories/${c.slug}`)),

@@ -75,10 +75,30 @@ export interface OrderProvider {
   getOrder(id: string): Promise<Order | null>;
 }
 
-export type CommerceMode = "demo" | "storepro";
+/**
+ * demo   = fixtures for development, tests and previews.
+ * synced = catalog pushed by StorePro into PostgreSQL (Stage 1: shipping
+ *          rates, payment options and orders are still demo).
+ */
+export type CommerceMode = "demo" | "synced";
+
+export interface Capabilities {
+  catalog: "demo" | "synced";
+  shipping: "demo" | "live";
+  orders: "demo" | "live";
+}
+
+export interface CatalogFreshness {
+  lastSuccessAt: string | null;
+  lastCompleteAt: string | null;
+  publishedProducts: number;
+}
 
 export interface Commerce {
   mode: CommerceMode;
+  capabilities: Capabilities;
+  /** Synchronized catalogs report when StorePro last delivered a snapshot. */
+  freshness?: () => Promise<CatalogFreshness>;
   catalog: CatalogProvider;
   categories: CategoryProvider;
   pricing: PricingProvider;

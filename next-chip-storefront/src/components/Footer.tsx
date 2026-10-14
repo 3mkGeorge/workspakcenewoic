@@ -8,7 +8,7 @@ import { localePath } from "@/i18n/config";
 import type { CommerceMode } from "@/lib/commerce/providers";
 import type { Locale } from "@/lib/commerce/types";
 
-export function Footer({ locale, t, categories, mode }: { locale: Locale; t: Dictionary; categories: NavCategory[]; mode: CommerceMode }) {
+export function Footer({ locale, t, categories, mode }: { locale: Locale; t: Dictionary; categories: NavCategory[]; mode: CommerceMode | "misconfigured" }) {
   const p = (path: string) => localePath(locale, path);
   const contact = SITE.contact;
   const published = [
@@ -30,6 +30,7 @@ export function Footer({ locale, t, categories, mode }: { locale: Locale; t: Dic
           </Link>
           <p>{t.footer.tagline}</p>
           {mode === "demo" && <span className="badge badge-soft">{t.footer.demo}</span>}
+          {mode === "synced" && <span className="badge badge-soft">{t.footer.synced}</span>}
         </div>
         <nav className="footer-col" aria-labelledby="footer-shop">
           <h2 id="footer-shop">{t.footer.shop}</h2>

@@ -33,7 +33,11 @@ export function alternates(locale: Locale, path = "/"): Metadata["alternates"] {
   };
 }
 
-/** Demo deployments must not be indexed: their products and prices are samples. */
-export const indexable = () => commerceMode() !== "demo";
+/**
+ * Demo deployments must never be indexed (sample products and prices). A synced
+ * catalog is indexable only when an operator opts in with
+ * NEXT_CHIP_ALLOW_INDEXING=true, since Stage 1 checkout is still a demo.
+ */
+export const indexable = () => commerceMode() === "synced" && process.env.NEXT_CHIP_ALLOW_INDEXING === "true";
 
 export const absoluteUrl = (path: string) => new URL(path, SITE.url).toString();
