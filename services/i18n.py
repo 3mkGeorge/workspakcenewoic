@@ -1061,6 +1061,8 @@ AR.update(
         "Open (Pending + Processing)": "مفتوح (قيد الانتظار + قيد المعالجة)",
         "Settings sections": "أقسام الإعدادات",
         "Account menu": "قائمة الحساب",
+        "Confirm Return": "تأكيد الإرجاع",
+        "Unable to load invoice details.": "تعذّر تحميل تفاصيل الفاتورة.",
         "Changing stock requires the stock adjustment permission.": "تغيير المخزون يتطلب صلاحية تعديل المخزون.",
         "Account & password": "الحساب وكلمة المرور",
         "Backup Dashboard": "لوحة النسخ الاحتياطي",
@@ -1148,6 +1150,9 @@ AR.update(
 # Text built by page scripts (dialogs, toasts, status lines). Templates expose
 # the Arabic for these through #sp-ui-strings so StoreProUI.t() can use it.
 JS_STRINGS = (
+    "Return Selected",
+    "Confirm Return",
+    "Unable to load invoice details.",
     "Role permissions saved. User overrides remain in effect.",
     "Walk-in customer",
     "Backup destinations saved.",

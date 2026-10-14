@@ -92,7 +92,8 @@ function spInitSaleModal() {
     });
     const btn = $("sale-modal-refund-selected");
     if (btn) {
-      btn.innerHTML = `<i data-lucide="check-square"></i> Return Selected`;
+      btn.innerHTML = `<i data-lucide="check-square"></i> `;
+      btn.append(tr("Return Selected"));
       btn.classList.remove("btn-warning");
       btn.classList.add("btn-light");
     }
@@ -267,7 +268,7 @@ function spInitSaleModal() {
       if (seq !== requestSeq) return;
       console.error("Invoice details failed to load:", e);
       $("sale-modal-loading").hidden = true;
-      say("Unable to load invoice details.", true);
+      say(tr("Unable to load invoice details."), true);
     }
   }
 
@@ -348,7 +349,8 @@ function spInitSaleModal() {
         });
         const btn = $("sale-modal-refund-selected");
         if (btn) {
-          btn.innerHTML = `<i data-lucide="check-circle-2"></i> Confirm Return`;
+          btn.innerHTML = `<i data-lucide="check-circle-2"></i> `;
+          btn.append(tr("Confirm Return"));
           btn.classList.remove("btn-light");
           btn.classList.add("btn-warning");
         }
