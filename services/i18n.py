@@ -1061,6 +1061,11 @@ AR.update(
         "Open (Pending + Processing)": "مفتوح (قيد الانتظار + قيد المعالجة)",
         "Settings sections": "أقسام الإعدادات",
         "Account menu": "قائمة الحساب",
+        "Shipping fee": "رسوم الشحن",
+        "no VAT": "بدون ضريبة",
+        "Shipping fees billed": "رسوم الشحن المحصّلة",
+        "Billed on the invoice; cannot be changed here.": "مُدرجة في الفاتورة؛ لا يمكن تغييرها من هنا.",
+        "The invoice total changed on the server. Review the totals before saving.": "تغيّر إجمالي الفاتورة على الخادم. راجع الإجماليات قبل الحفظ.",
         "Confirm Return": "تأكيد الإرجاع",
         "Unable to load invoice details.": "تعذّر تحميل تفاصيل الفاتورة.",
         "Changing stock requires the stock adjustment permission.": "تغيير المخزون يتطلب صلاحية تعديل المخزون.",
@@ -1150,6 +1155,13 @@ AR.update(
 # Text built by page scripts (dialogs, toasts, status lines). Templates expose
 # the Arabic for these through #sp-ui-strings so StoreProUI.t() can use it.
 JS_STRINGS = (
+    "Shipping fee",
+    "Billed on the invoice; cannot be changed here.",
+    "The invoice total changed on the server. Review the totals before saving.",
+    "Grand Total",
+    "Subtotal",
+    "Discount",
+    "VAT",
     "Return Selected",
     "Confirm Return",
     "Unable to load invoice details.",

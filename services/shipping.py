@@ -280,6 +280,7 @@ def serialize_order(order):
         "delivered_by": order.delivered_by or "",
         "delivered_at": delivered_at,
         "shipping_cost": order.shipping_cost,
+        "shipping_billed": bool(sale and sale.shipping_charge),
         "shipment_date": order.shipment_date or "",
     }
 
@@ -362,6 +363,12 @@ def update_shipping_order_details(order, data, actor_name):
         if cost < 0 or cost > 1000000000:
             raise ValueError("Shipping cost is out of range.")
         if cost != order.shipping_cost:
+            if order.sale is not None and order.sale.shipping_charge:
+                # The fee is part of the invoice total and its payments; changing it
+                # here would make the shipment and the invoice disagree.
+                raise ValueError(
+                    f"The shipping fee is billed on invoice {order.sale.invoice} and cannot be changed here."
+                )
             order.shipping_cost = cost
             changed.append("shipping cost")
             log_event(order, "Shipping cost updated", actor_name)

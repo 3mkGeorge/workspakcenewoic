@@ -242,10 +242,13 @@ function spInitShipmentModal() {
     if (st) {
       const box = document.createElement("dl");
       box.className = "detail-list totals sm-summary";
-      [["Subtotal", money(st.subtotal, st.currency)],
-       ["Discount", money(st.discount, st.currency)],
-       [`VAT (${Number(st.tax_rate) / 100}%)`, money(st.tax, st.currency)],
-      ].forEach(([k, v]) => {
+      const rows = [
+        [tr("Subtotal"), money(st.subtotal, st.currency)],
+        [tr("Discount"), money(st.discount, st.currency)],
+        [`${tr("VAT")} (${Number(st.tax_rate) / 100}%)`, money(st.tax, st.currency)],
+      ];
+      if (Number(st.shipping) > 0) rows.push([tr("Shipping fee"), money(st.shipping, st.currency)]);
+      rows.forEach(([k, v]) => {
         const dt = document.createElement("dt");
         dt.textContent = k;
         const dd = document.createElement("dd");
@@ -255,7 +258,7 @@ function spInitShipmentModal() {
       const grand = document.createElement("div");
       grand.className = "sm-grand";
       const gb = document.createElement("b");
-      gb.textContent = "Grand Total";
+      gb.textContent = tr("Grand Total");
       const gv = document.createElement("b");
       gv.textContent = money(st.total, st.currency);
       grand.append(gb, gv);
@@ -480,6 +483,9 @@ function spInitShipmentModal() {
     $("shipmentEditTracking").value = o.tracking_code || "";
     $("shipmentEditUrl").value = o.tracking_url || "";
     $("shipmentEditCost").value = (Number(o.shipping_cost || 0) / 100).toFixed(2);
+    // A fee billed on the invoice is part of its total and payments: read-only here.
+    $("shipmentEditCost").readOnly = !!o.shipping_billed;
+    $("shipmentEditCost").title = o.shipping_billed ? tr("Billed on the invoice; cannot be changed here.") : "";
     $("shipmentEditDate").value = o.shipment_date || "";
     say("shipmentEditError", "");
     showModal("shipmentEditModal");

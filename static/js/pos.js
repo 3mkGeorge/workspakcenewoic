@@ -155,6 +155,14 @@
         : {}),
     };
   }
+  // Shipping fee billed on this invoice: an edited invoice keeps the fee it was
+  // issued with; a new delivery sale uses the fee entered at checkout. The
+  // server recomputes the same figure and is authoritative.
+  function shippingFee() {
+    if (cfg.initial) return Number(cfg.initial.shipping || 0);
+    const f = state.fulfillment;
+    return f && f.method === "delivery" ? Number(f.shipping_cost || 0) : 0;
+  }
   function totals() {
     const subtotal = state.items.reduce((s, i) => s + i.quantity * i.product.price, 0),
       lineDiscount = state.items.reduce((s, i) => s + i.discount, 0),
@@ -162,12 +170,15 @@
     const discount = lineDiscount + state.invoice_discount,
       net = Math.max(0, subtotal - discount);
     const tax = Number((BigInt(Math.round(net)) * BigInt(cfg.tax_rate) + 5000n) / 10000n);
+    // Total = products − discounts + VAT on products + shipping (no VAT, no discount).
+    const shipping = shippingFee();
     return {
       subtotal,
       lineDiscount,
       discount,
       tax,
-      total: net + tax,
+      shipping,
+      total: net + tax + shipping,
       profit: net - cost,
       margin: net ? (100 * (net - cost)) / net : 0,
     };
@@ -210,8 +221,14 @@
       "receipt-discount": lastTotals.discount,
       "receipt-tax": lastTotals.tax,
       "receipt-total": lastTotals.total,
+      "shipping-total": lastTotals.shipping,
+      "receipt-shipping": lastTotals.shipping,
     }))
       $(id).textContent = money(value);
+    // The fee row appears whenever delivery is billed (a free delivery shows 0.00).
+    const billsShipping = cfg.initial ? lastTotals.shipping > 0 : state.fulfillment?.method === "delivery";
+    $("shipping-row").hidden = !billsShipping;
+    $("receipt-shipping-row").hidden = !billsShipping;
     $("profit-margin").textContent = `${lastTotals.margin.toFixed(1)}%`;
     $("tax-label").textContent = `${$("tax-label").dataset.label || "VAT"} (${cfg.tax_rate / 100}%)`;
     $("item-count").textContent = state.items.length;
@@ -476,6 +493,12 @@
         return false;
       }
       serverIssues = data.issues.map((i) => (typeof i === "string" ? i : i.message));
+      // The server's total is the one that will be charged; never let the screen disagree.
+      if (data.valid && typeof data.total === "number" && data.total !== totals().total)
+        serverIssues.push(
+          window.StoreProUI?.t("The invoice total changed on the server. Review the totals before saving.") ||
+            "The invoice total changed on the server. Review the totals before saving.",
+        );
       let changedProducts = false;
       for (const line of data.items || data.lines || []) {
         const item = state.items.find((i) => i.product.id === line.product.id);

@@ -107,8 +107,14 @@ def restore_backup(file, emergency=False):
                     raise ValueError("Backup contains invalid inventory.")
                 if (
                     check.execute(
+                        # Payments must add up to each invoice total. Partial refunds
+                        # made before refunds reduced the payment rows left the full
+                        # original payment recorded; that known, benign footprint is
+                        # accepted so those stores' backups stay restorable.
                         "SELECT 1 FROM sales s JOIN sale_payments p ON p.sale_id=s.id "
-                        "GROUP BY s.id HAVING SUM(p.amount) != s.total LIMIT 1"
+                        "GROUP BY s.id HAVING SUM(p.amount) != s.total "
+                        "AND NOT (SUM(p.amount) > s.total AND s.note LIKE '%[Partial refund:%') "
+                        "LIMIT 1"
                     ).fetchone()
                     or check.execute(
                         "SELECT 1 FROM sales s JOIN sale_items i ON i.sale_id=s.id "

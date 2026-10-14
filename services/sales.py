@@ -91,6 +91,8 @@ def write_sale(form, existing=None):
             Decimal("1"), rounding=ROUND_HALF_UP
         )
     )
+    # Read before any total is overwritten: a billed shipping fee is kept as-is.
+    kept_shipping = existing.shipping_charge if existing else 0
     if existing:
         audit(
             "Invoice revision snapshot",
@@ -157,7 +159,7 @@ def write_sale(form, existing=None):
         rate,
     )
     sale.total, sale.cost, sale.note = (
-        subtotal - discount + tax,
+        subtotal - discount + tax + kept_shipping,
         sum(p.cost * q for p, q, _ in lines),
         form.get("note", "")[:500],
     )
@@ -238,6 +240,10 @@ def refund_sale_items(sale, items_to_return):
 
     old_subtotal = sale.subtotal
     old_invoice_discount = max(0, sale.invoice_discount)
+    old_total = sale.total
+    # A partial refund returns items only: the shipping fee stays billed (a full
+    # refund or void reverses the whole invoice, shipping included).
+    shipping = sale.shipping_charge
     details = []
     for item, qty in to_refund:
         move(item.product, qty, "Partial Refund", sale.invoice)
@@ -260,9 +266,12 @@ def refund_sale_items(sale, items_to_return):
     sale.tax = int(
         (Decimal(net) * sale.tax_rate / 10000).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
     )
-    sale.total = net + sale.tax
+    sale.total = net + sale.tax + shipping
     sale.cost = sum(i.cost * i.quantity for i in sale.items)
     sale.revision += 1
+    refunded = refund_payments(sale, old_total - sale.total)
+    if refunded:
+        details.append("refunded " + ", ".join(f"{m} {amount / 100:.2f}" for m, amount in refunded))
 
     note_text = f"[Partial refund: {', '.join(details)}]"
     if sale.note:
@@ -272,6 +281,34 @@ def refund_sale_items(sale, items_to_return):
 
     audit("Partial refund", f"{sale.invoice}: {', '.join(details)}")
     return sale
+
+
+def refund_payments(sale, amount):
+    """Take a refunded amount off the invoice's payment rows, last-entered method
+    first, so the recorded payments always add up to the invoice total.
+
+    Returns [(method, amount refunded)] for the audit trail.
+    """
+    if amount <= 0 or not sale.payments:
+        return []
+    refunded = []
+    for pay in sorted(sale.payments, key=lambda p: p.id or 0, reverse=True):
+        if amount <= 0:
+            break
+        take = min(pay.amount, amount)
+        if take <= 0:
+            continue
+        pay.amount -= take
+        amount -= take
+        refunded.append((pay.method, take))
+    for pay in [p for p in sale.payments if p.amount == 0]:
+        if len(sale.payments) > 1:
+            sale.payments.remove(pay)
+            db.session.delete(pay)
+    if amount > 0:
+        raise ValueError("The refund exceeds the payments recorded on this invoice.")
+    sale.payment = sale.payments[0].method if len(sale.payments) == 1 else "Split"
+    return refunded
 
 
 def receive_purchase(order):
@@ -347,6 +384,7 @@ def serialize_sale_detail(sale):
         "discount": sale.discount,
         "tax_rate": sale.tax_rate,
         "tax": sale.tax,
+        "shipping": sale.shipping_charge,
         "total": sale.total,
         "currency": sale.currency,
         "note": sale.note or "",

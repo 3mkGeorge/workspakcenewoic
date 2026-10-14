@@ -244,6 +244,7 @@ def order_detail(oid):
                 "discount": sale.discount,
                 "tax": sale.tax,
                 "tax_rate": sale.tax_rate,
+                "shipping": sale.shipping_charge,
                 "total": sale.total,
                 "currency": sale.currency,
             }

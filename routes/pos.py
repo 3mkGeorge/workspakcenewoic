@@ -47,6 +47,8 @@ def render_pos(sale=None):
                 else None
             ),
             "invoice_discount": sale.invoice_discount,
+            # The fee billed when the invoice was issued; edits keep it unchanged.
+            "shipping": sale.shipping_charge,
             "note": sale.note,
             "payments": [
                 {"method": p.method, "amount": p.amount} for p in sale.payments

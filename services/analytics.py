@@ -282,9 +282,11 @@ def report_data(kind, start, end):
             "Subtotal",
             "Discount",
             "Tax",
+            "Shipping",
             "Total",
             "Profit",
         ]
+        # Total = Subtotal − Discount + Tax + Shipping; profit is on products only.
         rows = [
             [
                 s.invoice,
@@ -294,12 +296,13 @@ def report_data(kind, start, end):
                 s.subtotal,
                 s.discount,
                 s.tax,
+                s.shipping_charge,
                 s.total,
                 s.subtotal - s.discount - s.cost,
             ]
             for s in sales
         ]
-        money_cols = [4, 5, 6, 7, 8]
+        money_cols = [4, 5, 6, 7, 8, 9]
     elif kind == "purchases":
         headers = ["Invoice", "Date", "Supplier", "Items", "Status", "Total"]
         rows = [
@@ -422,6 +425,8 @@ def report_data(kind, start, end):
             ["Expenses", stats["expenses"]],
             ["Net Profit", stats["net"]],
             ["VAT collected", sum(s.tax for s in sales)],
+            # Billed to customers; not part of product profit above.
+            ["Shipping fees billed", sum(s.shipping_charge for s in sales)],
         ]
         money_cols = [1]
     elif kind == "shipping":
@@ -470,8 +475,8 @@ def sales_charts(start, end):
             if group == "week"
             else d.isoformat()
         )
-        grouped[label][0] += r[7]
-        grouped[label][1] += r[8]
+        grouped[label][0] += r[8]  # Total
+        grouped[label][1] += r[9]  # Profit
     keys = sorted(grouped)
     chart = {
         "labels": keys,

@@ -177,11 +177,13 @@ function spInitSaleModal() {
   function renderTotals(d) {
     const totals = $("sale-modal-totals");
     totals.replaceChildren();
-    [
-      ["Subtotal", money(d.subtotal, d.currency)],
-      ["Discount", money(d.discount, d.currency)],
-      [`VAT (${Number(d.tax_rate) / 100}%)`, money(d.tax, d.currency)],
-    ].forEach(([k, v]) => {
+    const rows = [
+      [tr("Subtotal"), money(d.subtotal, d.currency)],
+      [tr("Discount"), money(d.discount, d.currency)],
+      [`${tr("VAT")} (${Number(d.tax_rate) / 100}%)`, money(d.tax, d.currency)],
+    ];
+    if (Number(d.shipping) > 0) rows.push([tr("Shipping fee"), money(d.shipping, d.currency)]);
+    rows.forEach(([k, v]) => {
       const dt = document.createElement("dt");
       dt.textContent = k;
       const dd = document.createElement("dd");

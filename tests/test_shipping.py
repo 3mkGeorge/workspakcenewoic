@@ -23,7 +23,7 @@ def invoice(**changes):
         note="",
         tax_rate=1400,
         currency="EGP",
-        payments=[dict(method="Cash", amount=11400)],
+        payments=None,
         fulfillment={
             "method": "delivery",
             "address": {
@@ -47,6 +47,11 @@ def invoice(**changes):
         },
     )
     data.update(changes)
+    if data["payments"] is None:
+        # Products 100.00 + 14% VAT = 114.00, plus the billed shipping fee (no VAT).
+        f = data["fulfillment"]
+        fee = f.get("shipping_cost", 0) if isinstance(f, dict) and f.get("method") == "delivery" else 0
+        data["payments"] = [dict(method="Cash", amount=11400 + fee)]
     return data
 
 
@@ -300,7 +305,10 @@ def test_delivered_shipments_are_locked(app, client):
 
 
 def test_tracking_update_and_last_address(app, client):
-    client.post("/api/pos/sales", json=invoice())
+    free = invoice()
+    free["fulfillment"]["shipping_cost"] = 0  # free delivery: nothing billed, cost may be recorded later
+    free["payments"] = [dict(method="Cash", amount=11400)]
+    assert client.post("/api/pos/sales", json=free).status_code == 200
     with app.app_context():
         oid = ShippingOrder.query.one().id
     response = client.post(
@@ -697,7 +705,6 @@ def test_case_d_ship_flow_updates_dashboard(app, client):
             "courier": "Aramex",
             "tracking_code": "ARX-555",
             "tracking_url": "https://track.aramex.com/ARX-555",
-            "shipping_cost": 4500,
             "shipment_date": "2026-09-23",
         },
     )
