@@ -79,6 +79,14 @@ def log_event(order, action, actor):
     db.session.add(ShippingEvent(order_id=order.id, action=action, actor=actor))
 
 
+def ensure_invoice_active(order):
+    if order.sale and order.sale.status != "Completed":
+        raise ValueError(
+            f"Invoice {order.sale.invoice} is {order.sale.status.lower()}. Cancel this shipment instead."
+        )
+
+
+
 def create_shipping_order(sale, address, courier="", shipping_cost=0):
     # No tracking code at creation: it is assigned when the shipment ships.
     order = ShippingOrder(
@@ -272,6 +280,7 @@ def serialize_order(order):
         "delivered_by": order.delivered_by or "",
         "delivered_at": delivered_at,
         "shipping_cost": order.shipping_cost,
+        "shipping_billed": bool(sale and sale.shipping_charge),
         "shipment_date": order.shipment_date or "",
     }
 
@@ -283,6 +292,8 @@ def update_shipping_order_details(order, data, actor_name):
 
     if order.status == "Delivered":
         raise ValueError("Delivered shipments are locked and cannot be edited.")
+    if not SHIPPING_TRANSITIONS.get(order.status):
+        raise ValueError(f"{order.status} shipments are closed and cannot be edited.")
 
     changed = []
     if "courier" in data:
@@ -290,6 +301,8 @@ def update_shipping_order_details(order, data, actor_name):
         if not isinstance(courier, str):
             raise ValueError("Courier must be text.")
         courier = courier.strip()[:80]
+        if courier == "—":
+            courier = ""  # the display placeholder for "no courier" is not a courier name
         if courier != order.courier:
             order.courier = courier
             changed.append(f"courier {courier or '—'}")
@@ -333,6 +346,8 @@ def update_shipping_order_details(order, data, actor_name):
         if not isinstance(value, str):
             raise ValueError(f"{field.replace('_', ' ').title()} must be text.")
         value = " ".join(value.split())[:limit]
+        if not value and field in ("governorate", "city", "street"):
+            raise ValueError(f"{field.title()} is required for delivery.")
         if value != (getattr(order, field) or ""):
             setattr(order, field, value)
             address_touched = True
@@ -348,6 +363,12 @@ def update_shipping_order_details(order, data, actor_name):
         if cost < 0 or cost > 1000000000:
             raise ValueError("Shipping cost is out of range.")
         if cost != order.shipping_cost:
+            if order.sale is not None and order.sale.shipping_charge:
+                # The fee is part of the invoice total and its payments; changing it
+                # here would make the shipment and the invoice disagree.
+                raise ValueError(
+                    f"The shipping fee is billed on invoice {order.sale.invoice} and cannot be changed here."
+                )
             order.shipping_cost = cost
             changed.append("shipping cost")
             log_event(order, "Shipping cost updated", actor_name)
@@ -367,10 +388,14 @@ def update_shipping_order_details(order, data, actor_name):
             changed.append("shipment date")
             log_event(order, "Shipment date updated", actor_name)
 
+    ship = data.get("ship") is True
+    if ship and not order.tracking_code:
+        raise ValueError("Enter the tracking code provided by the courier before marking as Shipped.")
+    if ship or (order.status == "Ready For Shipment" and "tracking code" in changed):
+        ensure_invoice_active(order)
+        set_status(order, "Shipped", actor_name)
+        changed.append("status Shipped")
     if changed:
-        if order.status == "Ready For Shipment" and "tracking code" in changed:
-            set_status(order, "Shipped", actor_name)
-            changed.append("status Shipped")
         audit("Update shipping order", f"{order.order_number}: {', '.join(changed)}")
         db.session.commit()
 
@@ -379,11 +404,14 @@ def update_shipping_order_details(order, data, actor_name):
 
 def execute_order_transition(order, target, data, actor_name):
     """Validate and transition shipping order status with courier and event rules."""
-    from datetime import datetime, timedelta
+    from datetime import datetime, timedelta, timezone
+    from zoneinfo import ZoneInfo
     from models import SHIPPING_TRANSITIONS
 
     if target not in SHIPPING_TRANSITIONS:
         raise ValueError("Unknown shipping status.")
+    if target not in ("Cancelled", "Returned"):
+        ensure_invoice_active(order)
 
     if target == "Cancelled":
         reason = data.get("cancel_reason", "")
@@ -422,6 +450,8 @@ def execute_order_transition(order, target, data, actor_name):
             at = datetime.strptime(f"{date.strip()} {time.strip()}", "%Y-%m-%d %H:%M")
         except ValueError:
             raise ValueError("Delivered date/time must look like YYYY-MM-DD HH:MM.")
+        # Entered in store-local time; stored as naive UTC like every other timestamp.
+        at = at.replace(tzinfo=ZoneInfo("Africa/Cairo")).astimezone(timezone.utc).replace(tzinfo=None)
         if at > now().replace(microsecond=0) + timedelta(minutes=5):
             raise ValueError("Delivered time cannot be in the future.")
         order.delivered_by = by.strip()[:120]

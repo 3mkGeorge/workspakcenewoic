@@ -32,6 +32,9 @@ function spInitBackups() {
         }).format(new Date(value))
       : "—";
   const message = (text) => put("backup-message", text);
+  const ui = window.StoreProUI;
+  const tr = (text, values) => (ui ? ui.t(text, values) : text);
+  const ask = (opts) => (ui ? ui.confirm(opts) : Promise.resolve(window.confirm(opts.message)));
   const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || "";
   const bytes = (n) =>
     n >= 1073741824
@@ -101,10 +104,15 @@ function spInitBackups() {
           const data = await response.json().catch(() => ({}));
           if (response.status === 409 && data.needs_confirm) {
             const list = Object.entries(data.needs_confirm).map(([s, p]) => `${s}: ${p}`).join("\n");
-            if (confirm(`These backup folders do not exist and will be created:\n\n${list}\n\nCreate them now?`)) {
-              return send(true);
-            }
-            message("Save cancelled — missing folders were not created.");
+            const create = await ask({
+              title: tr("Create backup folders?"),
+              message: tr("These backup folders do not exist and will be created:"),
+              detail: list,
+              confirmLabel: tr("Create folders"),
+              tone: "primary",
+            });
+            if (create) return send(true);
+            message(tr("Save cancelled — missing folders were not created."));
             return null;
           }
           if (!response.ok) {
@@ -115,8 +123,10 @@ function spInitBackups() {
         };
         const data = await send(false);
         if (data) {
-          message(data.message);
+          syncSettingsForm(destValues());
           await refresh();
+          message(tr(data.message)); // after refresh, so the result is not overwritten
+          ui?.toast(tr(data.message), "success");
         }
       } catch (error) {
         message(error.message);
@@ -151,14 +161,22 @@ function spInitBackups() {
       }
     });
     if (defaults) defaults.addEventListener("click", async () => {
-      if (!confirm("Reset both destinations to the installation folders?")) return;
+      const reset = await ask({
+        title: tr("Reset backup destinations?"),
+        message: tr("Reset both destinations to the installation folders?"),
+        confirmLabel: tr("Reset destinations"),
+        tone: "primary",
+      });
+      if (!reset) return;
       defaults.disabled = true;
       try {
         const data = await postJSON("/api/backups/defaults", {});
         document.querySelector('[data-dest-input="Primary"]').value = "";
         document.querySelector('[data-dest-input="Secondary"]').value = "";
-        message(data.message);
+        syncSettingsForm({ backup_primary: "", backup_secondary: "" });
         await refresh();
+        message(tr(data.message));
+        ui?.toast(tr(data.message), "success");
       } catch (error) {
         message(error.message);
       } finally {
@@ -166,6 +184,14 @@ function spInitBackups() {
       }
     });
     wireNativePicker();
+  }
+  // The Settings form also posts these paths; keep it in step so "Save Changes" never reverts them.
+  function syncSettingsForm(values) {
+    Object.entries(values).forEach(([name, value]) => {
+      document.querySelectorAll(`form input[name="${name}"]`).forEach((input) => {
+        input.value = value;
+      });
+    });
   }
   // Native OS folder picker (Windows Explorer dialog: all drives, new folders,
   // network locations). Browsers do not expose the absolute path of the
@@ -437,21 +463,30 @@ function spInitBackups() {
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (busy) return;
-      if (
-        form.hasAttribute("data-restore-form") &&
-        !confirm("Replace current store data with this backup? All sessions will end.")
-      )
-        return;
+      if (form.dataset.spSending) return; // already submitted; wait for the server
+      if (form.hasAttribute("data-restore-form")) {
+        const yes = await ask({
+          title: tr("Restore this backup?"),
+          message: tr("Replace current store data with this backup? All sessions will end."),
+          detail: form.elements.name?.value || "",
+          confirmLabel: tr("Restore backup"),
+        });
+        if (!yes || busy) return;
+      }
+      if (form.dataset.spSending) return;
+      form.dataset.spSending = "1";
       const buttons = form.querySelectorAll("button");
+      const submitter = event.submitter && form.contains(event.submitter) ? event.submitter : null;
       buttons.forEach((b) => (b.disabled = true));
+      ui?.busy(submitter, true);
       try {
-        const response = await fetch(form.action, {
+        const response = await fetch(new URL(form.getAttribute("action") || location.href, location.href).href, {
           method: "POST",
           body: new FormData(form),
           headers: { Accept: "application/json" },
         });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || data.message || "The request failed.");
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || data.message || `${tr("The request failed.")} (${response.status})`);
         restoring = form.hasAttribute("data-restore-form");
         if (form.elements.password) form.elements.password.value = "";
         if (find("backup-restore-modal"))
@@ -459,9 +494,12 @@ function spInitBackups() {
         message(data.message);
         await refresh();
       } catch (error) {
-        message(error.message);
-        alert(error.message);
+        const text = error instanceof TypeError ? tr("The request failed. Check your connection and try again.") : error.message;
+        message(text);
+        if (ui) ui.toast(text, "error");
       } finally {
+        delete form.dataset.spSending;
+        ui?.busy(submitter, false);
         buttons.forEach((b) => (b.disabled = busy));
       }
     }),

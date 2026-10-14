@@ -21,12 +21,7 @@ function spInitArchived() {
 
   const money = (v) =>
     `${(Number(v || 0) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
-  const toast = (text) => {
-    const el = document.getElementById("app-toast");
-    if (!el) return;
-    el.querySelector(".toast-body").textContent = text;
-    if (window.bootstrap?.Toast) bootstrap.Toast.getOrCreateInstance(el).show();
-  };
+  const toast = (text, type = "success") => window.StoreProUI?.toast(text, type);
   const say = (text, isError) => {
     const box = $("arch-message");
     if (!box) return;
@@ -82,23 +77,10 @@ function spInitArchived() {
     else btn.removeAttribute("aria-busy");
   }
 
-  async function refreshListing() {
-    // Re-swap server-rendered metrics + tables so restored products reappear
-    // instantly without a full page reload. Static markup only; all row
-    // actions use delegated listeners, charts live outside .split-view.
-    try {
-      const res = await fetch(location.href, { headers: { Accept: "text/html" }, credentials: "same-origin" });
-      if (!res.ok) return;
-      const doc = new DOMParser().parseFromString(await res.text(), "text/html");
-      const freshMetrics = doc.querySelectorAll(".metrics");
-      document.querySelectorAll(".metrics").forEach((m, i) => {
-        if (freshMetrics[i]) m.innerHTML = freshMetrics[i].innerHTML;
-      });
-      const freshSplit = doc.querySelector(".split-view");
-      const cur = document.querySelector(".split-view");
-      if (freshSplit && cur) cur.innerHTML = freshSplit.innerHTML;
-      icons();
-    } catch {}
+  // Products/Inventory re-render in place (metrics, charts, table) once the
+  // archive dialog closes, keeping filters and scroll position.
+  function refreshListing() {
+    if (window.StoreProUI?.refreshView) window.StoreProUI.refreshView();
   }
 
   function afterChange(message) {

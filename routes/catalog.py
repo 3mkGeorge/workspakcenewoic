@@ -83,6 +83,11 @@ def products():
         else (page.items[0] if page.items else None)
     )
     stock = stock_stats()
+    attention = Product.query.filter(Product.active.is_(True), Product.stock <= Product.minimum)
+    stock["products"] = (
+        attention.filter(Product.stock > 0).order_by(Product.stock, Product.name).limit(8).all()
+        + attention.filter(Product.stock == 0).order_by(Product.name).limit(8).all()
+    )
     loc_rows = (
         db.session.query(
             db.func.coalesce(db.func.nullif(Product.location, ""), "Unassigned"),
@@ -192,7 +197,16 @@ def product_form(pid=None):
             # Editable stock count: any change writes a ledger movement so the
             # audit trail stays complete. Same Product.stock column, no duplicate.
             new_stock = integer(request.form.get("current_stock"), 0)
-            if new_stock != p.stock:
+            baseline = request.form.get("stock_baseline")
+            baseline = integer(baseline, 0) if baseline not in (None, "") else p.stock
+            if new_stock != baseline:
+                # Same permission as Inventory → Adjust Stock: the edit form is
+                # not a way around it.
+                require("inventory.stock_adjustment")
+                if p.stock != baseline:
+                    raise ValueError(
+                        f"Stock changed to {p.stock} since this page was opened. Reload before editing the stock count."
+                    )
                 move(p, new_stock - p.stock, "Adjustment", "Manual Product Edit")
         # Multi-image gallery: new uploads submitted with the product form.
         # (Existing products are otherwise managed live via the image API.)
@@ -343,12 +357,15 @@ def contacts(kind):
     page = query.order_by(model.name).paginate(
         page=max(1, request.args.get("page", 1, type=int)), per_page=20, error_out=False
     )
+    edit = model.query.filter_by(id=request.args.get("edit", type=int))
+    if kind != "categories":
+        edit = edit.filter_by(active=True)  # a removed record cannot be edited back in
     return render_template(
         "contacts.html",
         title=kind.title(),
         kind=kind,
         page=page,
-        edit=model.query.filter_by(id=request.args.get("edit", type=int)).first(),
+        edit=edit.first(),
     )
 
 
@@ -371,6 +388,7 @@ def save_contact(kind):
     db.session.add(row)
     audit("Save " + kind, row.name)
     db.session.commit()
+    flash("Saved.", "success")
     return redirect(url_for("catalog.contacts", kind=kind))
 
 
@@ -404,6 +422,7 @@ def delete_contact(kind, pid):
         row.active = False
     audit("Delete " + kind, row.name)
     db.session.commit()
+    flash("Record removed.", "success")
     return redirect(url_for("catalog.contacts", kind=kind))
 
 
@@ -454,9 +473,10 @@ def import_products_csv():
     except ValueError as exc:
         db.session.rollback()
         flash(str(exc), "danger")
-    except Exception as exc:
+    except Exception:
         db.session.rollback()
-        flash(f"Failed to import products: {str(exc)}", "danger")
+        current_app.logger.exception("Product CSV import failed")
+        flash("Failed to import products. Check that SKUs and barcodes are unique, then try again.", "danger")
 
     return redirect(url_for("catalog.products"))
 

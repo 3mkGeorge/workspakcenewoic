@@ -1,9 +1,13 @@
 "use strict";
 function spInitPriceHistory() {
-  if (window.__spPriceHistory) return;
-  window.__spPriceHistory = true;
+  // Bind once per rendered modal (in-app navigation brings a fresh copy) and
+  // drop the previous page's document listeners, which point at a detached modal.
   const modalEl = document.getElementById("priceAnalyticsModal");
-  if (!modalEl) return;
+  if (!modalEl || modalEl.dataset.spBound) return;
+  modalEl.dataset.spBound = "1";
+  window.__spPriceHistoryAbort?.abort();
+  const binding = (window.__spPriceHistoryAbort = new AbortController());
+  const { signal } = binding;
   const body = document.getElementById("price-modal-body");
   const loading = document.getElementById("price-modal-loading");
   const content = document.getElementById("price-modal-content");
@@ -156,12 +160,8 @@ function spInitPriceHistory() {
     if (err) err.hidden = true;
     const priceIn = document.getElementById("pm-adjust-price");
     const costIn = document.getElementById("pm-adjust-cost");
-    if (priceIn && currentSummary && currentSummary.current_price !== undefined) {
-      priceIn.value = (Number(currentSummary.current_price || 0) / 100).toFixed(2);
-    }
-    if (costIn && currentSummary && currentSummary.current_cost !== undefined) {
-      costIn.value = (Number(currentSummary.current_cost || 0) / 100).toFixed(2);
-    }
+    if (priceIn) priceIn.value = currentSummary ? (Number(currentSummary.current || 0) / 100).toFixed(2) : "";
+    if (costIn) costIn.value = currentSummary ? (Number(currentSummary.current_cost || 0) / 100).toFixed(2) : "";
     if (priceIn) priceIn.focus();
   }
 
@@ -209,6 +209,8 @@ function spInitPriceHistory() {
         if (!res.ok) throw new Error(data.error || "Failed to update price.");
         hideAdjustDrawer();
         await openModal(currentId, currentName);
+        modalEl.focus(); // the drawer that held focus is gone; keep Escape working
+        window.StoreProUI?.refreshView(); // table prices refresh when the dialog closes
       } catch (e) {
         if (err) {
           err.textContent = e.message;
@@ -223,14 +225,20 @@ function spInitPriceHistory() {
   async function openModal(pid, pname) {
     currentId = pid;
     currentName = pname || "";
+    currentSummary = null;
     hideAdjustDrawer();
     currentRange = "30";
     modalEl.querySelectorAll(".price-range a").forEach((a) => a.classList.toggle("active", a.dataset.range === "30"));
     nameEl.textContent = pname || "";
     subtitle.textContent = `Price History · Price Trend`;
-    document.getElementById("pm-export-xlsx").href = `/products/${pid}/price-history/export/xlsx`;
-    document.getElementById("pm-export-pdf").href = `/products/${pid}/price-history/export/pdf`;
-    document.getElementById("pm-export-history").href = `/products/${pid}/price-history/export/xlsx`;
+    // Export links exist only for users allowed to export.
+    const setHref = (id, href) => {
+      const a = document.getElementById(id);
+      if (a) a.href = href;
+    };
+    setHref("pm-export-xlsx", `/products/${pid}/price-history/export/xlsx`);
+    setHref("pm-export-pdf", `/products/${pid}/price-history/export/pdf`);
+    setHref("pm-export-history", `/products/${pid}/price-history/export/xlsx`);
     const countBadge = document.getElementById("pm-image-count");
     if (countBadge) countBadge.textContent = "…";
     const galleryBtn = document.getElementById("pm-view-gallery");
@@ -278,12 +286,17 @@ function spInitPriceHistory() {
     }
   }
 
-  document.addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-price-analytics]");
-    if (!btn) return;
-    e.preventDefault();
-    openModal(btn.getAttribute("data-price-analytics"), btn.getAttribute("data-product-name") || "");
-  });
+  document.addEventListener(
+    "click",
+    (e) => {
+      const btn = e.target.closest("[data-price-analytics]");
+      if (!btn) return;
+      e.preventDefault();
+      openModal(btn.getAttribute("data-price-analytics"), btn.getAttribute("data-product-name") || "");
+    },
+    { signal },
+  );
+  document.addEventListener("storepro:leave", () => binding.abort(), { signal });
 
   modalEl.querySelectorAll(".price-range a").forEach((a) =>
     a.addEventListener("click", (e) => {
@@ -312,8 +325,8 @@ function spInitPriceHistory() {
     }
   });
 
-  // Delete confirms are handled centrally in row-menu.js via a delegated
-  // submit listener, so cloned floating-menu forms are covered too.
+  // Delete confirms are handled centrally in ui.js (form[data-confirm]),
+  // so cloned floating-menu forms are covered too.
 }
 document.addEventListener("DOMContentLoaded", spInitPriceHistory);
 document.addEventListener("storepro:content", spInitPriceHistory);

@@ -55,7 +55,8 @@ def make_delivery_payload(**changes):
         note="Phase 10 E2E delivery test",
         tax_rate=1400,
         currency="EGP",
-        payments=[dict(method="Cash", amount=22800)],
+        # 2 x 100.00 + 14% VAT = 228.00, plus the 50.00 shipping fee (no VAT).
+        payments=[dict(method="Cash", amount=27800)],
         fulfillment={
             "method": "delivery",
             "address": {

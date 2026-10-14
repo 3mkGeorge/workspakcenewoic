@@ -23,6 +23,19 @@ def manager():
     return current_app.extensions["backups"]
 
 
+def rescan_now():
+    """List the new destinations before answering, so the page never shows (and
+    offers to restore) recovery points from the folders just replaced."""
+    from services.core import settings
+
+    service = manager()
+    try:
+        service.scan(settings())
+    except Exception:
+        current_app.logger.exception("Immediate backup rescan failed; the worker will retry")
+    service.changed()
+
+
 def check_password(value, emergency=False):
     service = manager()
     # All recovery attempts share the localhost rate limit, independent of cookies.
@@ -196,7 +209,7 @@ def save_paths():
         from models import db
 
         db.session.commit()
-        manager().changed()
+        rescan_now()
     return jsonify(message="Backup destinations saved." if changes else "No changes to save.", changes=changes)
 
 
@@ -217,7 +230,7 @@ def reset_defaults():
     if changes:
         audit("Backup paths reset", "; ".join(changes))
         db.session.commit()
-        manager().changed()
+        rescan_now()
     return jsonify(message="Default destinations restored." if changes else "Already using defaults.", changes=changes)
 
 

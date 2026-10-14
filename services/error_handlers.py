@@ -6,9 +6,10 @@ database rollback safety, and incident recovery reporting.
 
 import secrets
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import render_template, request, jsonify, redirect, g
 from flask_wtf.csrf import CSRFError
+from werkzeug.exceptions import HTTPException
 from sqlalchemy.exc import IntegrityError, DatabaseError
 from models import db
 from services.dual_backup import check_database
@@ -40,7 +41,7 @@ def register_error_handlers(app):
         db.session.rollback()
         if is_ajax_or_api(request):
             return jsonify(
-                error="This record changed. Refresh the stock and try again."
+                error="This record conflicts with existing data. SKU, barcode, username and category names must be unique."
             ), 409
         return render_template(
             "error.html",
@@ -115,6 +116,10 @@ def register_error_handlers(app):
     @app.errorhandler(500)
     @app.errorhandler(Exception)
     def server_error(error):
+        if isinstance(error, HTTPException) and error.code and error.code < 500:
+            if is_ajax_or_api(request):
+                return jsonify(error=str(error.description)), error.code
+            return render_template("error.html", code=error.code, message=error.description), error.code
         db.session.rollback()
         req_id = getattr(g, "request_id", secrets.token_hex(8))
         app.logger.exception(f"Crash recovery intercepted exception [Incident {req_id}]: {str(error)}")
@@ -146,5 +151,5 @@ def register_error_handlers(app):
             db_healthy=db_healthy,
             is_admin=is_admin,
             details=details,
-            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S UTC"),
+            timestamp=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         ), 500

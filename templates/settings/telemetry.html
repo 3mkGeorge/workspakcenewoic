@@ -90,7 +90,7 @@
             <td>{{ j.next_run }}</td>
             <td>{{ j.last_duration_ms }} ms</td>
             <td>{{ j.run_count }} / <span class="{{ 'text-danger' if j.failure_count > 0 else 'muted' }}">{{ j.failure_count }}</span></td>
-            <td><small class="text-danger">{{ j.last_error or 'None' }}</small></td>
+            <td>{% if j.last_error %}<small class="text-danger">{{ j.last_error }}</small>{% else %}<span class="muted">—</span>{% endif %}</td>
           </tr>
           {% endfor %}
         </tbody>

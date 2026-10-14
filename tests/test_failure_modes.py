@@ -320,7 +320,9 @@ def test_missing_image_files_graceful_handling(app, client):
     # 1. Product catalog page renders 200 OK with fallback
     resp = client.get("/products")
     assert resp.status_code == 200
-    assert b"onerror=" in resp.data
+    # The CSP blocks inline handlers; the fallback is the delegated handler in app.js.
+    assert b"onerror=" not in resp.data
+    assert f'class="product-thumb" src="/static/uploads/{ghost_filename}'.encode() in resp.data
 
     # 2. POS product API returns valid JSON without crashing
     resp_api = client.get("/api/pos/products?q=Test")

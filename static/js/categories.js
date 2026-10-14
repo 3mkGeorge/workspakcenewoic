@@ -1,11 +1,14 @@
 "use strict";
 // Category Management: cards, live search, sort, pagination, create/edit/
 // delete with live filter-dropdown refresh. Mutations are audited server-side.
+let spCategoriesAbort = null;
 function spInitCategories() {
-  if (window.__spCategories) return;
-  window.__spCategories = true;
   const root = document.getElementById("category-manager");
-  if (!root) return;
+  if (!root || root.dataset.spBound) return;
+  root.dataset.spBound = "1";
+  spCategoriesAbort?.abort();
+  spCategoriesAbort = new AbortController();
+  const { signal } = spCategoriesAbort;
   const modalEl = document.getElementById("categoryManagerModal");
   const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
   const canCreate = root.dataset.canCreate === "1";
@@ -219,7 +222,8 @@ function spInitCategories() {
   async function openDelete(c) {
     deleteTarget = c;
     $("cat-delete-name").textContent = c.name;
-    $("cat-delete-count").textContent = "…";
+    const count = $("cat-delete-count"); // optional in the markup
+    if (count) count.textContent = "…";
     $("cat-delete-archived").hidden = true;
     $("cat-delete-blocking").hidden = true;
     showView("cat-delete-view");
@@ -296,10 +300,20 @@ function spInitCategories() {
   $("cat-delete-confirm").addEventListener("click", async (e) => {
     const btn = e.currentTarget;
     const mode = document.querySelector('input[name="cat-delete-mode"]:checked')?.value;
-    if (mode === "purge" && !confirm(
-      `Permanently delete ${deleteTarget.total} archived product(s) and the category "${deleteTarget.name}"? This cannot be undone. Products with sales, purchase, stock-movement or price history cannot be purged.`
-    )) {
-      return;
+    if (btn.disabled) return;
+    if (mode === "purge") {
+      const ui = window.StoreProUI;
+      const tr = (text, values) => (ui ? ui.t(text, values) : text);
+      const opts = {
+        title: tr("Permanently delete this category?"),
+        message: tr(
+          "Permanently delete {count} archived product(s) and this category? This cannot be undone. Products with sales, purchase, stock-movement or price history cannot be purged.",
+          { count: deleteTarget.total },
+        ),
+        detail: deleteTarget.name,
+        confirmLabel: tr("Delete permanently"),
+      };
+      if (!(await (ui ? ui.confirm(opts) : Promise.resolve(window.confirm(opts.message))))) return;
     }
     btn.disabled = true;
     try {
@@ -332,13 +346,17 @@ function spInitCategories() {
   document.querySelectorAll("#manage-categories").forEach((b) =>
     b.addEventListener("click", openModal),
   );
-  document.addEventListener("input", (e) => {
-    if (e.target.id !== "category-filter-search") return;
-    const q = e.target.value.toLowerCase();
-    document.querySelectorAll("#category-filter-select option").forEach((o) => {
-      o.hidden = !!o.value && !o.textContent.toLowerCase().includes(q);
-    });
-  });
+  document.addEventListener(
+    "input",
+    (e) => {
+      if (e.target.id !== "category-filter-search") return;
+      const q = e.target.value.toLowerCase();
+      document.querySelectorAll("#category-filter-select option").forEach((o) => {
+        o.hidden = !!o.value && !o.textContent.toLowerCase().includes(q);
+      });
+    },
+    { signal },
+  );
   modalEl.addEventListener("hidden.bs.modal", () => {
     showView("cat-list-view");
     if (location.hash === "#categories") history.replaceState(null, "", location.pathname + location.search);
@@ -346,7 +364,7 @@ function spInitCategories() {
   // Dashboard widget + deep link support.
   if (location.hash === "#categories") openModal();
   // Restores / permanent deletes elsewhere refresh counts + dropdown.
-  document.addEventListener("storepro:catalog-changed", () => load());
+  document.addEventListener("storepro:catalog-changed", () => load(), { signal });
 }
 document.addEventListener("DOMContentLoaded", spInitCategories);
 document.addEventListener("storepro:content", spInitCategories);

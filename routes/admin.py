@@ -45,10 +45,13 @@ def settings_page():
         )
         flash("Settings saved.", "success")
         return redirect(url_for("admin.settings_page"))
+    from models import BackupLog
+
     return render_template(
         "settings/index.html",
         title="Settings",
         backup_state=current_app.extensions["backups"].snapshot(),
+        backup_logs=BackupLog.query.order_by(BackupLog.id.desc()).limit(20).all(),
     )
 
 
@@ -194,11 +197,16 @@ def run_maintenance():
             _ok, msg = reindex_database(db_path)
         else:
             res = run_full_database_maintenance(db_path)
+            _ok = res.get("integrity") == "Passed" and not res.get("failed_steps")
             msg = str(res)
 
     audit("Database maintenance", f"Executed {action}: {msg}")
     db.session.commit()
-    flash(f"Maintenance action '{action}' completed.", "success")
+    # Report what actually happened: a busy checkpoint or failed step is not a success.
+    if _ok:
+        flash(f"Maintenance action '{action}' completed.", "success")
+    else:
+        flash(f"Maintenance action '{action}' did not complete: {str(msg)[:300]}", "danger")
     return redirect(url_for("admin.telemetry"))
 
 

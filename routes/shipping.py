@@ -61,14 +61,13 @@ def shipping_listing(base_query=None):
         query = query.filter(ShippingOrder.city == request.args["city"][:80])
     if request.args.get("courier"):
         query = query.filter(ShippingOrder.courier == request.args["courier"][:80])
-    if request.args.get("from"):
-        query = query.filter(
-            ShippingOrder.created_at >= f"{request.args['from'][:10]} 00:00:00"
-        )
-    if request.args.get("to"):
-        query = query.filter(
-            ShippingOrder.created_at < f"{request.args['to'][:10]} 00:00:00"
-        )
+    from services.analytics import day_bounds
+
+    start, end = day_bounds(request.args.get("from")), day_bounds(request.args.get("to"))
+    if start:
+        query = query.filter(ShippingOrder.created_at >= start[0])
+    if end:
+        query = query.filter(ShippingOrder.created_at < end[1])
     q = request.args.get("q", "").strip()[:100]
     if q:
         like = f"%{q}%"
@@ -245,6 +244,7 @@ def order_detail(oid):
                 "discount": sale.discount,
                 "tax": sale.tax,
                 "tax_rate": sale.tax_rate,
+                "shipping": sale.shipping_charge,
                 "total": sale.total,
                 "currency": sale.currency,
             }

@@ -97,10 +97,13 @@ def list_archived():
         query = query.filter(
             Product.supplier_id == integer(request.args["supplier_id"], 1)
         )
-    if request.args.get("from"):
-        query = query.filter(Product.updated_at >= f"{request.args['from'][:10]} 00:00:00")
-    if request.args.get("to"):
-        query = query.filter(Product.updated_at < f"{request.args['to'][:10]} 00:00:00")
+    from services.analytics import day_bounds
+
+    start, end = day_bounds(request.args.get("from")), day_bounds(request.args.get("to"))
+    if start:
+        query = query.filter(Product.updated_at >= start[0])
+    if end:
+        query = query.filter(Product.updated_at < end[1])
     sort = request.args.get("sort", "newest")
     if sort == "name":
         query = query.order_by(Product.name)

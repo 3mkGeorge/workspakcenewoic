@@ -16,12 +16,9 @@ function spInitSaleModal() {
   const money = (v, cur) =>
     `${cur || ""} ${(Number(v || 0) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const text = (v) => (v === null || v === undefined || v === "" ? "Not assigned yet" : String(v));
-  const toast = (msg) => {
-    const el = $("app-toast");
-    if (!el) return;
-    el.querySelector(".toast-body").textContent = msg;
-    if (window.bootstrap?.Toast) bootstrap.Toast.getOrCreateInstance(el).show();
-  };
+  const ui = () => window.StoreProUI;
+  const tr = (msg, values) => (ui() ? ui().t(msg, values) : msg);
+  const toast = (msg, type = "success") => ui()?.toast(tr(msg), type);
   const say = (msg, isError) => {
     const box = $("sale-modal-message");
     if (!box) return;
@@ -95,7 +92,8 @@ function spInitSaleModal() {
     });
     const btn = $("sale-modal-refund-selected");
     if (btn) {
-      btn.innerHTML = `<i data-lucide="check-square"></i> Return Selected`;
+      btn.innerHTML = `<i data-lucide="check-square"></i> `;
+      btn.append(tr("Return Selected"));
       btn.classList.remove("btn-warning");
       btn.classList.add("btn-light");
     }
@@ -179,11 +177,13 @@ function spInitSaleModal() {
   function renderTotals(d) {
     const totals = $("sale-modal-totals");
     totals.replaceChildren();
-    [
-      ["Subtotal", money(d.subtotal, d.currency)],
-      ["Discount", money(d.discount, d.currency)],
-      [`VAT (${Number(d.tax_rate) / 100}%)`, money(d.tax, d.currency)],
-    ].forEach(([k, v]) => {
+    const rows = [
+      [tr("Subtotal"), money(d.subtotal, d.currency)],
+      [tr("Discount"), money(d.discount, d.currency)],
+      [`${tr("VAT")} (${Number(d.tax_rate) / 100}%)`, money(d.tax, d.currency)],
+    ];
+    if (Number(d.shipping) > 0) rows.push([tr("Shipping fee"), money(d.shipping, d.currency)]);
+    rows.forEach(([k, v]) => {
       const dt = document.createElement("dt");
       dt.textContent = k;
       const dd = document.createElement("dd");
@@ -223,7 +223,7 @@ function spInitSaleModal() {
     setHref("sale-modal-edit", `/sales/${d.id}/edit`);
     // Mutations only apply to completed invoices (mirrors server rules).
     const live = d.status === "Completed";
-    ["sale-modal-edit", "sale-modal-refund", "sale-modal-delete"].forEach((id) => {
+    ["sale-modal-edit", "sale-modal-refund", "sale-modal-refund-selected", "sale-modal-delete"].forEach((id) => {
       const el = $(id);
       if (el) el.hidden = !live;
     });
@@ -233,6 +233,14 @@ function spInitSaleModal() {
     const seq = ++requestSeq;
     const modalEl = $("saleDetailsModal");
     if (!modalEl) return;
+    // Until this invoice has loaded, no action may target the previous one.
+    delete modalEl.dataset.saleId;
+    delete modalEl.dataset.saleStatus;
+    ["sale-modal-edit", "sale-modal-refund", "sale-modal-refund-selected", "sale-modal-delete"].forEach((id) => {
+      const el = $(id);
+      if (el) el.hidden = true;
+    });
+    resetSelectionMode();
     $("sale-modal-inv").textContent = "…";
     $("sale-modal-sub").textContent = "";
     setLoading();
@@ -262,15 +270,28 @@ function spInitSaleModal() {
       if (seq !== requestSeq) return;
       console.error("Invoice details failed to load:", e);
       $("sale-modal-loading").hidden = true;
-      say("Unable to load invoice details.", true);
+      say(tr("Unable to load invoice details."), true);
     }
   }
 
-  async function mutate(action, confirmText, successText, extraBody) {
+  let mutating = false;
+  async function mutate(action, confirmText, successText, extraBody, { confirmed = false, confirmLabel } = {}) {
     const modalEl = $("saleDetailsModal");
     const sid = modalEl?.dataset.saleId;
-    if (!sid) return;
-    if (!window.confirm(confirmText)) return;
+    if (!sid || mutating) return;
+    if (!confirmed) {
+      const opts = {
+        title: tr("Please confirm"),
+        message: confirmText,
+        detail: $("sale-modal-inv")?.textContent || "",
+        confirmLabel,
+      };
+      const yes = await (ui() ? ui().confirm(opts) : Promise.resolve(window.confirm(confirmText)));
+      if (!yes || mutating || modalEl.dataset.saleId !== sid) return;
+    }
+    mutating = true;
+    const buttons = [...modalEl.querySelectorAll(".modal-footer button")].filter((b) => !b.disabled);
+    buttons.forEach((b) => (b.disabled = true));
     try {
       const res = await fetch(`/sales/${encodeURIComponent(sid)}/${action}`, {
         method: "POST",
@@ -280,7 +301,7 @@ function spInitSaleModal() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Action failed.");
+        throw new Error(data.error || tr("Action failed."));
       }
       if (window.bootstrap?.Modal) bootstrap.Modal.getInstance(modalEl)?.hide();
       toast(successText);
@@ -288,7 +309,10 @@ function spInitSaleModal() {
       else location.reload();
     } catch (e) {
       console.error(`Invoice ${action} failed:`, e);
-      say(e.message, true);
+      say(e instanceof TypeError ? tr("The request failed. Check your connection and try again.") : e.message, true);
+    } finally {
+      mutating = false;
+      buttons.forEach((b) => (b.disabled = false));
     }
   }
 
@@ -314,7 +338,9 @@ function spInitSaleModal() {
       return;
     }
     if (e.target.closest("#sale-modal-refund")) {
-      mutate("refund", "Refund this entire invoice and return all items to stock?", "Invoice refunded.");
+      mutate("refund", tr("Refund this entire invoice and return all items to stock?"), "Invoice refunded.", undefined, {
+        confirmLabel: tr("Refund invoice"),
+      });
       return;
     }
     if (e.target.closest("#sale-modal-refund-selected")) {
@@ -325,7 +351,8 @@ function spInitSaleModal() {
         });
         const btn = $("sale-modal-refund-selected");
         if (btn) {
-          btn.innerHTML = `<i data-lucide="check-circle-2"></i> Confirm Return`;
+          btn.innerHTML = `<i data-lucide="check-circle-2"></i> `;
+          btn.append(tr("Confirm Return"));
           btn.classList.remove("btn-light");
           btn.classList.add("btn-warning");
         }
@@ -349,24 +376,27 @@ function spInitSaleModal() {
         }
       });
       if (selected.length === 0) {
-        toast("Please select at least one item to return.");
+        toast("Please select at least one item to return.", "warning");
         return;
       }
       mutate(
         "refund",
-        `Return ${selected.length} selected item(s) to stock and process refund?`,
+        tr("Return {count} selected item(s) to stock and process refund?", { count: selected.length }),
         "Selected items refunded and returned to stock.",
-        { items: selected }
+        { items: selected },
+        { confirmLabel: tr("Refund selected") },
       );
       return;
     }
     if (e.target.closest("#sale-modal-delete")) {
+      // The reason dialog is itself the deliberate confirmation; without it, ask.
       const runDelete = (reason) =>
         mutate(
           "delete",
-          "Void this invoice and restore its stock? The audit record will remain.",
+          tr("Void this invoice and restore its stock? The audit record will remain."),
           "Invoice voided. The original is retained for the audit trail.",
           reason ? { cancel_reason: reason } : undefined,
+          { confirmed: !!reason, confirmLabel: tr("Void invoice") },
         );
       if (window.StoreProCancel) {
         window.StoreProCancel.open({
@@ -385,5 +415,15 @@ function spInitSaleModal() {
     open: (sid) => openModal(sid),
   };
 }
+// "/sales?selected=ID" (e.g. "View invoice" after saving) opens that invoice.
+function spOpenRequestedSale() {
+  const marker = document.querySelector("[data-open-sale]");
+  if (!marker) return;
+  const sid = marker.dataset.openSale;
+  marker.remove();
+  window.StoreProSaleModal?.open(sid);
+}
 document.addEventListener("DOMContentLoaded", spInitSaleModal);
 document.addEventListener("storepro:content", spInitSaleModal);
+document.addEventListener("DOMContentLoaded", spOpenRequestedSale);
+document.addEventListener("storepro:content", spOpenRequestedSale);

@@ -25,6 +25,15 @@ def bounds(start, end):
     return a, b
 
 
+def day_bounds(value):
+    """UTC (start, end) of a YYYY-MM-DD store-local day, or None if the value is not a date."""
+    try:
+        day = datetime.strptime((value or "").strip()[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None
+    return bounds(day, day)
+
+
 def date_range(default_days=30):
     today = local_today()
     try:
@@ -99,10 +108,11 @@ def sale_stats(sales):
     )
 
 
-def trend(days=7):
+def trend(days=7, end=None):
     days = max(1, min(days, 365))
-    start = local_today() - timedelta(days=days - 1)
-    a, b = bounds(start, local_today())
+    end = end or local_today()
+    start = end - timedelta(days=days - 1)
+    a, b = bounds(start, end)
     sales = Sale.query.filter(
         Sale.created_at >= a, Sale.created_at < b, Sale.status == "Completed"
     ).all()
@@ -174,9 +184,16 @@ def report_data(kind, start, end):
         category = db.session.get(Category, integer(request.args["category_id"], 1))
         if not category:
             raise ValueError("Unknown category.")
-        sales = [
-            s for s in sales if any(i.category_name == category.name for i in s.items)
-        ]
+
+        # Match by the product's category id, so renaming a category keeps its
+        # history; the name recorded on the sale line still counts as well.
+        def in_category(item):
+            if item.product is not None and item.product.category_id == category.id:
+                return True
+            return getattr(item, "category_name", None) == category.name
+
+        sales = [s for s in sales if any(in_category(i) for i in s.items)]
+        purchases = [p for p in purchases if any(in_category(i) for i in p.items)]
     if request.args.get("supplier_id"):
         from services.core import integer
 
@@ -265,9 +282,11 @@ def report_data(kind, start, end):
             "Subtotal",
             "Discount",
             "Tax",
+            "Shipping",
             "Total",
             "Profit",
         ]
+        # Total = Subtotal − Discount + Tax + Shipping; profit is on products only.
         rows = [
             [
                 s.invoice,
@@ -277,12 +296,13 @@ def report_data(kind, start, end):
                 s.subtotal,
                 s.discount,
                 s.tax,
+                s.shipping_charge,
                 s.total,
                 s.subtotal - s.discount - s.cost,
             ]
             for s in sales
         ]
-        money_cols = [4, 5, 6, 7, 8]
+        money_cols = [4, 5, 6, 7, 8, 9]
     elif kind == "purchases":
         headers = ["Invoice", "Date", "Supplier", "Items", "Status", "Total"]
         rows = [
@@ -405,6 +425,8 @@ def report_data(kind, start, end):
             ["Expenses", stats["expenses"]],
             ["Net Profit", stats["net"]],
             ["VAT collected", sum(s.tax for s in sales)],
+            # Billed to customers; not part of product profit above.
+            ["Shipping fees billed", sum(s.shipping_charge for s in sales)],
         ]
         money_cols = [1]
     elif kind == "shipping":
@@ -453,8 +475,8 @@ def sales_charts(start, end):
             if group == "week"
             else d.isoformat()
         )
-        grouped[label][0] += r[7]
-        grouped[label][1] += r[8]
+        grouped[label][0] += r[8]  # Total
+        grouped[label][1] += r[9]  # Profit
     keys = sorted(grouped)
     chart = {
         "labels": keys,

@@ -99,7 +99,19 @@ def verify_all_backup_archives(app):
     from models import db, BackupLog
 
     root = Path(app.config.get("ROOT", Path(".")))
-    destinations = [root / "backups", root / "backups-secondary"]
+    # Check the folders backups are actually written to (Settings may point
+    # them anywhere), not only the installation defaults.
+    try:
+        from services.core import settings
+        from services.dual_backup import destinations as backup_destinations
+
+        with app.app_context():
+            configured = backup_destinations(root, settings())
+        sources = {Path(path): source for source, path in configured.items()}
+    except Exception:
+        logger.exception("Could not read backup destinations; checking default folders")
+        sources = {root / "backups": "Primary", root / "backups-secondary": "Secondary"}
+    destinations = list(sources)
     
     total_checked = 0
     verified_healthy = 0
@@ -127,7 +139,7 @@ def verify_all_backup_archives(app):
                             status="Failed",
                             file_size=archive.stat().st_size if archive.exists() else 0,
                             location=str(archive),
-                            source="Primary" if "secondary" not in str(dest) else "Secondary",
+                            source=sources.get(dest, "Primary"),
                             error=str(exc)[:500],
                         )
                         db.session.add(log)
@@ -168,6 +180,18 @@ def run_full_database_maintenance(db_path):
     vac_ok, vac_msg = vacuum_database(db_path)
     results["vacuum"] = vac_msg
 
+    failed = [
+        step
+        for step, ok_step in (
+            ("optimize", opt_ok),
+            ("checkpoint", chk_ok),
+            ("reindex", reindex_ok),
+            ("vacuum", vac_ok),
+        )
+        if not ok_step
+    ]
+    if failed:
+        results["failed_steps"] = failed
     return results
 
 

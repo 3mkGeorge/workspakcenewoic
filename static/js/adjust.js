@@ -1,9 +1,12 @@
 "use strict";
+let spAdjustAbort = null;
 function spInitAdjust() {
-  if (window.__spAdjust) return;
-  window.__spAdjust = true;
   const form = document.getElementById("adjust-form");
-  if (!form) return;
+  if (!form || form.dataset.spBound) return;
+  form.dataset.spBound = "1";
+  spAdjustAbort?.abort();
+  spAdjustAbort = new AbortController();
+  const { signal } = spAdjustAbort;
   const isAdmin = form.dataset.admin === "1";
   const products = JSON.parse(document.getElementById("adjust-products").textContent || "[]");
   const byId = Object.fromEntries(products.map((p) => [String(p.id), p]));
@@ -65,7 +68,7 @@ function spInitAdjust() {
   function renderList(filter) {
     const q = (filter || "").trim().toLowerCase();
     const matches = products
-      .filter((p) => !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q))
+      .filter((p) => !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q) || (p.barcode || "").toLowerCase().includes(q))
       .slice(0, 60);
     list.replaceChildren();
     list.hidden = !matches.length;
@@ -113,6 +116,9 @@ function spInitAdjust() {
     qtyError.textContent = next < 0 ? "This would take stock below zero." : "";
     qtyError.hidden = next >= 0;
     saveBtn.disabled = bad;
+    // "Save & New" submits the same adjustment, so it follows the same rule.
+    const saveNew = form.querySelector('button[name="save_and_new"]');
+    if (saveNew) saveNew.disabled = bad;
   }
   const barcodeScanner = document.getElementById("adjust-barcode-scanner");
   const scanFeedback = document.getElementById("scan-feedback");
@@ -168,10 +174,14 @@ function spInitAdjust() {
 
   search.addEventListener("input", () => renderList(search.value));
   search.addEventListener("focus", () => renderList(search.value));
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest("#product-search") && !e.target.closest("#product-list"))
-      list.hidden = true;
-  });
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!e.target.closest("#product-search") && !e.target.closest("#product-list"))
+        list.hidden = true;
+    },
+    { signal },
+  );
   document.querySelectorAll("[data-step]").forEach((b) =>
     b.addEventListener("click", () => {
       const v = parseInt(qty.value || "0", 10) || 0;

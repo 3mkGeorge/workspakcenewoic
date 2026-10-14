@@ -6,6 +6,7 @@ pickup lifecycle queries, cancelled/voided listings, and returned/refunded ledge
 
 from models import (
     PICKUP_TRANSITIONS,
+    SHIPPING_TRANSITIONS,
     Sale,
     ShippingOrder,
     db,
@@ -13,7 +14,7 @@ from models import (
 from services.analytics import bounds
 from sqlalchemy.orm import joinedload
 
-OPEN_SHIPPING = ("Ready For Shipment", "Out For Delivery", "Delivered")
+OPEN_SHIPPING = tuple(status for status, nxt in SHIPPING_TRANSITIONS.items() if nxt)
 TERMINAL_SALES = ("Refunded", "Voided")
 
 
@@ -47,7 +48,8 @@ def get_orders_hub_counters():
     shipped = ShippingOrder.query.filter_by(status="Shipped").count()
     out_for_delivery = ShippingOrder.query.filter_by(status="Out For Delivery").count()
     delivered = ShippingOrder.query.filter_by(status="Delivered").count()
-    total_all = ShippingOrder.query.count() + pickup
+    # The pipeline's "All" stage lists every shipment (pickups have their own tab).
+    total_all = ShippingOrder.query.count()
     return {
         "shipping": shipping,
         "pickup": pickup,

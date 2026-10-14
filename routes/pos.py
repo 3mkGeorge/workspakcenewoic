@@ -41,8 +41,14 @@ def render_pos(sale=None):
                 }
                 for i in sale.items
             ],
-            "customer": {"id": sale.customer_id, "name": sale.customer_name},
+            "customer": (
+                {"id": sale.customer_id, "name": sale.customer_name}
+                if sale.customer_id
+                else None
+            ),
             "invoice_discount": sale.invoice_discount,
+            # The fee billed when the invoice was issued; edits keep it unchanged.
+            "shipping": sale.shipping_charge,
             "note": sale.note,
             "payments": [
                 {"method": p.method, "amount": p.amount} for p in sale.payments

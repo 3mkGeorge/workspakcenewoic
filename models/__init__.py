@@ -290,6 +290,17 @@ class Sale(db.Model):
     def invoice_discount(self):
         return self.discount - sum(item.discount for item in self.items)
 
+    @property
+    def shipping_charge(self):
+        """Shipping fee billed on this invoice, in piastres.
+
+        Invoice total = (subtotal - discount) + tax + shipping fee, where the fee
+        is never discounted and carries no VAT. It is read back from the
+        persisted totals (the same figures the payments add up to), so there is
+        one source of truth; invoices issued before delivery was billed give 0.
+        """
+        return max(0, self.total - (self.subtotal - self.discount + self.tax))
+
     __table_args__ = (
         CheckConstraint(
             "subtotal >= 0 AND discount >= 0 AND discount <= subtotal AND total >= 0"

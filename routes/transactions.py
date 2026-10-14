@@ -70,16 +70,18 @@ def sales():
         per_page=int(g.settings["items_per_page"]),
         error_out=False,
     )
-    selected = (
-        db.get_or_404(Sale, request.args.get("selected", type=int))
-        if request.args.get("selected")
-        else (page.items[0] if page.items else None)
+    requested = (
+        db.session.get(Sale, request.args.get("selected", type=int))
+        if request.args.get("selected", type=int)
+        else None
     )
+    selected = requested or (page.items[0] if page.items else None)
     return render_template(
         "sales/index.html",
         title="Sales",
         page=page,
         selected=selected,
+        open_sale=requested.id if requested else None,
         stats=stats,
         start=start,
         end=end,
@@ -146,29 +148,33 @@ def pickup_status(sid):
 def sale_action(sid, action):
     if action not in ("refund", "delete"):
         raise ValueError("Unknown sale action.")
-    sale = db.get_or_404(Sale, sid)
+    payload = request.get_json(silent=True) or {}
+    reason = payload.get("cancel_reason", request.form.get("cancel_reason", ""))
+    if action == "delete" and (not isinstance(reason, str) or not reason.strip()):
+        raise ValueError("A cancellation reason is required.")
     is_itemized_refund = False
-    if action == "refund":
-        payload = request.get_json(silent=True) or {}
-        items = payload.get("items")
-        if items and isinstance(items, list):
-            from services.sales import refund_sale_items
+    # Serialize refunds/voids: the invoice is loaded and its status checked only
+    # once any concurrent request on it has committed, so a double submit (two
+    # tabs, a retry) cannot restore the same stock twice.
+    with current_app.config["DB_LOCK"]:
+        db.session.expire_all()
+        sale = db.get_or_404(Sale, sid)
+        if action == "refund":
+            items = payload.get("items")
+            if items and isinstance(items, list):
+                from services.sales import refund_sale_items
 
-            refund_sale_items(sale, items)
-            is_itemized_refund = True
-        else:
-            reverse_sale(sale, "Refunded")
-    elif action == "delete":
-        reverse_sale(sale, "Voided")
-        from models import now as model_now
+                refund_sale_items(sale, items)
+                is_itemized_refund = True
+            else:
+                reverse_sale(sale, "Refunded")
+        elif action == "delete":
+            reverse_sale(sale, "Voided")
+            from models import now as model_now
 
-        payload = request.get_json(silent=True) or {}
-        reason = payload.get("cancel_reason", request.form.get("cancel_reason", ""))
-        if not isinstance(reason, str) or not reason.strip():
-            raise ValueError("A cancellation reason is required.")
-        sale.cancel_reason = reason.strip()[:200]
-        sale.cancelled_at = model_now()
-    db.session.commit()
+            sale.cancel_reason = reason.strip()[:200]
+            sale.cancelled_at = model_now()
+        db.session.commit()
     if request.is_json and is_itemized_refund:
         return jsonify(
             success=True,
@@ -201,7 +207,12 @@ def invoice(sid):
 def purchases():
     start, end = date_range()
     a, b = bounds(start, end)
-    query = Purchase.query.filter(Purchase.created_at >= a, Purchase.created_at < b)
+    status = request.args.get("status", "")
+    query = Purchase.query
+    # "open" (Pending + Processing) lists every open order, like the dashboard
+    # count it comes from, unless a date range is chosen explicitly.
+    if status != "open" or request.args.get("from") or request.args.get("to"):
+        query = query.filter(Purchase.created_at >= a, Purchase.created_at < b)
     q = request.args.get("q", "")[:100]
     if q:
         query = query.filter(
@@ -213,8 +224,10 @@ def purchases():
         )
     if request.args.get("supplier_id"):
         query = query.filter_by(supplier_id=integer(request.args["supplier_id"], 1))
-    if request.args.get("status"):
-        query = query.filter_by(status=request.args["status"])
+    if status == "open":
+        query = query.filter(Purchase.status.in_(("Pending", "Processing")))
+    elif status:
+        query = query.filter_by(status=status)
     rows = query.all()
     page = query.order_by(Purchase.id.desc()).paginate(
         page=max(1, request.args.get("page", 1, type=int)),
@@ -222,8 +235,8 @@ def purchases():
         error_out=False,
     )
     selected = (
-        db.get_or_404(Purchase, request.args.get("selected", type=int))
-        if request.args.get("selected")
+        db.session.get(Purchase, request.args.get("selected", type=int))
+        if request.args.get("selected", type=int)
         else None
     )
     stats = dict(
@@ -259,7 +272,7 @@ def purchases():
         start=start,
         end=end,
         suppliers=Supplier.query.filter_by(active=True).all(),
-        chart=trend(),
+        chart=trend((end - start).days + 1, end),  # follows the From/To filter
         top=top,
     )
 

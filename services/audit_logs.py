@@ -4,7 +4,6 @@ Provides audit trail search filtering, facet discovery, and formula-safe CSV exp
 """
 
 import csv
-from datetime import datetime, timedelta
 import io
 
 from models import AuditLog, db
@@ -30,20 +29,14 @@ def query_audit_logs(actor="", action="", search_text="", date_from="", date_to=
                 AuditLog.action.ilike(term, escape="\\"),
             )
         )
-    date_from = (date_from or "").strip()
-    if date_from:
-        try:
-            df = datetime.strptime(date_from, "%Y-%m-%d")
-            query = query.filter(AuditLog.created_at >= df)
-        except ValueError:
-            pass
-    date_to = (date_to or "").strip()
-    if date_to:
-        try:
-            dt = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1)
-            query = query.filter(AuditLog.created_at < dt)
-        except ValueError:
-            pass
+    from services.analytics import day_bounds
+
+    start = day_bounds(date_from)
+    if start:
+        query = query.filter(AuditLog.created_at >= start[0])
+    end = day_bounds(date_to)
+    if end:
+        query = query.filter(AuditLog.created_at < end[1])
     return query.order_by(AuditLog.id.desc())
 
 

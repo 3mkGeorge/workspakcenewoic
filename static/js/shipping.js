@@ -44,11 +44,14 @@ function spInitShipping() {
     Cancelled: "darkred",
   };
 
+  const ui = () => window.StoreProUI;
+  const tr = (text, values) => (ui() ? ui().t(text, values) : text);
   function message(text) {
     if (!box) return;
     box.textContent = text;
     box.hidden = !text;
   }
+  let changing = false;
   const icons = () => { if (window.lucide) window.lucide.createIcons(); };
   async function post(url, body) {
     const response = await fetch(url, {
@@ -228,7 +231,8 @@ function spInitShipping() {
     set("ship-courier-view", formatShipmentValue(order.courier));
     renderTracking(order.tracking_code || "");
     renderTrackingUrl(order.tracking_url || "");
-    if (order.status === "Delivered") {
+    // Closed shipments (delivered, cancelled, returned) cannot be edited.
+    if (order.status === "Delivered" || !(data.transitions || []).length) {
       document.getElementById("courier-edit-toggle")?.setAttribute("hidden", "");
       setCourierMode(false);
     }
@@ -237,7 +241,7 @@ function spInitShipping() {
       const el = document.getElementById(id);
       if (el) el.value = value;
     };
-    syncInput("courier-name", order.courier || "");
+    syncInput("courier-name", order.courier && order.courier !== "—" ? order.courier : "");
     syncInput("courier-tracking", order.tracking_code || "");
     syncInput("courier-tracking-url", order.tracking_url || "");
     if (typeof order.shipping_cost === "number")
@@ -274,10 +278,6 @@ function spInitShipping() {
     if (toggle) toggle.hidden = edit;
   }
   document.getElementById("courier-edit-toggle")?.addEventListener("click", () => setCourierMode(true));
-  document.getElementById("ship-header-edit")?.addEventListener("click", () => {
-    setCourierMode(true);
-    document.getElementById("courier-card")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
   document.getElementById("courier-cancel")?.addEventListener("click", () => setCourierMode(false));
   if (courierForm)
     courierForm.addEventListener("submit", async (event) => {
@@ -296,7 +296,7 @@ function spInitShipping() {
         const codeInput = document.getElementById("courier-tracking");
         if (codeInput && codeInput.value.trim()) body.tracking_code = codeInput.value;
         const urlInput = document.getElementById("courier-tracking-url");
-        if (urlInput && urlInput.value.trim()) body.tracking_url = urlInput.value;
+        if (urlInput) body.tracking_url = urlInput.value.trim();
         const data = await post(`/api/shipping/${orderId}`, body);
         if (!data.changed.length) {
           message("No changes to save.");
@@ -332,7 +332,7 @@ function spInitShipping() {
         return;
       }
       try {
-        const body = { tracking_code: code };
+        const body = { tracking_code: code, ship: true };
         if (shipUrlInput?.value.trim()) body.tracking_url = shipUrlInput.value;
         const data = await post(`/api/shipping/${orderId}`, body);
         bootstrap.Modal.getInstance(document.getElementById("ship-modal"))?.hide();
@@ -356,7 +356,7 @@ function spInitShipping() {
       const target = btn.dataset.status;
       if (target === "Delivered") {
         const now = new Date();
-        document.getElementById("delivered-date").value = now.toISOString().slice(0, 10);
+        document.getElementById("delivered-date").value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
         document.getElementById("delivered-time").value =
           String(now.getHours()).padStart(2, "0") +
           ":" +
@@ -381,32 +381,51 @@ function spInitShipping() {
         return;
       }
       if (target === "Cancelled" && window.StoreProCancel) {
+        const number = root.dataset.orderNumber || orderId;
         window.StoreProCancel.open({
-          title: "Cancel Shipment",
-          context: `Cancelling order ${orderId}. A reason is required.`,
-          confirmLabel: "Confirm Cancel",
+          title: tr("Cancel Shipment"),
+          context: tr("Cancelling {order}. A reason is required.", { order: number }),
+          confirmLabel: tr("Confirm Cancel"),
           onConfirm: async (reason) => {
+            if (changing) return;
+            changing = true;
             try {
               const data = await post(`/api/shipping/${orderId}/status`, {
                 status: target,
                 cancel_reason: reason,
               });
               applyOrder(data);
-              message(`Order moved to ${target}.`);
+              message(tr("Order moved to {status}.", { status: tr(target) }));
             } catch (error) {
               message(error.message);
+            } finally {
+              changing = false;
             }
           },
         });
         return;
       }
-      if (!confirm(`Move order to ${ACTION_LABEL(target).replace(/^Mark (as )?/, "")}?`)) return;
+      if (changing) return;
+      const opts = {
+        title: tr("Change shipment status?"),
+        message: tr("Move this order to {status}?", { status: tr(target) }),
+        detail: root.dataset.orderNumber || "",
+        confirmLabel: tr(ACTION_LABEL(target)),
+        tone: target === "Returned" || target === "Failed Delivery" ? "danger" : "primary",
+      };
+      if (!(await (ui() ? ui().confirm(opts) : Promise.resolve(window.confirm(opts.message))))) return;
+      if (changing) return;
+      changing = true;
+      ui()?.busy(btn, true);
       try {
         const data = await post(`/api/shipping/${orderId}/status`, { status: target });
         applyOrder(data);
-        message(`Order moved to ${target}.`);
+        message(tr("Order moved to {status}.", { status: tr(target) }));
       } catch (error) {
         message(error.message);
+      } finally {
+        changing = false;
+        ui()?.busy(btn, false);
       }
     });
   const deliverForm = document.getElementById("deliver-form");

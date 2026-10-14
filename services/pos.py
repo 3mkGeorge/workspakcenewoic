@@ -61,6 +61,31 @@ def product_json(product, sale=None):
     }
 
 
+MAX_SHIPPING = 1_000_000_000
+
+
+def shipping_fee(payload, sale=None):
+    """The shipping fee billed on an invoice (piastres), counted exactly once.
+
+    Store policy: the fee is added after VAT, carries no VAT and is not reduced
+    by item or invoice discounts. A new delivery sale takes the fee entered at
+    checkout; an invoice being edited keeps the fee it was issued with, because
+    fulfillment is locked once an invoice is saved. The client never supplies
+    the total: it is always recomputed here.
+    """
+    if sale is not None:
+        return sale.shipping_charge
+    data = payload.get("fulfillment")
+    if not isinstance(data, dict) or data.get("method") != "delivery":
+        return 0
+    cost = data.get("shipping_cost", 0)
+    if isinstance(cost, bool) or not isinstance(cost, int):
+        raise ValueError("Shipping cost must be a whole number.")
+    if cost < 0 or cost > MAX_SHIPPING:
+        raise ValueError("Shipping cost is out of range.")
+    return cost
+
+
 def calculate(payload, sale=None):
     raw = payload.get("items", [])
     if not isinstance(raw, list) or len(raw) > 100:
@@ -138,6 +163,7 @@ def calculate(payload, sale=None):
         (Decimal(net) * rate / 10000).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
     )
     profit = net - cost
+    shipping = shipping_fee(payload, sale)
     return {
         "items": lines,
         "subtotal": subtotal,
@@ -146,7 +172,8 @@ def calculate(payload, sale=None):
         "discount": discount,
         "tax_rate": rate,
         "tax": tax,
-        "total": net + tax,
+        "shipping": shipping,
+        "total": net + tax + shipping,
         "cost": cost,
         "profit": profit,
         "margin": round(profit * 100 / net, 2) if net else 0,
@@ -220,6 +247,7 @@ def save_invoice(payload, sale=None):
                     "subtotal": sale.subtotal,
                     "discount": sale.discount,
                     "tax": sale.tax,
+                    "shipping": sale.shipping_charge,
                     "total": sale.total,
                     "cost": sale.cost,
                     "customer": sale.customer_name,
@@ -342,12 +370,13 @@ def apply_fulfillment(payload, sale, is_new):
     if not isinstance(courier, str):
         raise ValueError("Courier must be text.")
     courier = courier.strip()[:80]
-    cost = data.get("shipping_cost", 0)
-    if isinstance(cost, bool) or not isinstance(cost, int):
-        raise ValueError("Shipping cost must be a whole number.")
-    if cost < 0 or cost > 1000000000:
-        raise ValueError("Shipping cost is out of range.")
+    cost = shipping_fee(payload)  # the same fee the invoice total was charged with
     if data.get("update_profile") and sale.customer_id:
+        from services.permissions import require
+
+        # Same rule as the Customers page: changing a customer's contact
+        # details needs customers.edit, whichever screen asks for it.
+        require("customers.edit")
         customer = db.session.get(Customer, sale.customer_id)
         if customer and customer.active:
             if address["phone"]:

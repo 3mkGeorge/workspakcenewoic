@@ -19,6 +19,7 @@ REPORTS = {
     "customers": "Customer Report",
     "suppliers": "Supplier Report",
     "profit": "Profit and Loss",
+    "shipping": "Shipping Report",
 }
 
 

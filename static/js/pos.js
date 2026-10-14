@@ -11,6 +11,8 @@
       return;
     }
     window.__spPosBooted = true;
+    const posListeners = new AbortController();
+    const posSignal = { signal: posListeners.signal };
   const cfg = JSON.parse(root.dataset.config),
     $ = (id) => document.getElementById(id);
   const csrf = document.querySelector('meta[name="csrf-token"]').content;
@@ -36,15 +38,20 @@
     if (action) b.addEventListener("click", action);
     return b;
   }
+  const PACKAGE_ICON =
+    '<svg class="lucide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="m7.5 4.27 9 5.15"/></svg>';
+  function placeholder() {
+    const span = el("span", "pos-product-symbol");
+    span.innerHTML = PACKAGE_ICON;
+    return span;
+  }
   function image(p) {
-    if (!p.image) return el("span", "pos-product-symbol", "▣");
+    if (!p.image) return placeholder();
     const im = el("img", "pos-product-image");
     im.src = p.image;
     im.alt = "";
     im.loading = "lazy";
-    im.addEventListener("error", () => im.replaceWith(el("span", "pos-product-symbol", "▣")), {
-      once: true,
-    });
+    im.addEventListener("error", () => im.replaceWith(placeholder()), { once: true });
     return im;
   }
   let state = {
@@ -148,6 +155,14 @@
         : {}),
     };
   }
+  // Shipping fee billed on this invoice: an edited invoice keeps the fee it was
+  // issued with; a new delivery sale uses the fee entered at checkout. The
+  // server recomputes the same figure and is authoritative.
+  function shippingFee() {
+    if (cfg.initial) return Number(cfg.initial.shipping || 0);
+    const f = state.fulfillment;
+    return f && f.method === "delivery" ? Number(f.shipping_cost || 0) : 0;
+  }
   function totals() {
     const subtotal = state.items.reduce((s, i) => s + i.quantity * i.product.price, 0),
       lineDiscount = state.items.reduce((s, i) => s + i.discount, 0),
@@ -155,12 +170,15 @@
     const discount = lineDiscount + state.invoice_discount,
       net = Math.max(0, subtotal - discount);
     const tax = Number((BigInt(Math.round(net)) * BigInt(cfg.tax_rate) + 5000n) / 10000n);
+    // Total = products − discounts + VAT on products + shipping (no VAT, no discount).
+    const shipping = shippingFee();
     return {
       subtotal,
       lineDiscount,
       discount,
       tax,
-      total: net + tax,
+      shipping,
+      total: net + tax + shipping,
       profit: net - cost,
       margin: net ? (100 * (net - cost)) / net : 0,
     };
@@ -203,10 +221,16 @@
       "receipt-discount": lastTotals.discount,
       "receipt-tax": lastTotals.tax,
       "receipt-total": lastTotals.total,
+      "shipping-total": lastTotals.shipping,
+      "receipt-shipping": lastTotals.shipping,
     }))
       $(id).textContent = money(value);
+    // The fee row appears whenever delivery is billed (a free delivery shows 0.00).
+    const billsShipping = cfg.initial ? lastTotals.shipping > 0 : state.fulfillment?.method === "delivery";
+    $("shipping-row").hidden = !billsShipping;
+    $("receipt-shipping-row").hidden = !billsShipping;
     $("profit-margin").textContent = `${lastTotals.margin.toFixed(1)}%`;
-    $("tax-label").textContent = `VAT (${cfg.tax_rate / 100}%)`;
+    $("tax-label").textContent = `${$("tax-label").dataset.label || "VAT"} (${cfg.tax_rate / 100}%)`;
     $("item-count").textContent = state.items.length;
     $("units-count").textContent = `${state.items.reduce((s, i) => s + i.quantity, 0)} units`;
     const paid = state.payments.reduce((s, p) => s + p.amount, 0),
@@ -325,8 +349,10 @@
     refreshTotals();
   }
   function hasInvalidInputs() {
+    // Inputs in hidden panes (e.g. the delivery form of a saved invoice, whose
+    // fulfillment is locked) cannot be fixed by the cashier, so they never block Save.
     return [...root.querySelectorAll("input")].some(
-      (i) => !i.closest(".modal") && !i.validity.valid,
+      (i) => !i.closest(".modal") && !i.closest("[hidden]") && !i.validity.valid,
     );
   }
   function quantity(item, value) {
@@ -467,6 +493,12 @@
         return false;
       }
       serverIssues = data.issues.map((i) => (typeof i === "string" ? i : i.message));
+      // The server's total is the one that will be charged; never let the screen disagree.
+      if (data.valid && typeof data.total === "number" && data.total !== totals().total)
+        serverIssues.push(
+          window.StoreProUI?.t("The invoice total changed on the server. Review the totals before saving.") ||
+            "The invoice total changed on the server. Review the totals before saving.",
+        );
       let changedProducts = false;
       for (const line of data.items || data.lines || []) {
         const item = state.items.find((i) => i.product.id === line.product.id);
@@ -684,13 +716,12 @@
   );
   function setCustomer(customer) {
     state.customer = customer;
-    $("customer-label").textContent = customer?.name || "Walk-in customer";
+    $("customer-label").textContent = customer?.name || window.StoreProUI?.t("Walk-in customer") || "Walk-in customer";
     $("remove-customer").hidden = !customer;
     $("customer-search").value = "";
     $("customer-results").hidden = true;
     $("customer-search").setAttribute("aria-expanded", "false");
-    if (customer && state.fulfillment?.method === "delivery" && !cfg.initial)
-      autofillAddress();
+    if (state.fulfillment?.method === "delivery" && !cfg.initial) autofillAddress();
     refreshTotals();
   }
   let customerVersion = 0;
@@ -705,7 +736,7 @@
       box.replaceChildren();
       box.hidden = false;
       $("customer-search").setAttribute("aria-expanded", "true");
-      const walk = button("Walk-in customer", "", () => {
+      const walk = button(window.StoreProUI?.t("Walk-in customer") || "Walk-in customer", "", () => {
         setCustomer(null);
         changed(false);
       });
@@ -873,12 +904,28 @@
   async function autofillAddress() {
     const customer = state.customer;
     const f = state.fulfillment;
+    // Values we filled in for a previous customer are cleared when the customer
+    // changes (anything the cashier typed over is kept), then refilled below.
+    const owner = customer?.id ?? null;
+    if (f._autoFor !== owner) {
+      for (const [key, value] of Object.entries(f._auto || {})) {
+        const el = $(SHIP_IDS[key]);
+        if (el && el.value === value) {
+          el.value = "";
+          f[key] = "";
+        }
+      }
+      f._auto = {};
+      f._autoFor = owner;
+      f._autofilled_for = null;
+    }
+    const auto = f._auto || (f._auto = {});
     if (customer?.name && !$("ship-name").value) {
-      f.name = customer.name;
+      f.name = auto.name = customer.name;
       $("ship-name").value = customer.name;
     }
     if (customer?.phone && !$("ship-phone").value) {
-      f.phone = customer.phone;
+      f.phone = auto.phone = customer.phone;
       $("ship-phone").value = customer.phone;
     }
     if (!customer?.id || f._autofilled_for === customer.id) return;
@@ -900,7 +947,7 @@
       for (const [serverKey, key] of Object.entries(serverToCompact)) {
         const id = SHIP_IDS[key];
         if ($(id) && !$(id).value && data.address[serverKey]) {
-          f[key] = data.address[serverKey];
+          f[key] = auto[key] = data.address[serverKey];
           $(id).value = data.address[serverKey];
         }
       }
@@ -1102,9 +1149,9 @@
         "This draft changed in another tab. Automatic draft saving is paused here. Finish this invoice in one tab only; refresh to load the latest saved draft.",
       );
     }
-  });
-  window.addEventListener("pagehide", saveDraft);
-  window.addEventListener("beforeunload", saveDraft);
+  }, posSignal);
+  window.addEventListener("pagehide", saveDraft, posSignal);
+  window.addEventListener("beforeunload", saveDraft, posSignal);
   window.__spPosDraftTimer = setInterval(saveDraft, 10000);
   function finishSaved(result) {
     saved = true;
@@ -1221,6 +1268,16 @@
         return;
       }
       if (event.key === "Escape" && event.target !== $("product-search")) {
+        // Escape inside the customer picker only closes its list; it must
+        // never start discarding the sale.
+        if (event.target.closest?.("#customer-search, #customer-results, .pos-customer-search")) {
+          event.preventDefault();
+          $("customer-results").hidden = true;
+          $("customer-search").setAttribute("aria-expanded", "false");
+          if (event.target !== $("customer-search")) $("customer-search").focus();
+          return;
+        }
+        if (document.querySelector("[data-sp-popup]:not([hidden])")) return; // a menu closes first
         event.preventDefault();
         cancel();
         return;
@@ -1260,15 +1317,19 @@
         scanBuffer = "";
       } else if (!["Shift", "CapsLock"].includes(event.key)) scanBuffer = "";
     },
-    true,
+    { capture: true, signal: posListeners.signal },
   );
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".pos-search-wrap")) closeSearch();
-    if (!e.target.closest(".pos-customer-search")) {
-      $("customer-results").hidden = true;
-      $("customer-search").setAttribute("aria-expanded", "false");
-    }
-  });
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!e.target.closest(".pos-search-wrap")) closeSearch();
+      if (!e.target.closest(".pos-customer-search")) {
+        $("customer-results").hidden = true;
+        $("customer-search").setAttribute("aria-expanded", "false");
+      }
+    },
+    posSignal,
+  );
   window.__spPosQuoteTimer = setInterval(() => {
     if (
       !document.hidden &&
@@ -1279,9 +1340,13 @@
     )
       validateQuote();
   }, 10000);
-  window.addEventListener("focus", () => {
-    if (state.items.length && !busy && !saved) validateQuote();
-  });
+  window.addEventListener(
+    "focus",
+    () => {
+      if (state.items.length && !busy && !saved) validateQuote();
+    },
+    posSignal,
+  );
   const heldKey = `storepro-pos-held-v1:${cfg.draft_scope}`;
   function esc(s) { const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
   function getHeldSales() {
@@ -1326,6 +1391,7 @@
     localStorage.removeItem(draftKey);
     dirty = false;
     $("invoice-discount").value = "0.00";
+    $("invoice-discount").setCustomValidity("");
     if ($("sale-note")) $("sale-note").value = "";
     setCustomer(null);
     renderFulfillment();
@@ -1381,7 +1447,19 @@
     }
   }
 
-  function resumeHeldSale(holdId) {
+  async function resumeHeldSale(holdId) {
+    if (!getHeldSales().some(h => h.id === holdId)) return;
+    if (state.items.length) {
+      const ui = window.StoreProUI;
+      const tr = (text) => (ui ? ui.t(text) : text);
+      const opts = {
+        title: tr("Resume held sale?"),
+        message: tr("Replace the items currently in this invoice with the held sale?"),
+        confirmLabel: tr("Replace items"),
+      };
+      if (!(await (ui ? ui.confirm(opts) : Promise.resolve(window.confirm(opts.message))))) return;
+    }
+    // Re-read after the dialog: the hold may have been resumed or discarded meanwhile.
     const list = getHeldSales();
     const idx = list.findIndex(h => h.id === holdId);
     if (idx === -1) return;
@@ -1398,6 +1476,7 @@
     if (hold.fulfillment) state.fulfillment = hold.fulfillment;
 
     $("invoice-discount").value = decimal(state.invoice_discount);
+    $("invoice-discount").setCustomValidity("");
     if ($("sale-note")) $("sale-note").value = state.note;
     setCustomer(state.customer);
     renderFulfillment();
@@ -1420,12 +1499,16 @@
   if (holdBtn) holdBtn.onclick = holdCurrentSale;
   const resumeBtn = $("resume-sale");
   if (resumeBtn) resumeBtn.onclick = showHeldModal;
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "F6") {
+  window.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key !== "F6") return;
       e.preventDefault();
+      if (busy || saved || root.querySelector(".modal.show")) return;
       holdCurrentSale();
-    }
-  });
+    },
+    posSignal,
+  );
 
   async function initialize() {
     if (cfg.initial) state = { ...state, ...cfg.initial, token: cfg.token };
@@ -1476,16 +1559,22 @@
   // Unsaved-invoice guard + teardown for SPA navigation.
   window.__storeproGuard = () =>
     dirty && !saved && state.items.length
-      ? "Unsaved invoice items will be lost. Leave anyway?"
+      ? document.getElementById("sp-ui-strings")?.dataset.leaveMessage ||
+        "You have unsaved changes. They will be lost if you leave."
       : null;
-  document.addEventListener("storepro:leave", () => {
-    clearInterval(window.__spPosDraftTimer);
-    clearInterval(window.__spPosQuoteTimer);
-    try {
-      saveDraft();
-    } catch {}
-    window.__storeproGuard = null;
-  });
+  document.addEventListener(
+    "storepro:leave",
+    () => {
+      clearInterval(window.__spPosDraftTimer);
+      clearInterval(window.__spPosQuoteTimer);
+      try {
+        saveDraft();
+      } catch {}
+      window.__storeproGuard = null;
+      posListeners.abort();
+    },
+    posSignal,
+  );
   }
   if (document.readyState !== "loading") bootPOS();
   else document.addEventListener("DOMContentLoaded", bootPOS);

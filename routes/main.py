@@ -18,9 +18,12 @@ def dashboard():
         perm_can_settings=can("settings.view"),
         perm_can_sales=can("sales.view"),
     )
+    from services.analytics import local_today
+
     return render_template(
         "dashboard/index.html",
         title="Dashboard",
+        today=local_today().isoformat(),
         **data,
     )
 

@@ -8,6 +8,7 @@
   const CONTENT = "main.content";
   const scrollPos = new Map();
   let navSeq = 0;
+  let currentPage = location.pathname + location.search;
 
   window.StorePro = window.StorePro || {};
   const StorePro = window.StorePro;
@@ -118,15 +119,62 @@
     });
   }
 
-  async function render(url, { push = true, restoreScroll = false, formData = null, method = "GET" } = {}) {
-    const seq = ++navSeq;
-    if (typeof window.__storeproGuard === "function") {
-      const verdict = window.__storeproGuard(push ? url : null);
-      if (verdict === false) return false;
-      if (typeof verdict === "string" && verdict && !confirm(verdict)) return false;
+  const uiText = (key, fallback) => document.getElementById("sp-ui-strings")?.dataset[key] || fallback;
+
+  // Pages with unsaved work register window.__storeproGuard; it returns a
+  // message (ask first), false (block) or nothing (leave freely).
+  async function mayLeave(url) {
+    if (typeof window.__storeproGuard !== "function") return true;
+    const verdict = window.__storeproGuard(url);
+    if (verdict === false) return false;
+    if (typeof verdict !== "string" || !verdict) return true;
+    if (!window.StoreProUI) return window.confirm(verdict);
+    return window.StoreProUI.confirm({
+      title: uiText("leaveTitle", "Leave this page?"),
+      message: verdict,
+      confirmLabel: uiText("leaveOk", "Leave page"),
+    });
+  }
+
+  // Keep the persistent shell in step with the page just rendered.
+  function syncShell(doc, nextHtml) {
+    let stored = null;
+    try {
+      stored = localStorage.getItem("storepro-theme");
+    } catch {}
+    const theme = nextHtml.getAttribute("data-bs-theme");
+    // A store-wide theme saved in Settings applies unless this browser chose its own.
+    if (!stored && theme && theme !== document.documentElement.dataset.bsTheme) {
+      document.documentElement.dataset.bsTheme = theme;
+      document.dispatchEvent(new CustomEvent("storepro:theme"));
     }
-    document.dispatchEvent(new CustomEvent("storepro:leave"));
-    closeModals();
+    // The topbar search shows the query only on the search results page.
+    const box = document.querySelector(".global-search input[name=q]");
+    const next = doc.querySelector(".global-search input[name=q]");
+    if (box && next && document.activeElement !== box) box.value = next.value;
+    // Alert dot follows the server's latest state.
+    const bell = document.querySelector(".topbar .notification");
+    const nextBell = doc.querySelector(".topbar .notification");
+    if (bell && nextBell) {
+      const dot = nextBell.querySelector("b");
+      bell.querySelector("b")?.remove();
+      if (dot) bell.append(document.importNode(dot, true));
+    }
+    // Store name, the signed-in user's name/role, and the menu entries the
+    // user's permissions allow can all change on a settings save.
+    ["#sidebar .brand > span", "#sidebar nav", "#sidebar .user-card", ".topbar .header-user", "#user-menu .sp-menu-head"].forEach((sel) => {
+      const here = document.querySelector(sel);
+      const there = doc.querySelector(sel);
+      if (here && there && here.innerHTML !== there.innerHTML)
+        here.replaceChildren(...[...there.childNodes].map((n) => document.importNode(n, true)));
+    });
+  }
+
+  async function render(url, { push = true, restoreScroll = false, formData = null, method = "GET", guard = true, keepScroll = false } = {}) {
+    const keptY = window.scrollY;
+    const seq = ++navSeq;
+    if (guard && !(await mayLeave(push ? url : null))) return false;
+    if (seq !== navSeq) return false;
     if (!restoreScroll) scrollPos.set(location.pathname + location.search, window.scrollY);
     setLoading(true);
     let response;
@@ -143,12 +191,33 @@
       });
     } catch {
       setLoading(false);
+      if (formData) {
+        // Never replay a POST as a GET: keep the form as typed and say why.
+        window.StoreProUI?.toast(uiText("failed", "The request failed. Check your connection and try again."), "error");
+        return false;
+      }
       location.href = url; // offline or failed: fall back to full load
       return false;
     }
     if (seq !== navSeq) return false;
     const ct = response.headers.get("content-type") || "";
     const cd = response.headers.get("content-disposition") || "";
+    if (ct.includes("application/json") && !cd.includes("attachment")) {
+      setLoading(false);
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        if (data.code === "session_expired") {
+          location.href = "/login";
+          return false;
+        }
+        const text = data.error || `Request failed (${response.status}).`;
+        if (window.StoreProUI) window.StoreProUI.toast(text, "error");
+        else StorePro.toast?.(text);
+        return false;
+      }
+      if (data.redirect) return render(data.redirect, { push: true, guard: false });
+      return render(location.href, { push: false, guard: false });
+    }
     if (!ct.includes("text/html") || cd.includes("attachment")) {
       setLoading(false);
       location.href = response.url || url;
@@ -157,20 +226,37 @@
     const html = await response.text();
     const doc = new DOMParser().parseFromString(html, "text/html");
     const nextMain = doc.querySelector(CONTENT);
-    if (!doc.getElementById("sidebar") || !nextMain) {
-      // e.g. session expired and server returned the login page
+    const html_ = document.documentElement;
+    const nextHtml = doc.documentElement;
+    if (
+      !doc.getElementById("sidebar") ||
+      !nextMain ||
+      ["lang", "dir"].some((k) => nextHtml.getAttribute(k) !== html_.getAttribute(k))
+    ) {
+      // Login page, or language changed: the shell itself must be re-rendered.
+      // (The theme is not compared: the toggle is a per-browser choice the
+      // server does not know about, and comparing it forced full reloads.)
       setLoading(false);
       location.href = response.url || url;
       return false;
     }
     await ensureAssets(doc);
     if (seq !== navSeq) return false;
+    document.dispatchEvent(new CustomEvent("storepro:leave"));
+    closeModals();
     document.title = doc.title;
+    syncShell(doc, nextHtml);
     const main = document.querySelector(CONTENT);
     main.replaceChildren(...[...nextMain.childNodes].map((n) => document.importNode(n, true)));
-    updateNav(response.url || url);
-    if (push) history.pushState({ sp: true }, "", response.url || url);
-    else history.replaceState({ sp: true }, "", response.url || url);
+    const hash = new URL(url, location.href).hash;
+    const finalUrl = (response.url || url).split("#")[0] + hash;
+    updateNav(finalUrl);
+    // Re-rendering the page you are on (a save that redirects back, or a
+    // second click on the active link) must not stack duplicate Back entries.
+    const samePage = new URL(finalUrl, location.href).href === location.href;
+    if (push && !samePage) history.pushState({ sp: true }, "", finalUrl);
+    else history.replaceState({ sp: true }, "", finalUrl);
+    currentPage = location.pathname + location.search;
     setLoading(false);
     main.classList.add("sp-enter");
     requestAnimationFrame(() => requestAnimationFrame(() => main.classList.remove("sp-enter")));
@@ -181,7 +267,12 @@
       }
     } catch {}
     document.dispatchEvent(new CustomEvent("storepro:content"));
-    if (restoreScroll) {
+    const anchor = hash && document.getElementById(decodeURIComponent(hash.slice(1)));
+    if (anchor) {
+      anchor.scrollIntoView();
+    } else if (keepScroll) {
+      window.scrollTo(0, keptY);
+    } else if (restoreScroll) {
       const y = scrollPos.get(location.pathname + location.search);
       window.scrollTo(0, y === undefined ? 0 : y);
     } else {
@@ -191,7 +282,8 @@
     return true;
   }
 
-  document.addEventListener("click", (e) => {
+  // Registered on window so page scripts' document-level handlers run first and can preventDefault.
+  window.addEventListener("click", (e) => {
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey)
       return;
     const a = e.target.closest("a[href]");
@@ -200,28 +292,59 @@
     render(a.href, { push: true });
   });
 
-  document.addEventListener("submit", (e) => {
+  // Read action/method as attributes: a field named "action" or "method" (an
+  // audit filter, a maintenance button) shadows the form's own properties.
+  const actionOf = (form) => new URL(form.getAttribute("action") || location.href, location.href).href;
+  const methodOf = (form) => (form.getAttribute("method") || "get").toLowerCase();
+  const posting = new WeakSet();
+  window.addEventListener("submit", (e) => {
     const form = e.target;
     if (!(form instanceof HTMLFormElement) || e.defaultPrevented) return;
-    if (form.method.toLowerCase() === "get") {
+    const submitter = e.submitter && form.contains(e.submitter) ? e.submitter : null;
+    const data = new FormData(form);
+    if (submitter?.name) data.append(submitter.name, submitter.value);
+    if (methodOf(form) === "get") {
       e.preventDefault();
-      const url = new URL(form.action || location.href, location.href);
-      url.search = new URLSearchParams(new FormData(form)).toString();
+      const url = new URL(actionOf(form));
+      url.search = new URLSearchParams(data).toString();
       render(url.toString(), { push: true });
     } else {
       e.preventDefault();
-      render(form.action || location.href, {
+      if (posting.has(form)) return; // double click or Enter twice: one request only
+      posting.add(form);
+      const button = submitter || form.querySelector("button[type=submit],button:not([type])");
+      window.StoreProUI?.busy(button, true);
+      render(actionOf(form), {
         push: true,
-        formData: new FormData(form),
+        formData: data,
         method: "post",
+        // Submitting the page's own form is not leaving it; shell forms (logout) are.
+        guard: !form.closest(CONTENT),
+      }).finally(() => {
+        posting.delete(form);
+        window.StoreProUI?.busy(button, false);
       });
     }
   });
 
-  window.addEventListener("popstate", () => {
-    render(location.href, { push: false, restoreScroll: true });
+  window.addEventListener("popstate", async () => {
+    const target = location.pathname + location.search;
+    if (target === currentPage) return; // only the #hash changed
+    const left = location.href;
+    if (!(await mayLeave(null))) {
+      // Cancelled: put the address bar back on the page that is still shown.
+      history.pushState({ sp: true }, "", currentPage);
+      return;
+    }
+    if (location.href !== left) return; // another Back/Forward happened meanwhile
+    render(location.href, { push: false, restoreScroll: true, guard: false });
   });
 
   StorePro.navigate = (url) => render(url, { push: true });
-  StorePro.reload = () => render(location.href, { push: false });
+  StorePro.notePage = () => (currentPage = location.pathname + location.search);
+  StorePro.reload = () => render(location.href, { push: false, guard: false });
+  StorePro.replace = (url) => render(url, { push: false, guard: false });
+  // Re-render the current page after an in-place change (counters, tabs, rows)
+  // without moving the user's scroll position.
+  StorePro.refreshInPlace = () => render(location.href, { push: false, guard: false, keepScroll: true });
 })();

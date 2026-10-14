@@ -1,0 +1,1625 @@
+[
+ {
+  "id": "p-vortek-v1-air",
+  "sku": "VTK-V1A-BLK",
+  "slug": "vortek-v1-air",
+  "name": "Vortek V1 Air",
+  "brand": "brand-vortek",
+  "category": "cat-mice",
+  "summary": {
+   "en": "49 g wireless symmetrical mouse with a 4K polling receiver.",
+   "ar": "ماوس لاسلكي متماثل بوزن 49 جم ومستقبل 4K."
+  },
+  "description": {
+   "en": "A low, symmetrical shell for claw and fingertip grips. The optical sensor tracks cleanly to 26,000 DPI, and the bundled receiver polls at up to 4,000 Hz.",
+   "ar": "هيكل منخفض ومتماثل يناسب قبضة المخلب وأطراف الأصابع. حساس بصري يصل إلى 26,000 DPI ومستقبل يدعم معدل استجابة حتى 4,000 هرتز."
+  },
+  "specs": [
+   [
+    "weight",
+    "49 g"
+   ],
+   [
+    "sensor",
+    "Optical, 26,000 DPI"
+   ],
+   [
+    "polling",
+    "Up to 4,000 Hz",
+    "حتى 4,000 هرتز"
+   ],
+   [
+    "connectivity",
+    "2.4 GHz wireless, USB-C",
+    "لاسلكي 2.4 جيجاهرتز، USB-C"
+   ],
+   [
+    "battery",
+    "Up to 90 h",
+    "حتى 90 ساعة"
+   ],
+   [
+    "shape",
+    "Symmetrical, right-hand friendly",
+    "متماثل، مريح لليد اليمنى"
+   ]
+  ],
+  "keywords": [
+   "wireless",
+   "lightweight",
+   "4k",
+   "fps",
+   "لاسلكي",
+   "خفيف"
+  ],
+  "featured": true,
+  "rank": 1,
+  "published": "2026-08-02",
+  "max": 5,
+  "art": {
+   "kind": "mouse",
+   "style": "sym",
+   "body": "#17191d",
+   "accent": "#b8f53b"
+  },
+  "price": 329900,
+  "compareAt": 379900,
+  "saleEnds": "2026-11-30T23:59:59+02:00",
+  "stock": 14,
+  "discontinued": false
+ },
+ {
+  "id": "p-nexa-falcon-pro",
+  "sku": "NXL-FCP-WHT",
+  "slug": "nexa-falcon-pro",
+  "name": "Nexa Labs Falcon Pro",
+  "brand": "brand-nexa",
+  "category": "cat-mice",
+  "summary": {
+   "en": "Ergonomic 58 g wireless mouse for palm and relaxed claw grips.",
+   "ar": "ماوس لاسلكي مريح بوزن 58 جم لقبضة الكف والمخلب المريح."
+  },
+  "description": {
+   "en": "A right-handed ergonomic shape with a supportive hump and textured side grips. Optical switches remove double-click wear.",
+   "ar": "شكل مريح لليد اليمنى مع ظهر داعم وجوانب محببة. أزرار ضوئية تمنع مشكلة النقر المزدوج."
+  },
+  "specs": [
+   [
+    "weight",
+    "58 g"
+   ],
+   [
+    "sensor",
+    "Optical, 30,000 DPI"
+   ],
+   [
+    "polling",
+    "1,000 Hz",
+    "1,000 هرتز"
+   ],
+   [
+    "connectivity",
+    "2.4 GHz wireless, USB-C",
+    "لاسلكي 2.4 جيجاهرتز، USB-C"
+   ],
+   [
+    "battery",
+    "Up to 80 h",
+    "حتى 80 ساعة"
+   ],
+   [
+    "shape",
+    "Ergonomic, right-handed",
+    "مريح، لليد اليمنى"
+   ]
+  ],
+  "keywords": [
+   "ergonomic",
+   "wireless",
+   "palm",
+   "مريح"
+  ],
+  "featured": false,
+  "rank": 3,
+  "published": "2026-06-18",
+  "max": 5,
+  "art": {
+   "kind": "mouse",
+   "style": "ergo",
+   "body": "#e6e9ee",
+   "accent": "#e9edf1"
+  },
+  "price": 449900,
+  "compareAt": 499900,
+  "saleEnds": "2026-11-30T23:59:59+02:00",
+  "stock": 4,
+  "discontinued": false
+ },
+ {
+  "id": "p-vortek-v2-wired",
+  "sku": "VTK-V2W-BLK",
+  "slug": "vortek-v2-wired",
+  "name": "Vortek V2 Wired",
+  "brand": "brand-vortek",
+  "category": "cat-mice",
+  "summary": {
+   "en": "55 g wired mouse with a flexible paracord cable.",
+   "ar": "ماوس سلكي بوزن 55 جم وكابل باراكورد مرن."
+  },
+  "description": {
+   "en": "The V1 shape with a lighter-on-the-wallet wired build. The paracord cable keeps drag to a minimum.",
+   "ar": "نفس شكل V1 بإصدار سلكي أوفر. كابل الباراكورد يقلل السحب إلى الحد الأدنى."
+  },
+  "specs": [
+   [
+    "weight",
+    "55 g"
+   ],
+   [
+    "sensor",
+    "Optical, 26,000 DPI"
+   ],
+   [
+    "polling",
+    "1,000 Hz",
+    "1,000 هرتز"
+   ],
+   [
+    "connectivity",
+    "Wired, 1.8 m paracord",
+    "سلكي، باراكورد 1.8 م"
+   ],
+   [
+    "shape",
+    "Symmetrical",
+    "متماثل"
+   ]
+  ],
+  "keywords": [
+   "wired",
+   "paracord",
+   "budget",
+   "سلكي"
+  ],
+  "featured": false,
+  "rank": 5,
+  "published": "2026-03-11",
+  "max": 5,
+  "art": {
+   "kind": "mouse",
+   "style": "sym",
+   "body": "#17191d",
+   "accent": "#3be0f5"
+  },
+  "price": 149900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 30,
+  "discontinued": false
+ },
+ {
+  "id": "p-nexa-wraith-mini",
+  "sku": "NXL-WRM-BLK",
+  "slug": "nexa-wraith-mini",
+  "name": "Nexa Labs Wraith Mini",
+  "brand": "brand-nexa",
+  "category": "cat-mice",
+  "summary": {
+   "en": "Small 45 g wireless mouse for small hands and fingertip grip.",
+   "ar": "ماوس لاسلكي صغير بوزن 45 جم للأيدي الصغيرة وقبضة الأطراف."
+  },
+  "description": {
+   "en": "A compact symmetrical shell with a short hump, sized for hands under 18 cm.",
+   "ar": "هيكل متماثل صغير بارتفاع قصير، مناسب للأيدي الأقل من 18 سم."
+  },
+  "specs": [
+   [
+    "weight",
+    "45 g"
+   ],
+   [
+    "sensor",
+    "Optical, 26,000 DPI"
+   ],
+   [
+    "polling",
+    "Up to 2,000 Hz",
+    "حتى 2,000 هرتز"
+   ],
+   [
+    "connectivity",
+    "2.4 GHz wireless",
+    "لاسلكي 2.4 جيجاهرتز"
+   ],
+   [
+    "shape",
+    "Small symmetrical",
+    "متماثل صغير"
+   ]
+  ],
+  "keywords": [
+   "mini",
+   "small",
+   "wireless",
+   "صغير"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-09-26",
+  "max": 5,
+  "art": {
+   "kind": "mouse",
+   "style": "mini",
+   "body": "#17191d",
+   "accent": "#a78bfa"
+  },
+  "price": 389900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 0,
+  "discontinued": false
+ },
+ {
+  "id": "p-vortek-hex-ultralight",
+  "sku": "VTK-HEX-LIM",
+  "slug": "vortek-hex-ultralight",
+  "name": "Vortek Hex Ultralight",
+  "brand": "brand-vortek",
+  "category": "cat-mice",
+  "summary": {
+   "en": "39 g honeycomb-shell wired mouse built for flick shots.",
+   "ar": "ماوس سلكي بهيكل مفرغ بوزن 39 جم للحركات السريعة."
+  },
+  "description": {
+   "en": "An ultralight perforated shell with reinforced ribs and low-friction skates fitted from the box.",
+   "ar": "هيكل خفيف جدًا ومفرغ بدعامات مقواة وسكيتس منخفضة الاحتكاك مركبة من المصنع."
+  },
+  "specs": [
+   [
+    "weight",
+    "39 g"
+   ],
+   [
+    "sensor",
+    "Optical, 26,000 DPI"
+   ],
+   [
+    "polling",
+    "8,000 Hz",
+    "8,000 هرتز"
+   ],
+   [
+    "connectivity",
+    "Wired, 1.8 m paracord",
+    "سلكي، باراكورد 1.8 م"
+   ],
+   [
+    "shape",
+    "Symmetrical, honeycomb",
+    "متماثل، مفرغ"
+   ]
+  ],
+  "keywords": [
+   "honeycomb",
+   "ultralight",
+   "8k",
+   "مفرغ"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-10-04",
+  "max": 5,
+  "art": {
+   "kind": "mouse",
+   "style": "honey",
+   "body": "#17191d",
+   "accent": "#b8f53b"
+  },
+  "price": 279900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 9,
+  "discontinued": false
+ },
+ {
+  "id": "p-glidex-control-xl",
+  "sku": "GLX-CTL-XL",
+  "slug": "glidex-control-xl",
+  "name": "Glidex Control XL",
+  "brand": "brand-glidex",
+  "category": "cat-mousepads",
+  "summary": {
+   "en": "900 × 400 mm control cloth pad with stitched edges.",
+   "ar": "ماوس باد قماش للتحكم بمقاس 900 × 400 مم وحواف مخيطة."
+  },
+  "description": {
+   "en": "A dense weave with high stopping power for tactical shooters. Covers the whole desk for keyboard and mouse.",
+   "ar": "نسيج كثيف بقدرة إيقاف عالية لألعاب التصويب التكتيكية. يغطي المكتب للكيبورد والماوس."
+  },
+  "specs": [
+   [
+    "surface",
+    "Control cloth",
+    "قماش تحكم"
+   ],
+   [
+    "size",
+    "900 × 400 mm",
+    "900 × 400 مم"
+   ],
+   [
+    "thickness",
+    "4 mm",
+    "4 مم"
+   ],
+   [
+    "base",
+    "Natural rubber",
+    "مطاط طبيعي"
+   ]
+  ],
+  "keywords": [
+   "control",
+   "xl",
+   "desk mat",
+   "تحكم"
+  ],
+  "featured": true,
+  "rank": null,
+  "published": "2026-05-02",
+  "max": 5,
+  "art": {
+   "kind": "mousepad",
+   "style": "cloth",
+   "body": "#17191d",
+   "accent": "#b8f53b"
+  },
+  "price": 119900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 25,
+  "discontinued": false
+ },
+ {
+  "id": "p-glidex-speed-glass-m",
+  "sku": "GLX-GLS-M",
+  "slug": "glidex-speed-glass-m",
+  "name": "Glidex Speed Glass M",
+  "brand": "brand-glidex",
+  "category": "cat-mousepads",
+  "summary": {
+   "en": "Tempered glass pad with an etched, ultra-fast surface.",
+   "ar": "ماوس باد زجاج مقسى بسطح محفور سريع جدًا."
+  },
+  "description": {
+   "en": "Consistent glide that does not wear in. Rounded corners and a non-slip silicone base.",
+   "ar": "انزلاق ثابت لا يتأثر بالاستخدام. زوايا مستديرة وقاعدة سيليكون مانعة للانزلاق."
+  },
+  "specs": [
+   [
+    "surface",
+    "Tempered glass",
+    "زجاج مقسى"
+   ],
+   [
+    "size",
+    "490 × 420 mm",
+    "490 × 420 مم"
+   ],
+   [
+    "thickness",
+    "4 mm",
+    "4 مم"
+   ],
+   [
+    "base",
+    "Silicone",
+    "سيليكون"
+   ]
+  ],
+  "keywords": [
+   "glass",
+   "speed",
+   "زجاج",
+   "سرعة"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-07-14",
+  "max": 5,
+  "art": {
+   "kind": "mousepad",
+   "style": "glass",
+   "body": "#17191d",
+   "accent": "#3be0f5"
+  },
+  "price": 239900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 6,
+  "discontinued": false
+ },
+ {
+  "id": "p-glidex-hybrid-l",
+  "sku": "GLX-HYB-L",
+  "slug": "glidex-hybrid-l",
+  "name": "Glidex Hybrid L",
+  "brand": "brand-glidex",
+  "category": "cat-mousepads",
+  "summary": {
+   "en": "Balanced hybrid cloth surface, 480 × 400 mm.",
+   "ar": "سطح قماش هجين متوازن بمقاس 480 × 400 مم."
+  },
+  "description": {
+   "en": "Fast initial glide with enough stopping power for micro-adjustments.",
+   "ar": "انزلاق أولي سريع مع قدرة إيقاف كافية للتعديلات الدقيقة."
+  },
+  "specs": [
+   [
+    "surface",
+    "Hybrid cloth",
+    "قماش هجين"
+   ],
+   [
+    "size",
+    "480 × 400 mm",
+    "480 × 400 مم"
+   ],
+   [
+    "thickness",
+    "3.5 mm",
+    "3.5 مم"
+   ]
+  ],
+  "keywords": [
+   "hybrid",
+   "balanced",
+   "هجين"
+  ],
+  "featured": false,
+  "rank": 4,
+  "published": "2026-04-20",
+  "max": 5,
+  "art": {
+   "kind": "mousepad",
+   "style": "cloth",
+   "body": "#17191d",
+   "accent": "#ff9a3b"
+  },
+  "price": 89900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 18,
+  "discontinued": false
+ },
+ {
+  "id": "p-vortek-deskmat-topo",
+  "sku": "VTK-DSK-TOPO",
+  "slug": "vortek-deskmat-topo",
+  "name": "Vortek Deskmat Topo",
+  "brand": "brand-vortek",
+  "category": "cat-mousepads",
+  "summary": {
+   "en": "900 × 400 mm desk mat with a topographic print.",
+   "ar": "ديسك مات 900 × 400 مم بنقشة طبوغرافية."
+  },
+  "description": {
+   "en": "A soft everyday surface for work and play, with a water-resistant coating.",
+   "ar": "سطح ناعم للاستخدام اليومي في العمل واللعب مع طبقة مقاومة للماء."
+  },
+  "specs": [
+   [
+    "surface",
+    "Speed cloth",
+    "قماش سرعة"
+   ],
+   [
+    "size",
+    "900 × 400 mm",
+    "900 × 400 مم"
+   ],
+   [
+    "thickness",
+    "3 mm",
+    "3 مم"
+   ]
+  ],
+  "keywords": [
+   "deskmat",
+   "printed",
+   "ديسك مات"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-02-08",
+  "max": 5,
+  "art": {
+   "kind": "mousepad",
+   "style": "topo",
+   "body": "#17191d",
+   "accent": "#b8f53b"
+  },
+  "price": 74900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 40,
+  "discontinued": false
+ },
+ {
+  "id": "p-glidex-dots-pro",
+  "sku": "GLX-DOT-32",
+  "slug": "glidex-dots-pro",
+  "name": "Glidex Dots Pro (32 pcs)",
+  "brand": "brand-glidex",
+  "category": "cat-skates",
+  "summary": {
+   "en": "32 rounded PTFE dots that fit almost any mouse.",
+   "ar": "32 نقطة PTFE مستديرة تناسب معظم الماوسات."
+  },
+  "description": {
+   "en": "Pure PTFE dots with rounded edges for a smooth, scratch-free glide on cloth pads.",
+   "ar": "نقاط PTFE نقية بحواف مستديرة لانزلاق ناعم دون خدش على الأسطح القماشية."
+  },
+  "specs": [
+   [
+    "material",
+    "Pure PTFE",
+    "PTFE نقي"
+   ],
+   [
+    "count",
+    "32 dots",
+    "32 نقطة"
+   ],
+   [
+    "thickness",
+    "0.8 mm",
+    "0.8 مم"
+   ],
+   [
+    "compatibility",
+    "Universal",
+    "عالمي"
+   ]
+  ],
+  "keywords": [
+   "ptfe",
+   "dots",
+   "universal",
+   "نقاط"
+  ],
+  "featured": false,
+  "rank": 2,
+  "published": "2026-06-01",
+  "max": 10,
+  "art": {
+   "kind": "skates",
+   "style": "dots",
+   "body": "#17191d",
+   "accent": "#e9edf1"
+  },
+  "price": 34900,
+  "compareAt": 44900,
+  "saleEnds": "2026-11-30T23:59:59+02:00",
+  "stock": 50,
+  "discontinued": false
+ },
+ {
+  "id": "p-glidex-glass-feet-v1",
+  "sku": "GLX-GLF-V1",
+  "slug": "glidex-glass-feet-v1",
+  "name": "Glidex Glass Feet for V1 Air",
+  "brand": "brand-glidex",
+  "category": "cat-skates",
+  "summary": {
+   "en": "Pre-cut glass skates shaped for the Vortek V1 Air.",
+   "ar": "سكيتس زجاج مقصوص مسبقًا لماوس Vortek V1 Air."
+  },
+  "description": {
+   "en": "Tempered glass feet for the lowest friction on cloth and hybrid pads.",
+   "ar": "أرجل زجاج مقسى لأقل احتكاك على الأسطح القماشية والهجينة."
+  },
+  "specs": [
+   [
+    "material",
+    "Tempered glass",
+    "زجاج مقسى"
+   ],
+   [
+    "count",
+    "4 pieces",
+    "4 قطع"
+   ],
+   [
+    "compatibility",
+    "Vortek V1 Air",
+    "Vortek V1 Air"
+   ]
+  ],
+  "keywords": [
+   "glass skates",
+   "v1",
+   "زجاج"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-09-02",
+  "max": 4,
+  "art": {
+   "kind": "skates",
+   "style": "glass",
+   "body": "#17191d",
+   "accent": "#3be0f5"
+  },
+  "price": 89900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 7,
+  "discontinued": false
+ },
+ {
+  "id": "p-glidex-universal-skates",
+  "sku": "GLX-UNI-SK",
+  "slug": "glidex-universal-skates",
+  "name": "Glidex Universal Skates",
+  "brand": "brand-glidex",
+  "category": "cat-skates",
+  "summary": {
+   "en": "Cut-to-fit PTFE sheet for custom skates.",
+   "ar": "شريحة PTFE قابلة للقص لتصميم سكيتس مخصصة."
+  },
+  "description": {
+   "en": "A large PTFE sheet with adhesive backing — trace your mouse's feet and cut your own.",
+   "ar": "شريحة PTFE كبيرة بظهر لاصق — ارسم شكل أرجل الماوس وقصها بنفسك."
+  },
+  "specs": [
+   [
+    "material",
+    "PTFE",
+    "PTFE"
+   ],
+   [
+    "size",
+    "100 × 60 mm sheet",
+    "شريحة 100 × 60 مم"
+   ],
+   [
+    "thickness",
+    "0.6 mm",
+    "0.6 مم"
+   ]
+  ],
+  "keywords": [
+   "ptfe",
+   "sheet",
+   "diy"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-01-15",
+  "max": 10,
+  "art": {
+   "kind": "skates",
+   "style": "classic",
+   "body": "#17191d",
+   "accent": "#b8f53b"
+  },
+  "price": 24900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 60,
+  "discontinued": false
+ },
+ {
+  "id": "p-glidex-edge-falcon",
+  "sku": "GLX-EDG-FCP",
+  "slug": "glidex-edge-falcon",
+  "name": "Glidex Edge Skates for Falcon Pro",
+  "brand": "brand-glidex",
+  "category": "cat-skates",
+  "summary": {
+   "en": "Replacement PTFE skates for the Nexa Labs Falcon Pro.",
+   "ar": "سكيتس PTFE بديلة لماوس Nexa Labs Falcon Pro."
+  },
+  "description": {
+   "en": "Exact-fit replacements with rounded edges.",
+   "ar": "بدائل بمقاس مطابق وحواف مستديرة."
+  },
+  "specs": [
+   [
+    "material",
+    "PTFE",
+    "PTFE"
+   ],
+   [
+    "count",
+    "1 set",
+    "طقم واحد"
+   ],
+   [
+    "compatibility",
+    "Nexa Labs Falcon Pro",
+    "Nexa Labs Falcon Pro"
+   ]
+  ],
+  "keywords": [
+   "falcon",
+   "replacement"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-07-01",
+  "max": 4,
+  "art": {
+   "kind": "skates",
+   "style": "classic",
+   "body": "#17191d",
+   "accent": "#e9edf1"
+  },
+  "price": 29900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 0,
+  "discontinued": false
+ },
+ {
+  "id": "p-kinetiq-k75",
+  "sku": "KNQ-K75-PRO",
+  "slug": "kinetiq-k75",
+  "name": "Kinetiq K75 Pro",
+  "brand": "brand-kinetiq",
+  "category": "cat-keyboards",
+  "summary": {
+   "en": "75% gasket-mounted, hot-swappable mechanical keyboard.",
+   "ar": "كيبورد ميكانيكي 75% بتثبيت جاسكيت ومفاتيح قابلة للتبديل."
+  },
+  "description": {
+   "en": "A dampened gasket mount, south-facing hot-swap sockets and a volume knob. Ships with linear switches and PBT keycaps.",
+   "ar": "تثبيت جاسكيت مخمد ومقابس قابلة للتبديل ومقبض للصوت. يأتي بمفاتيح خطية وأغطية PBT."
+  },
+  "specs": [
+   [
+    "layout",
+    "75%, ANSI"
+   ],
+   [
+    "switches",
+    "Linear, hot-swappable",
+    "خطية، قابلة للتبديل"
+   ],
+   [
+    "keycaps",
+    "Double-shot PBT",
+    "PBT مزدوج الحقن"
+   ],
+   [
+    "connectivity",
+    "USB-C wired",
+    "سلكي USB-C"
+   ],
+   [
+    "polling",
+    "1,000 Hz",
+    "1,000 هرتز"
+   ]
+  ],
+  "keywords": [
+   "mechanical",
+   "gasket",
+   "hot-swap",
+   "75",
+   "ميكانيكي"
+  ],
+  "featured": true,
+  "rank": null,
+  "published": "2026-05-22",
+  "max": 5,
+  "art": {
+   "kind": "keyboard",
+   "style": "75",
+   "body": "#17191d",
+   "accent": "#b8f53b"
+  },
+  "price": 479900,
+  "compareAt": 529900,
+  "saleEnds": "2026-08-31T23:59:59+03:00",
+  "stock": 12,
+  "discontinued": false
+ },
+ {
+  "id": "p-kinetiq-mag60-he",
+  "sku": "KNQ-M60-HE",
+  "slug": "kinetiq-mag60-he",
+  "name": "Kinetiq Mag60 HE",
+  "brand": "brand-kinetiq",
+  "category": "cat-keyboards",
+  "summary": {
+   "en": "60% magnetic keyboard with adjustable actuation and rapid trigger.",
+   "ar": "كيبورد مغناطيسي 60% بنقطة تفعيل قابلة للضبط وخاصية Rapid Trigger."
+  },
+  "description": {
+   "en": "Hall-effect switches let you set actuation from 0.1 to 4.0 mm per key, with rapid trigger for instant resets.",
+   "ar": "مفاتيح Hall Effect تتيح ضبط نقطة التفعيل من 0.1 إلى 4.0 مم لكل مفتاح، مع Rapid Trigger لإعادة فورية."
+  },
+  "specs": [
+   [
+    "layout",
+    "60%, ANSI"
+   ],
+   [
+    "switches",
+    "Magnetic Hall-effect",
+    "مغناطيسية Hall Effect"
+   ],
+   [
+    "keycaps",
+    "PBT",
+    "PBT"
+   ],
+   [
+    "polling",
+    "8,000 Hz",
+    "8,000 هرتز"
+   ],
+   [
+    "connectivity",
+    "USB-C wired",
+    "سلكي USB-C"
+   ]
+  ],
+  "keywords": [
+   "hall effect",
+   "rapid trigger",
+   "magnetic",
+   "60",
+   "مغناطيسي"
+  ],
+  "featured": false,
+  "rank": 6,
+  "published": "2026-09-30",
+  "max": 5,
+  "art": {
+   "kind": "keyboard",
+   "style": "60",
+   "body": "#17191d",
+   "accent": "#3be0f5"
+  },
+  "price": 699900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 3,
+  "discontinued": false
+ },
+ {
+  "id": "p-kinetiq-k87-tkl",
+  "sku": "KNQ-K87-TKL",
+  "slug": "kinetiq-k87-tkl",
+  "name": "Kinetiq K87 TKL",
+  "brand": "brand-kinetiq",
+  "category": "cat-keyboards",
+  "summary": {
+   "en": "Tenkeyless mechanical keyboard with tactile switches.",
+   "ar": "كيبورد ميكانيكي بدون أرقام بمفاتيح ملموسة."
+  },
+  "description": {
+   "en": "A familiar full arrow-cluster layout with tactile switches and a detachable cable.",
+   "ar": "تخطيط مألوف مع أسهم كاملة ومفاتيح ملموسة وكابل قابل للفصل."
+  },
+  "specs": [
+   [
+    "layout",
+    "TKL, ANSI"
+   ],
+   [
+    "switches",
+    "Tactile",
+    "ملموسة"
+   ],
+   [
+    "keycaps",
+    "ABS double-shot",
+    "ABS مزدوج الحقن"
+   ],
+   [
+    "connectivity",
+    "USB-C wired",
+    "سلكي USB-C"
+   ]
+  ],
+  "keywords": [
+   "tkl",
+   "tactile",
+   "mechanical"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-03-03",
+  "max": 5,
+  "art": {
+   "kind": "keyboard",
+   "style": "tkl",
+   "body": "#17191d",
+   "accent": "#ff9a3b"
+  },
+  "price": 349900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 15,
+  "discontinued": false
+ },
+ {
+  "id": "p-vortek-arc-65",
+  "sku": "VTK-ARC-65",
+  "slug": "vortek-arc-65",
+  "name": "Vortek Arc 65 Wireless",
+  "brand": "brand-vortek",
+  "category": "cat-keyboards",
+  "summary": {
+   "en": "65% tri-mode wireless keyboard: 2.4 GHz, Bluetooth and USB-C.",
+   "ar": "كيبورد لاسلكي 65% بثلاثة أوضاع: 2.4 جيجاهرتز وبلوتوث وUSB-C."
+  },
+  "description": {
+   "en": "Switch between three devices, with a 4,000 mAh battery and a sound-dampened case.",
+   "ar": "تنقل بين ثلاثة أجهزة مع بطارية 4,000 مللي أمبير وهيكل مخمد للصوت."
+  },
+  "specs": [
+   [
+    "layout",
+    "65%, ANSI"
+   ],
+   [
+    "switches",
+    "Linear, hot-swappable",
+    "خطية، قابلة للتبديل"
+   ],
+   [
+    "connectivity",
+    "2.4 GHz, Bluetooth, USB-C",
+    "2.4 جيجاهرتز، بلوتوث، USB-C"
+   ],
+   [
+    "battery",
+    "4,000 mAh",
+    "4,000 مللي أمبير"
+   ]
+  ],
+  "keywords": [
+   "wireless",
+   "65",
+   "bluetooth",
+   "لاسلكي"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-08-21",
+  "max": 5,
+  "art": {
+   "kind": "keyboard",
+   "style": "65",
+   "body": "#17191d",
+   "accent": "#a78bfa"
+  },
+  "price": 549900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 8,
+  "discontinued": false
+ },
+ {
+  "id": "p-halcyon-h1-wireless",
+  "sku": "HLC-H1-WL",
+  "slug": "halcyon-h1-wireless",
+  "name": "Halcyon Audio H1 Wireless",
+  "brand": "brand-halcyon",
+  "category": "cat-audio",
+  "summary": {
+   "en": "Low-latency 2.4 GHz headset with a detachable boom mic.",
+   "ar": "سماعة رأس 2.4 جيجاهرتز بزمن استجابة منخفض وميكروفون قابل للفصل."
+  },
+  "description": {
+   "en": "50 mm drivers tuned for footsteps and positional cues, memory-foam pads and up to 40 hours per charge.",
+   "ar": "مشغلات 50 مم مضبوطة لأصوات الخطوات والاتجاهات، وسائد إسفنج ذكي وحتى 40 ساعة للشحنة."
+  },
+  "specs": [
+   [
+    "driver",
+    "50 mm dynamic",
+    "ديناميكي 50 مم"
+   ],
+   [
+    "connectivity",
+    "2.4 GHz wireless, USB-C",
+    "لاسلكي 2.4 جيجاهرتز، USB-C"
+   ],
+   [
+    "battery",
+    "Up to 40 h",
+    "حتى 40 ساعة"
+   ],
+   [
+    "mic",
+    "Detachable cardioid",
+    "قابل للفصل، قلبي"
+   ],
+   [
+    "weight",
+    "290 g"
+   ]
+  ],
+  "keywords": [
+   "wireless",
+   "headset",
+   "low latency",
+   "سماعة"
+  ],
+  "featured": true,
+  "rank": null,
+  "published": "2026-07-28",
+  "max": 5,
+  "art": {
+   "kind": "headset",
+   "style": "wireless",
+   "body": "#17191d",
+   "accent": "#b8f53b"
+  },
+  "price": 599900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 10,
+  "discontinued": false
+ },
+ {
+  "id": "p-halcyon-studio-x",
+  "sku": "HLC-STX-W",
+  "slug": "halcyon-studio-x",
+  "name": "Halcyon Audio Studio X",
+  "brand": "brand-halcyon",
+  "category": "cat-audio",
+  "summary": {
+   "en": "Open-back wired headset for wide soundstage.",
+   "ar": "سماعة رأس سلكية مفتوحة الظهر لمسرح صوتي واسع."
+  },
+  "description": {
+   "en": "Open-back cups and velour pads for long sessions, with a 3.5 mm detachable cable.",
+   "ar": "أكواب مفتوحة الظهر ووسائد قطيفة للجلسات الطويلة، مع كابل 3.5 مم قابل للفصل."
+  },
+  "specs": [
+   [
+    "driver",
+    "50 mm dynamic",
+    "ديناميكي 50 مم"
+   ],
+   [
+    "connectivity",
+    "3.5 mm wired",
+    "سلكي 3.5 مم"
+   ],
+   [
+    "frequency",
+    "10 Hz – 30 kHz",
+    "10 هرتز – 30 كيلوهرتز"
+   ],
+   [
+    "weight",
+    "260 g"
+   ]
+  ],
+  "keywords": [
+   "open back",
+   "wired",
+   "soundstage",
+   "مفتوحة"
+  ],
+  "featured": false,
+  "rank": 7,
+  "published": "2026-02-20",
+  "max": 5,
+  "art": {
+   "kind": "headset",
+   "style": "studio",
+   "body": "#2a2d33",
+   "accent": "#e9edf1"
+  },
+  "price": 299900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 20,
+  "discontinued": false
+ },
+ {
+  "id": "p-halcyon-pulse-iem",
+  "sku": "HLC-PLS-IEM",
+  "slug": "halcyon-pulse-iem",
+  "name": "Halcyon Audio Pulse IEM",
+  "brand": "brand-halcyon",
+  "category": "cat-audio",
+  "summary": {
+   "en": "Single dynamic-driver in-ear monitors with a detachable mic cable.",
+   "ar": "سماعات أذن بمشغل ديناميكي واحد وكابل ميكروفون قابل للفصل."
+  },
+  "description": {
+   "en": "A 10 mm dynamic driver with a clean, slightly warm tuning — great for footsteps and music.",
+   "ar": "مشغل ديناميكي 10 مم بضبط نقي ودافئ قليلًا — ممتاز للخطوات والموسيقى."
+  },
+  "specs": [
+   [
+    "driver",
+    "10 mm dynamic",
+    "ديناميكي 10 مم"
+   ],
+   [
+    "connector",
+    "0.78 mm 2-pin",
+    "2-pin 0.78 مم"
+   ],
+   [
+    "mic",
+    "Inline, detachable",
+    "مدمج بالكابل، قابل للفصل"
+   ]
+  ],
+  "keywords": [
+   "iem",
+   "in-ear",
+   "budget",
+   "سماعة أذن"
+  ],
+  "featured": false,
+  "rank": 8,
+  "published": "2026-06-12",
+  "max": 5,
+  "art": {
+   "kind": "iem",
+   "style": "single",
+   "body": "#17191d",
+   "accent": "#3be0f5"
+  },
+  "price": 129900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 35,
+  "discontinued": false
+ },
+ {
+  "id": "p-halcyon-duet-iem",
+  "sku": "HLC-DUET-IEM",
+  "slug": "halcyon-duet-iem",
+  "name": "Halcyon Audio Duet IEM",
+  "brand": "brand-halcyon",
+  "category": "cat-audio",
+  "summary": {
+   "en": "Hybrid 1DD + 1BA in-ear monitors.",
+   "ar": "سماعات أذن هجينة بمشغل ديناميكي وآخر Balanced Armature."
+  },
+  "description": {
+   "en": "A dynamic driver for bass and a balanced armature for detail, in a resin shell.",
+   "ar": "مشغل ديناميكي للبيس وآخر Balanced Armature للتفاصيل داخل هيكل من الريزن."
+  },
+  "specs": [
+   [
+    "driver",
+    "1 dynamic + 1 balanced armature",
+    "ديناميكي + Balanced Armature"
+   ],
+   [
+    "connector",
+    "0.78 mm 2-pin",
+    "2-pin 0.78 مم"
+   ]
+  ],
+  "keywords": [
+   "hybrid",
+   "iem",
+   "هجين"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-09-18",
+  "max": 5,
+  "art": {
+   "kind": "iem",
+   "style": "dual",
+   "body": "#17191d",
+   "accent": "#a78bfa"
+  },
+  "price": 249900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 0,
+  "discontinued": false
+ },
+ {
+  "id": "p-sonaris-pod-usb",
+  "sku": "SNR-POD-USB",
+  "slug": "sonaris-pod-usb",
+  "name": "Sonaris Pod USB",
+  "brand": "brand-sonaris",
+  "category": "cat-mics",
+  "summary": {
+   "en": "USB dynamic microphone with tap-to-mute and headphone monitoring.",
+   "ar": "ميكروفون ديناميكي USB بخاصية الكتم باللمس ومراقبة بالسماعة."
+  },
+  "description": {
+   "en": "A dynamic capsule that rejects keyboard noise, plug-and-play over USB-C.",
+   "ar": "كبسولة ديناميكية تقلل صوت الكيبورد، توصيل مباشر عبر USB-C."
+  },
+  "specs": [
+   [
+    "type",
+    "Dynamic, cardioid",
+    "ديناميكي، قلبي"
+   ],
+   [
+    "connectivity",
+    "USB-C",
+    "USB-C"
+   ],
+   [
+    "sampleRate",
+    "48 kHz / 24-bit",
+    "48 كيلوهرتز / 24 بت"
+   ]
+  ],
+  "keywords": [
+   "usb mic",
+   "streaming",
+   "dynamic",
+   "ميكروفون"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-04-02",
+  "max": 5,
+  "art": {
+   "kind": "microphone",
+   "style": "usb",
+   "body": "#17191d",
+   "accent": "#b8f53b"
+  },
+  "price": 279900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 12,
+  "discontinued": false
+ },
+ {
+  "id": "p-sonaris-cast-xlr",
+  "sku": "SNR-CST-XLR",
+  "slug": "sonaris-cast-xlr",
+  "name": "Sonaris Cast XLR",
+  "brand": "brand-sonaris",
+  "category": "cat-mics",
+  "summary": {
+   "en": "Broadcast dynamic XLR microphone with an internal shock mount.",
+   "ar": "ميكروفون XLR ديناميكي للبث مع حامل مضاد للاهتزاز داخلي."
+  },
+  "description": {
+   "en": "A warm broadcast voice with strong off-axis rejection. Needs an audio interface or mixer.",
+   "ar": "صوت بث دافئ مع عزل قوي للأصوات الجانبية. يحتاج إلى كارت صوت أو ميكسر."
+  },
+  "specs": [
+   [
+    "type",
+    "Dynamic, cardioid",
+    "ديناميكي، قلبي"
+   ],
+   [
+    "connector",
+    "XLR",
+    "XLR"
+   ],
+   [
+    "frequency",
+    "50 Hz – 15 kHz",
+    "50 هرتز – 15 كيلوهرتز"
+   ]
+  ],
+  "keywords": [
+   "xlr",
+   "broadcast",
+   "podcast",
+   "بث"
+  ],
+  "featured": true,
+  "rank": null,
+  "published": "2026-08-08",
+  "max": 5,
+  "art": {
+   "kind": "microphone",
+   "style": "xlr",
+   "body": "#17191d",
+   "accent": "#ff9a3b"
+  },
+  "price": 549900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 5,
+  "discontinued": false
+ },
+ {
+  "id": "p-sonaris-boom-arm",
+  "sku": "SNR-ARM-LT",
+  "slug": "sonaris-boom-arm",
+  "name": "Sonaris Boom Arm Lite",
+  "brand": "brand-sonaris",
+  "category": "cat-mics",
+  "summary": {
+   "en": "Low-profile desk boom arm with internal cable routing.",
+   "ar": "ذراع ميكروفون منخفض للمكتب مع تمرير داخلي للكابل."
+  },
+  "description": {
+   "en": "Holds mics up to 1.2 kg with a desk clamp and 360° rotation.",
+   "ar": "يحمل ميكروفونات حتى 1.2 كجم مع مشبك للمكتب ودوران 360 درجة."
+  },
+  "specs": [
+   [
+    "mount",
+    "Desk clamp, 3/8\" and 5/8\" threads",
+    "مشبك مكتب، أسنان 3/8 و5/8"
+   ],
+   [
+    "weight",
+    "Supports up to 1.2 kg",
+    "يحمل حتى 1.2 كجم"
+   ]
+  ],
+  "keywords": [
+   "boom arm",
+   "stand",
+   "ذراع"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-05-15",
+  "max": 5,
+  "art": {
+   "kind": "microphone",
+   "style": "arm",
+   "body": "#17191d",
+   "accent": "#e9edf1"
+  },
+  "price": 149900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 16,
+  "discontinued": false
+ },
+ {
+  "id": "p-fluxline-paracord-cable",
+  "sku": "FLX-PCD-18",
+  "slug": "fluxline-paracord-cable",
+  "name": "Fluxline Paracord Mouse Cable",
+  "brand": "brand-fluxline",
+  "category": "cat-cables",
+  "summary": {
+   "en": "1.8 m USB-C paracord replacement cable.",
+   "ar": "كابل باراكورد USB-C بديل بطول 1.8 م."
+  },
+  "description": {
+   "en": "Swap a stiff stock cable for a flexible paracord one that barely touches the pad.",
+   "ar": "استبدل الكابل الأصلي الصلب بكابل باراكورد مرن بالكاد يلمس الماوس باد."
+  },
+  "specs": [
+   [
+    "connector",
+    "USB-C to USB-A",
+    "USB-C إلى USB-A"
+   ],
+   [
+    "length",
+    "1.8 m",
+    "1.8 م"
+   ],
+   [
+    "material",
+    "Paracord sleeve",
+    "غلاف باراكورد"
+   ]
+  ],
+  "keywords": [
+   "paracord",
+   "cable",
+   "كابل"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-03-28",
+  "max": 5,
+  "art": {
+   "kind": "cable",
+   "style": "paracord",
+   "body": "#17191d",
+   "accent": "#b8f53b"
+  },
+  "price": 54900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 22,
+  "discontinued": false
+ },
+ {
+  "id": "p-fluxline-coiled-aviator",
+  "sku": "FLX-COIL-AV",
+  "slug": "fluxline-coiled-aviator",
+  "name": "Fluxline Coiled Aviator Cable",
+  "brand": "brand-fluxline",
+  "category": "cat-cables",
+  "summary": {
+   "en": "Coiled USB-C keyboard cable with a GX16 aviator connector.",
+   "ar": "كابل كيبورد USB-C ملفوف بموصل GX16."
+  },
+  "description": {
+   "en": "A double-sleeved coil and detachable aviator connector for a clean desk setup.",
+   "ar": "لفة مزدوجة التغليف وموصل GX16 قابل للفصل لمكتب منظم."
+  },
+  "specs": [
+   [
+    "connector",
+    "USB-C to USB-A, GX16",
+    "USB-C إلى USB-A، GX16"
+   ],
+   [
+    "length",
+    "1.5 m",
+    "1.5 م"
+   ]
+  ],
+  "keywords": [
+   "coiled",
+   "aviator",
+   "keyboard cable",
+   "ملفوف"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-10-01",
+  "max": 5,
+  "art": {
+   "kind": "cable",
+   "style": "coiled",
+   "body": "#17191d",
+   "accent": "#3be0f5"
+  },
+  "price": 119900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 9,
+  "discontinued": false
+ },
+ {
+  "id": "p-fluxline-bungee",
+  "sku": "FLX-BNG-01",
+  "slug": "fluxline-bungee",
+  "name": "Fluxline Mouse Bungee",
+  "brand": "brand-fluxline",
+  "category": "cat-cables",
+  "summary": {
+   "en": "Weighted mouse bungee that lifts the cable off the desk.",
+   "ar": "حامل كابل ماوس ثقيل يرفع الكابل عن المكتب."
+  },
+  "description": {
+   "en": "A spring arm and weighted base keep a wired mouse feeling close to wireless.",
+   "ar": "ذراع زنبركي وقاعدة ثقيلة تجعل الماوس السلكي أقرب إحساسًا للاسلكي."
+  },
+  "specs": [
+   [
+    "material",
+    "Steel spring, rubber base",
+    "زنبرك صلب وقاعدة مطاطية"
+   ]
+  ],
+  "keywords": [
+   "bungee",
+   "cable management",
+   "حامل"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-02-02",
+  "max": 5,
+  "art": {
+   "kind": "cable",
+   "style": "bungee",
+   "body": "#17191d",
+   "accent": "#e9edf1"
+  },
+  "price": 39900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 30,
+  "discontinued": false
+ },
+ {
+  "id": "p-fluxline-grip-tape",
+  "sku": "FLX-GRP-KIT",
+  "slug": "fluxline-grip-tape",
+  "name": "Fluxline Grip Tape Kit",
+  "brand": "brand-fluxline",
+  "category": "cat-cables",
+  "summary": {
+   "en": "Pre-cut grip tape for mouse sides and buttons.",
+   "ar": "شرائط جريب مقصوصة مسبقًا لجوانب وأزرار الماوس."
+  },
+  "description": {
+   "en": "Thin textured tape that adds control without changing the shape.",
+   "ar": "شريط رفيع محبب يزيد التحكم دون تغيير الشكل."
+  },
+  "specs": [
+   [
+    "material",
+    "Textured polymer",
+    "بوليمر محبب"
+   ],
+   [
+    "count",
+    "6 pieces",
+    "6 قطع"
+   ],
+   [
+    "compatibility",
+    "Universal",
+    "عالمي"
+   ]
+  ],
+  "keywords": [
+   "grip",
+   "tape",
+   "جريب"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2026-01-20",
+  "max": 10,
+  "art": {
+   "kind": "cable",
+   "style": "grip",
+   "body": "#17191d",
+   "accent": "#ff9a3b"
+  },
+  "price": 19900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 45,
+  "discontinued": false
+ },
+ {
+  "id": "p-vortek-legacy-g1",
+  "sku": "VTK-G1-OLD",
+  "slug": "vortek-legacy-g1",
+  "name": "Vortek Legacy G1",
+  "brand": "brand-vortek",
+  "category": "cat-mice",
+  "summary": {
+   "en": "Discontinued sample product.",
+   "ar": "منتج تجريبي متوقف."
+  },
+  "description": {
+   "en": "Discontinued.",
+   "ar": "متوقف."
+  },
+  "specs": [
+   [
+    "weight",
+    "88 g"
+   ]
+  ],
+  "keywords": [
+   "legacy"
+  ],
+  "featured": false,
+  "rank": null,
+  "published": "2025-06-01",
+  "max": 5,
+  "art": {
+   "kind": "mouse",
+   "style": "ergo",
+   "body": "#17191d",
+   "accent": "#ff5d6c"
+  },
+  "price": 99900,
+  "compareAt": null,
+  "saleEnds": null,
+  "stock": 0,
+  "discontinued": true
+ }
+]
