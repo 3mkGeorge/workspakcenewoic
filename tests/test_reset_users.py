@@ -237,11 +237,22 @@ def test_safety_backup_creation(recovery_app):
         assert "pre_reset" in Path(bak_path).name
 
 
-def test_reset_users_bat_execution():
+def test_reset_users_bat_execution(tmp_path):
     """Verify reset_users.bat works from command prompt without errors or hash leaks."""
+    import shutil
+
     project_root = Path(__file__).resolve().parents[1]
     bat_file = project_root / "reset_users.bat"
     assert bat_file.exists(), "reset_users.bat does not exist at project root"
+
+    # Starting StorePro upgrades its database, so the utility lists the users
+    # of a private copy (plain file reads) instead of opening the real store.
+    live = project_root / "instance" / "store.db"
+    copy = tmp_path / "store.db"
+    for suffix in ("", "-wal"):
+        if Path(str(live) + suffix).exists():
+            shutil.copyfile(str(live) + suffix, str(copy) + suffix)
+    env = {**os.environ, "STOREPRO_DATABASE_URI": "sqlite:///" + str(copy)}
 
     # Run reset_users.bat --list through cmd.exe with null input (satisfying pause)
     res = subprocess.run(
@@ -249,6 +260,7 @@ def test_reset_users_bat_execution():
         cwd=str(project_root),
         capture_output=True,
         text=True,
+        env=env,
     )
 
     assert res.returncode == 0

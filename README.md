@@ -249,6 +249,8 @@ Tests cover page rendering, VAT rounding, stock changes, overselling, concurrent
 
 
 
+Tests never use the store's database. Every test runs on its own temporary database, and `tests/conftest.py` makes any attempt to open `instance\store.db` (or a database named by `STOREPRO_DATABASE_URI`) fail the test. Tests that need real users, such as the `reset_users.bat` check, read a private copy.
+
 Changing financial rules or models should be followed by integration tests and a backup/restore rehearsal with non-production data. Schema changes use explicit, idempotent migrations in services/migrations.py; existing business rows are preserved.
 
 
