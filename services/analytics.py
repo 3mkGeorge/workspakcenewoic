@@ -108,10 +108,11 @@ def sale_stats(sales):
     )
 
 
-def trend(days=7):
+def trend(days=7, end=None):
     days = max(1, min(days, 365))
-    start = local_today() - timedelta(days=days - 1)
-    a, b = bounds(start, local_today())
+    end = end or local_today()
+    start = end - timedelta(days=days - 1)
+    a, b = bounds(start, end)
     sales = Sale.query.filter(
         Sale.created_at >= a, Sale.created_at < b, Sale.status == "Completed"
     ).all()
@@ -183,9 +184,16 @@ def report_data(kind, start, end):
         category = db.session.get(Category, integer(request.args["category_id"], 1))
         if not category:
             raise ValueError("Unknown category.")
-        sales = [
-            s for s in sales if any(i.category_name == category.name for i in s.items)
-        ]
+
+        # Match by the product's category id, so renaming a category keeps its
+        # history; the name recorded on the sale line still counts as well.
+        def in_category(item):
+            if item.product is not None and item.product.category_id == category.id:
+                return True
+            return getattr(item, "category_name", None) == category.name
+
+        sales = [s for s in sales if any(in_category(i) for i in s.items)]
+        purchases = [p for p in purchases if any(in_category(i) for i in p.items)]
     if request.args.get("supplier_id"):
         from services.core import integer
 

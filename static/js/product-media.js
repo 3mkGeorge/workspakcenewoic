@@ -202,13 +202,22 @@ function spInitMedia() {
       return;
     }
     if (e.target.closest(".media-delete")) {
-      if (!pid || !confirm("Delete this image?")) return;
+      if (!pid || card.dataset.spDeleting) return;
+      const ui = window.StoreProUI;
+      const opts = {
+        title: ui ? ui.t("Delete this image?") : "Delete this image?",
+        message: ui ? ui.t("The image is removed from this product. This cannot be undone.") : "",
+        confirmLabel: ui ? ui.t("Delete image") : "Delete image",
+      };
+      if (!(await (ui ? ui.confirm(opts) : Promise.resolve(window.confirm(opts.title))))) return;
+      card.dataset.spDeleting = "1";
       try {
         const data = await api(`/api/products/${pid}/images/${idx}/delete`, { method: "POST" });
         existing = data.images || [];
         showError("");
         render();
       } catch (err) { showError(err.message); }
+      finally { delete card.dataset.spDeleting; }
       return;
     }
     if (e.target.closest(".media-up") || e.target.closest(".media-down")) {

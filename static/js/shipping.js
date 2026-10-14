@@ -44,11 +44,14 @@ function spInitShipping() {
     Cancelled: "darkred",
   };
 
+  const ui = () => window.StoreProUI;
+  const tr = (text, values) => (ui() ? ui().t(text, values) : text);
   function message(text) {
     if (!box) return;
     box.textContent = text;
     box.hidden = !text;
   }
+  let changing = false;
   const icons = () => { if (window.lucide) window.lucide.createIcons(); };
   async function post(url, body) {
     const response = await fetch(url, {
@@ -377,32 +380,51 @@ function spInitShipping() {
         return;
       }
       if (target === "Cancelled" && window.StoreProCancel) {
+        const number = root.dataset.orderNumber || orderId;
         window.StoreProCancel.open({
-          title: "Cancel Shipment",
-          context: `Cancelling order ${orderId}. A reason is required.`,
-          confirmLabel: "Confirm Cancel",
+          title: tr("Cancel Shipment"),
+          context: tr("Cancelling {order}. A reason is required.", { order: number }),
+          confirmLabel: tr("Confirm Cancel"),
           onConfirm: async (reason) => {
+            if (changing) return;
+            changing = true;
             try {
               const data = await post(`/api/shipping/${orderId}/status`, {
                 status: target,
                 cancel_reason: reason,
               });
               applyOrder(data);
-              message(`Order moved to ${target}.`);
+              message(tr("Order moved to {status}.", { status: tr(target) }));
             } catch (error) {
               message(error.message);
+            } finally {
+              changing = false;
             }
           },
         });
         return;
       }
-      if (!confirm(`Move order to ${ACTION_LABEL(target).replace(/^Mark (as )?/, "")}?`)) return;
+      if (changing) return;
+      const opts = {
+        title: tr("Change shipment status?"),
+        message: tr("Move this order to {status}?", { status: tr(target) }),
+        detail: root.dataset.orderNumber || "",
+        confirmLabel: tr(ACTION_LABEL(target)),
+        tone: target === "Returned" || target === "Failed Delivery" ? "danger" : "primary",
+      };
+      if (!(await (ui() ? ui().confirm(opts) : Promise.resolve(window.confirm(opts.message))))) return;
+      if (changing) return;
+      changing = true;
+      ui()?.busy(btn, true);
       try {
         const data = await post(`/api/shipping/${orderId}/status`, { status: target });
         applyOrder(data);
-        message(`Order moved to ${target}.`);
+        message(tr("Order moved to {status}.", { status: tr(target) }));
       } catch (error) {
         message(error.message);
+      } finally {
+        changing = false;
+        ui()?.busy(btn, false);
       }
     });
   const deliverForm = document.getElementById("deliver-form");

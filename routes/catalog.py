@@ -354,12 +354,15 @@ def contacts(kind):
     page = query.order_by(model.name).paginate(
         page=max(1, request.args.get("page", 1, type=int)), per_page=20, error_out=False
     )
+    edit = model.query.filter_by(id=request.args.get("edit", type=int))
+    if kind != "categories":
+        edit = edit.filter_by(active=True)  # a removed record cannot be edited back in
     return render_template(
         "contacts.html",
         title=kind.title(),
         kind=kind,
         page=page,
-        edit=model.query.filter_by(id=request.args.get("edit", type=int)).first(),
+        edit=edit.first(),
     )
 
 
@@ -382,6 +385,7 @@ def save_contact(kind):
     db.session.add(row)
     audit("Save " + kind, row.name)
     db.session.commit()
+    flash("Saved.", "success")
     return redirect(url_for("catalog.contacts", kind=kind))
 
 
@@ -415,6 +419,7 @@ def delete_contact(kind, pid):
         row.active = False
     audit("Delete " + kind, row.name)
     db.session.commit()
+    flash("Record removed.", "success")
     return redirect(url_for("catalog.contacts", kind=kind))
 
 

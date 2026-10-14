@@ -2629,6 +2629,60 @@ input[name="barcode"] {
 .toast .toast-body {
   padding: 12px 16px;
 }
+.sp-toast.showing,
+.sp-toast.show {
+  display: flex;
+  align-items: flex-start;
+}
+.sp-toast {
+  border-inline-start: 4px solid var(--blue);
+}
+.sp-toast .toast-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-inline-start: var(--sp-2);
+  overflow-wrap: anywhere;
+}
+.sp-toast .sp-toast-icon {
+  display: inline-flex;
+  padding: 13px 0 0;
+  padding-inline-start: 14px;
+}
+.sp-toast .sp-toast-icon:empty {
+  display: none;
+}
+.sp-toast .sp-toast-icon .lucide {
+  width: 18px;
+  height: 18px;
+}
+.sp-toast .btn-close {
+  flex: none;
+  margin: 10px;
+  filter: invert(1) grayscale(100%) brightness(200%);
+  width: 0.75em;
+  height: 0.75em;
+}
+.sp-toast.is-success {
+  border-inline-start-color: var(--success);
+}
+.sp-toast.is-success .sp-toast-icon {
+  color: #34d399;
+}
+.sp-toast.is-error {
+  border-inline-start-color: var(--danger);
+}
+.sp-toast.is-error .sp-toast-icon {
+  color: #f87171;
+}
+.sp-toast.is-warning {
+  border-inline-start-color: var(--warning);
+}
+.sp-toast.is-warning .sp-toast-icon {
+  color: #fbbf24;
+}
+.sp-toast.is-info .sp-toast-icon {
+  color: #60a5fa;
+}
 
 /* 18. Overlays: modals, menus, dropdowns ---------------------------------- */
 .modal-backdrop.show {
@@ -2678,6 +2732,117 @@ input[name="barcode"] {
 .modal-footer > * {
   margin: 0;
 }
+/* Long modal content scrolls inside the dialog; header and footer stay put. */
+.modal-dialog:not(.modal-fullscreen) > .modal-content:is(:has(> .modal-body), :has(> form > .modal-body)) {
+  max-height: calc(100dvh - 2 * var(--bs-modal-margin, 1.75rem));
+}
+.modal-dialog:not(.modal-fullscreen) > .modal-content > .modal-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.modal-dialog:not(.modal-fullscreen) > .modal-content > form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.modal-dialog:not(.modal-fullscreen) > .modal-content > form > .modal-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* Shared confirmation dialog */
+.modal.sp-confirm {
+  z-index: 1070;
+}
+.modal-backdrop.sp-confirm-backdrop {
+  z-index: 1065;
+}
+.sp-confirm .modal-dialog {
+  max-width: 440px;
+}
+.sp-confirm .modal-body {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+}
+.sp-confirm-icon {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.sp-confirm-icon.blue {
+  background: var(--info-soft);
+  color: var(--blue);
+}
+.sp-confirm-icon .lucide {
+  width: 22px;
+  height: 22px;
+}
+.sp-confirm-title {
+  margin: 2px 0 var(--sp-2);
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  color: var(--ink);
+}
+.sp-confirm-message {
+  margin: 0;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.sp-confirm-detail {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  background: var(--soft);
+  color: var(--ink);
+  font-weight: var(--fw-semibold);
+  overflow-wrap: anywhere;
+}
+/* Busy (pending) buttons keep their size and show a spinner */
+.btn.is-busy,
+button.is-busy {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+.btn.is-busy > *,
+button.is-busy > * {
+  visibility: hidden;
+}
+.btn.is-busy::after,
+button.is-busy::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 1.05em;
+  height: 1.05em;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-color: var(--sp-busy-color, var(--muted)) transparent var(--sp-busy-color, var(--muted)) var(--sp-busy-color, var(--muted));
+  animation: sp-spin 0.7s linear infinite;
+}
+.btn-primary.is-busy,
+.btn-danger.is-busy,
+.btn-success.is-busy,
+.btn-dark.is-busy {
+  --sp-busy-color: #fff;
+}
+@keyframes sp-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn.is-busy::after,
+  button.is-busy::after {
+    animation-duration: 2s;
+  }
+}
 [data-bs-theme="dark"] .btn-close {
   filter: invert(1) grayscale(100%) brightness(200%);
 }
@@ -2713,6 +2878,8 @@ input[name="barcode"] {
 }
 .row-floating-menu.open {
   display: block;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
 }
 .row-floating-menu .rf-item {
   display: flex;
@@ -2731,9 +2898,19 @@ input[name="barcode"] {
   cursor: pointer;
 }
 .row-floating-menu .rf-item:hover,
+.row-floating-menu .rf-item:focus,
 .row-floating-menu .rf-item:focus-visible {
   background: var(--soft);
   color: var(--ink);
+  outline: none;
+}
+.row-floating-menu .rf-item:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--blue);
+}
+.row-floating-menu .rf-item:is(:disabled, [aria-disabled="true"]) {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: none;
 }
 .row-floating-menu .rf-item .lucide {
   width: 16px;
@@ -2744,6 +2921,7 @@ input[name="barcode"] {
 .row-floating-menu .rf-item.rf-danger .lucide {
   color: var(--danger);
 }
+.row-floating-menu .rf-item.rf-danger:focus,
 .row-floating-menu .rf-item.rf-danger:hover {
   background: var(--danger-soft);
   color: var(--danger-ink);

@@ -16,12 +16,9 @@ function spInitSaleModal() {
   const money = (v, cur) =>
     `${cur || ""} ${(Number(v || 0) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const text = (v) => (v === null || v === undefined || v === "" ? "Not assigned yet" : String(v));
-  const toast = (msg) => {
-    const el = $("app-toast");
-    if (!el) return;
-    el.querySelector(".toast-body").textContent = msg;
-    if (window.bootstrap?.Toast) bootstrap.Toast.getOrCreateInstance(el).show();
-  };
+  const ui = () => window.StoreProUI;
+  const tr = (msg, values) => (ui() ? ui().t(msg, values) : msg);
+  const toast = (msg, type = "success") => ui()?.toast(tr(msg), type);
   const say = (msg, isError) => {
     const box = $("sale-modal-message");
     if (!box) return;
@@ -266,11 +263,24 @@ function spInitSaleModal() {
     }
   }
 
-  async function mutate(action, confirmText, successText, extraBody) {
+  let mutating = false;
+  async function mutate(action, confirmText, successText, extraBody, { confirmed = false, confirmLabel } = {}) {
     const modalEl = $("saleDetailsModal");
     const sid = modalEl?.dataset.saleId;
-    if (!sid) return;
-    if (!window.confirm(confirmText)) return;
+    if (!sid || mutating) return;
+    if (!confirmed) {
+      const opts = {
+        title: tr("Please confirm"),
+        message: confirmText,
+        detail: $("sale-modal-inv")?.textContent || "",
+        confirmLabel,
+      };
+      const yes = await (ui() ? ui().confirm(opts) : Promise.resolve(window.confirm(confirmText)));
+      if (!yes || mutating || modalEl.dataset.saleId !== sid) return;
+    }
+    mutating = true;
+    const buttons = [...modalEl.querySelectorAll(".modal-footer button")].filter((b) => !b.disabled);
+    buttons.forEach((b) => (b.disabled = true));
     try {
       const res = await fetch(`/sales/${encodeURIComponent(sid)}/${action}`, {
         method: "POST",
@@ -280,7 +290,7 @@ function spInitSaleModal() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Action failed.");
+        throw new Error(data.error || tr("Action failed."));
       }
       if (window.bootstrap?.Modal) bootstrap.Modal.getInstance(modalEl)?.hide();
       toast(successText);
@@ -288,7 +298,10 @@ function spInitSaleModal() {
       else location.reload();
     } catch (e) {
       console.error(`Invoice ${action} failed:`, e);
-      say(e.message, true);
+      say(e instanceof TypeError ? tr("The request failed. Check your connection and try again.") : e.message, true);
+    } finally {
+      mutating = false;
+      buttons.forEach((b) => (b.disabled = false));
     }
   }
 
@@ -314,7 +327,9 @@ function spInitSaleModal() {
       return;
     }
     if (e.target.closest("#sale-modal-refund")) {
-      mutate("refund", "Refund this entire invoice and return all items to stock?", "Invoice refunded.");
+      mutate("refund", tr("Refund this entire invoice and return all items to stock?"), "Invoice refunded.", undefined, {
+        confirmLabel: tr("Refund invoice"),
+      });
       return;
     }
     if (e.target.closest("#sale-modal-refund-selected")) {
@@ -349,24 +364,27 @@ function spInitSaleModal() {
         }
       });
       if (selected.length === 0) {
-        toast("Please select at least one item to return.");
+        toast("Please select at least one item to return.", "warning");
         return;
       }
       mutate(
         "refund",
-        `Return ${selected.length} selected item(s) to stock and process refund?`,
+        tr("Return {count} selected item(s) to stock and process refund?", { count: selected.length }),
         "Selected items refunded and returned to stock.",
-        { items: selected }
+        { items: selected },
+        { confirmLabel: tr("Refund selected") },
       );
       return;
     }
     if (e.target.closest("#sale-modal-delete")) {
+      // The reason dialog is itself the deliberate confirmation; without it, ask.
       const runDelete = (reason) =>
         mutate(
           "delete",
-          "Void this invoice and restore its stock? The audit record will remain.",
+          tr("Void this invoice and restore its stock? The audit record will remain."),
           "Invoice voided. The original is retained for the audit trail.",
           reason ? { cancel_reason: reason } : undefined,
+          { confirmed: !!reason, confirmLabel: tr("Void invoice") },
         );
       if (window.StoreProCancel) {
         window.StoreProCancel.open({

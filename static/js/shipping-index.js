@@ -18,8 +18,10 @@ function spInitShippingIndex() {
     Returned: "warning",
     Cancelled: "darkred",
   };
-  const FRIENDLY = {};
-  const label = (s) => FRIENDLY[s] || s;
+  const ui = () => window.StoreProUI;
+  const tr = (msg, values) => (ui() ? ui().t(msg, values) : msg);
+  const label = (s) => tr(s);
+  const ask = (opts) => (ui() ? ui().confirm(opts) : Promise.resolve(window.confirm(opts.message)));
 
   const $ = (id) => document.getElementById(id);
   const csrf = () => document.querySelector('meta[name="csrf-token"]')?.content || "";
@@ -30,12 +32,9 @@ function spInitShippingIndex() {
     ((v) => (v === null || v === undefined || v === "" ? NA : v));
   const money = (v, cur) =>
     `${cur || ""} ${(Number(v || 0) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const toast = (msg) => {
-    const el = $("app-toast");
-    if (!el) return;
-    el.querySelector(".toast-body").textContent = msg;
-    if (window.bootstrap?.Toast) bootstrap.Toast.getOrCreateInstance(el).show();
-  };
+  const toast = (msg, type = "success") => ui()?.toast(msg, type);
+  const fail = (err) =>
+    toast(err instanceof TypeError ? tr("The request failed. Check your connection and try again.") : err.message, "error");
   const say = (id, msg, isError) => {
     const box = $(id);
     if (!box) return;
@@ -83,10 +82,10 @@ function spInitShippingIndex() {
         document.execCommand("copy");
         ta.remove();
       }
-      toast("Tracking code copied.");
+      toast(tr("Tracking code copied."));
     } catch (e) {
       console.error("Copy tracking failed:", e);
-      toast("Copy failed. Select the code manually.");
+      toast(tr("Copy failed. Select the code manually."), "error");
     }
   }
 
@@ -98,54 +97,58 @@ function spInitShippingIndex() {
       menu.id = "ship-status-menu";
       menu.className = "ship-status-menu";
       menu.setAttribute("role", "menu");
+      menu.setAttribute("data-sp-popup", "");
       menu.hidden = true;
       document.body.append(menu);
     }
     return menu;
   }
-  function closeStatusMenu() {
+  function closeStatusMenu(restoreFocus = false) {
     const menu = $("ship-status-menu");
-    if (menu) {
-      menu.hidden = true;
-      menu.replaceChildren();
+    if (!menu || menu.hidden) return;
+    const owner = menu.__spOwner;
+    menu.hidden = true;
+    menu.replaceChildren();
+    menu.__spOwner = null;
+    delete menu.dataset.oid;
+    if (owner) {
+      owner.setAttribute("aria-expanded", "false");
+      if (restoreFocus === true && owner.isConnected) owner.focus({ preventScroll: true });
     }
   }
-  function openStatusMenu(badge) {
+  function openStatusMenu(badge, { focusFirst = false } = {}) {
+    ui()?.closeMenus($("ship-status-menu"));
+    closeStatusMenu();
     const menu = statusMenu();
-    menu.replaceChildren();
     const oid = badge.dataset.shipStatus;
     const transitions = (badge.dataset.transitions || "").split("|").filter(Boolean);
     if (!transitions.length) {
       const span = document.createElement("span");
       span.className = "ship-status-empty";
-      span.textContent = "No further transitions.";
+      span.textContent = tr("No further transitions.");
       menu.append(span);
     } else {
       transitions.forEach((target) => {
         const item = document.createElement("button");
         item.type = "button";
         item.className = "rf-item";
+        item.setAttribute("role", "menuitem");
+        item.tabIndex = -1;
         item.dataset.statusTarget = target;
         item.dataset.statusOid = oid;
         item.dataset.statusNumber = badge.dataset.orderNumber || oid;
-        item.textContent = target === "Delivered" ? "Mark Delivered" : `Move to ${label(target)}`;
+        item.textContent = target === "Delivered" ? tr("Mark Delivered") : tr("Move to {status}", { status: label(target) });
         menu.append(item);
       });
     }
-    const rect = badge.getBoundingClientRect();
-    menu.hidden = false;
-    const mw = menu.offsetWidth;
-    const mh = menu.offsetHeight;
-    const margin = 8;
-    // Absolute positioning: viewport rect plus page scroll offsets.
-    const sx = window.scrollX || 0;
-    const sy = window.scrollY || 0;
-    let left = Math.max(margin, Math.min(rect.left, window.innerWidth - mw - margin)) + sx;
-    let top = rect.bottom + 6;
-    if (top + mh + margin > window.innerHeight && rect.top - mh - 6 > margin) top = rect.top - mh - 6;
-    menu.style.left = `${Math.round(left)}px`;
-    menu.style.top = `${Math.round(Math.max(margin, top) + sy)}px`;
+    menu.dataset.oid = oid;
+    menu.__spOwner = badge;
+    menu.setAttribute("aria-label", badge.getAttribute("aria-label") || badge.textContent.trim());
+    badge.setAttribute("aria-expanded", "true");
+    if (ui()) ui().placePopup(menu, badge, "start");
+    else menu.hidden = false;
     icons();
+    if (focusFirst) menu.querySelector("[role=menuitem]")?.focus();
   }
 
   function syncRow(row, order, transitions) {
@@ -153,7 +156,9 @@ function spInitShippingIndex() {
     const badge = row.querySelector("[data-ship-status]");
     if (badge) {
       badge.className = `badge text-bg-${BADGES[order.status] || "secondary"} ship-status-btn`;
-      badge.textContent = order.status;
+      badge.textContent = tr(order.status);
+      const head = (badge.getAttribute("aria-label") || "").split(" · ")[0];
+      if (head) badge.setAttribute("aria-label", `${head} · ${tr(order.status)}`);
       badge.dataset.status = order.status;
       badge.dataset.transitions = (transitions || []).join("|");
       badge.dataset.badge = BADGES[order.status] || "secondary";
@@ -162,7 +167,12 @@ function spInitShippingIndex() {
     if (deliverItem) deliverItem.hidden = !(transitions || []).includes("Delivered");
   }
 
+  const applying = new Set();
   async function applyStatus(oid, target, extra) {
+    if (applying.has(String(oid))) return; // one status change per order at a time
+    applying.add(String(oid));
+    const badge = rowFor(oid)?.querySelector("[data-ship-status]");
+    badge?.setAttribute("aria-busy", "true");
     try {
       const data = await request(`/api/shipping/${encodeURIComponent(oid)}/status`, "POST", {
         status: target,
@@ -170,10 +180,13 @@ function spInitShippingIndex() {
       });
       syncRow(rowFor(oid), data.order, data.transitions);
       closeStatusMenu();
-      toast(`Order moved to ${label(target)}.`);
+      toast(tr("Order moved to {status}.", { status: label(target) }));
     } catch (e) {
       console.error("Shipping status change failed:", e);
       throw e;
+    } finally {
+      applying.delete(String(oid));
+      badge?.removeAttribute("aria-busy");
     }
   }
 
@@ -236,17 +249,27 @@ function spInitShippingIndex() {
 
   /* ---- delete ---- */
   async function deleteShipment(oid) {
-    if (!window.confirm("Delete this shipment permanently? This cannot be undone.")) return;
+    const row = rowFor(oid);
+    const yes = await ask({
+      title: tr("Delete shipment?"),
+      message: tr("Delete this shipment permanently? This cannot be undone."),
+      detail: row?.querySelector("[data-ship-status]")?.dataset.orderNumber || "",
+      confirmLabel: tr("Delete shipment"),
+    });
+    if (!yes || applying.has(`del-${oid}`)) return;
+    applying.add(`del-${oid}`);
     try {
       await request(`/api/shipping/${encodeURIComponent(oid)}`, "DELETE", {});
       rowFor(oid)?.remove();
       const count = $("ship-table-count");
       if (count) count.textContent = Math.max(0, Number(count.textContent || 0) - 1);
-      toast("Shipment deleted.");
+      toast(tr("Shipment deleted."));
       if (window.StorePro?.reload) window.StorePro.reload();
     } catch (e) {
       console.error("Shipment delete failed:", e);
-      toast(e.message);
+      fail(e);
+    } finally {
+      applying.delete(`del-${oid}`);
     }
   }
 
@@ -261,17 +284,23 @@ function spInitShippingIndex() {
       } else if (target === "Cancelled" && window.StoreProCancel) {
         closeStatusMenu();
         window.StoreProCancel.open({
-          title: "Cancel Shipment",
-          context: `Cancelling ${statusItem.dataset.statusNumber || oid}. A reason is required.`,
-          confirmLabel: "Confirm Cancel",
-          onConfirm: (reason) =>
-            applyStatus(oid, target, { cancel_reason: reason }).catch((err) =>
-              toast(err.message),
-            ),
+          title: tr("Cancel Shipment"),
+          context: tr("Cancelling {order}. A reason is required.", { order: statusItem.dataset.statusNumber || oid }),
+          confirmLabel: tr("Confirm Cancel"),
+          onConfirm: (reason) => applyStatus(oid, target, { cancel_reason: reason }).catch(fail),
         });
       } else {
-        if (!window.confirm(`Move order to ${label(target)}?`)) return;
-        applyStatus(oid, target).catch((err) => toast(err.message));
+        const number = statusItem.dataset.statusNumber || oid;
+        closeStatusMenu(true);
+        ask({
+          title: tr("Change shipment status?"),
+          message: tr("Move this order to {status}?", { status: label(target) }),
+          detail: number,
+          confirmLabel: tr("Move to {status}", { status: label(target) }),
+          tone: target === "Returned" || target === "Failed Delivery" ? "danger" : "primary",
+        }).then((yes) => {
+          if (yes) applyStatus(oid, target).catch(fail);
+        });
       }
       return;
     }
@@ -279,11 +308,9 @@ function spInitShippingIndex() {
     if (badge) {
       const current = $("ship-status-menu");
       if (current && !current.hidden && current.dataset.oid === badge.dataset.shipStatus) {
-        closeStatusMenu();
+        closeStatusMenu(true);
       } else {
-        openStatusMenu(badge);
-        const opened = $("ship-status-menu");
-        if (opened && !opened.hidden) opened.dataset.oid = badge.dataset.shipStatus;
+        openStatusMenu(badge, { focusFirst: e.detail === 0 });
       }
       return;
     }
@@ -319,11 +346,8 @@ function spInitShippingIndex() {
     const menuStatus = e.target.closest("[data-ship-menu-status]");
     if (menuStatus) {
       const rowBadge = rowFor(menuStatus.dataset.shipMenuStatus)?.querySelector("[data-ship-status]");
-      if (rowBadge) {
-        openStatusMenu(rowBadge);
-        const menu = $("ship-status-menu");
-        if (menu && !menu.hidden) menu.dataset.oid = rowBadge.dataset.shipStatus;
-      }
+      // Let the row menu close first, then open the status menu at the badge.
+      if (rowBadge) setTimeout(() => openStatusMenu(rowBadge, { focusFirst: e.detail === 0 }), 0);
       return;
     }
     const menuCopy = e.target.closest("[data-ship-menu-copy]");
@@ -349,7 +373,16 @@ function spInitShippingIndex() {
 
   async function advancePickup(saleId, target) {
     if (!saleId || !target) return;
-    if (!window.confirm(`Move pickup order to ${target}?`)) return;
+    const row = document.querySelector(`[data-pickup-row="${CSS.escape(String(saleId))}"]`);
+    const yes = await ask({
+      title: tr("Update pickup order?"),
+      message: tr("Move pickup order to {status}?", { status: tr(target) }),
+      detail: row?.dataset.pickupInvoice || "",
+      confirmLabel: tr("Move to {status}", { status: tr(target) }),
+      tone: "primary",
+    });
+    if (!yes || applying.has(`pickup-${saleId}`)) return;
+    applying.add(`pickup-${saleId}`);
     try {
       const data = await request(`/api/sales/${encodeURIComponent(saleId)}/pickup-status`, "POST", {
         status: target,
@@ -358,17 +391,19 @@ function spInitShippingIndex() {
       if (row) {
         const badge = row.querySelector(".badge");
         if (badge) {
-          badge.textContent = data.status;
+          badge.textContent = tr(data.status);
           badge.className = `badge ${data.status === "Collected" ? "text-bg-success" : data.status === "Ready For Pickup" ? "text-bg-info" : "text-bg-secondary"}`;
         }
         row.querySelectorAll("[data-pickup-action]").forEach((btn) => {
           btn.hidden = !(data.transitions || []).includes(btn.dataset.pickupAction);
         });
       }
-      toast(`Pickup order moved to ${data.status}.`);
+      toast(tr("Pickup order moved to {status}.", { status: tr(data.status) }));
     } catch (e) {
       console.error("Pickup status change failed:", e);
-      toast(e.message);
+      fail(e);
+    } finally {
+      applying.delete(`pickup-${saleId}`);
     }
   }
 
@@ -396,9 +431,42 @@ function spInitShippingIndex() {
   });
 
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeStatusMenu();
+    const menu = $("ship-status-menu");
+    const badge = e.target.closest?.("[data-ship-status]");
+    if (badge && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      e.preventDefault();
+      if (menu && !menu.hidden && menu.dataset.oid === badge.dataset.shipStatus)
+        menu.querySelector("[role=menuitem]")?.focus();
+      else openStatusMenu(badge, { focusFirst: true });
+      return;
+    }
+    if (!menu || menu.hidden) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeStatusMenu(true);
+      return;
+    }
+    if (menu.contains(e.target)) ui()?.menuKeys(e, menu, (restore) => closeStatusMenu(restore));
   });
-  document.addEventListener("storepro:leave", closeStatusMenu);
+  // Scrolling the table moves the badge away from its menu: close it.
+  document.addEventListener(
+    "scroll",
+    (e) => {
+      const menu = $("ship-status-menu");
+      if (!menu || menu.hidden || menu.contains(e.target)) return;
+      if (e.target === document || e.target === document.body) {
+        if (menu.__spOwner?.isConnected) ui()?.placePopup(menu, menu.__spOwner, "start");
+        return;
+      }
+      closeStatusMenu();
+    },
+    true,
+  );
+  window.addEventListener("resize", () => closeStatusMenu());
+  document.addEventListener("storepro:menus-close", (e) => {
+    if (e.detail?.except !== $("ship-status-menu")) closeStatusMenu();
+  });
+  document.addEventListener("storepro:leave", () => closeStatusMenu());
 
   window.StoreProShipping = {
     ...(window.StoreProShipping || {}),

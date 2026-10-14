@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from flask import request, g
 from models import now, Product, ShippingOrder
-from services.i18n import translate
+from services.i18n import js_strings, translate
 from services.permissions import can
 from services.startup import get_asset_version, get_app_version
 
@@ -80,9 +80,11 @@ def register_template_helpers(app):
                 app.logger.exception("Shipping alert count failed")
 
         def altered_url(**changes):
+            # The current URL with some query arguments replaced; None removes one.
             args = request.args.to_dict()
             args.update(changes)
-            return request.path + "?" + urlencode(args)
+            args = {k: v for k, v in args.items() if v is not None}
+            return request.path + ("?" + urlencode(args) if args else "")
 
         backup_service = app.extensions.get("backups")
         backup_warnings = (
@@ -98,9 +100,11 @@ def register_template_helpers(app):
             current_user=g.user,
             now=now(),
             t=translate,
+            js_i18n=js_strings,
             alert_count=count,
             page_url=lambda p: altered_url(page=p),
             select_url=lambda p: altered_url(selected=p),
+            url_with=altered_url,
             app_version=get_app_version(),
             asset_version=get_asset_version(),
         )

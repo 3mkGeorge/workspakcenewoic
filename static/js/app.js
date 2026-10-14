@@ -15,13 +15,11 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   syncThemeIcon();
   icons();
-  const toast = (message) => {
-    const el = document.getElementById("app-toast");
-    if (el) {
-      el.querySelector(".toast-body").textContent = message;
-      bootstrap.Toast.getOrCreateInstance(el).show();
-    }
-  };
+  document.addEventListener("storepro:theme", () => {
+    syncThemeIcon();
+    icons();
+  });
+  const toast = (message, type = "info") => window.StoreProUI?.toast(message, type);
   document.addEventListener("click", (e) => {
     const el = e.target.closest("[data-action]");
     if (!el) return;
@@ -30,8 +28,6 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         localStorage.setItem("storepro-theme", root.dataset.bsTheme);
       } catch {}
-      syncThemeIcon();
-      icons();
       redrawCharts();
       document.dispatchEvent(new CustomEvent("storepro:theme"));
     }
@@ -59,14 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
       document.querySelector(".global-search input")?.focus();
     }
   });
-  function bindConfirms(scope) {
-    scope.querySelectorAll("form[data-confirm]:not([data-sp-confirm])").forEach((form) => {
-      form.dataset.spConfirm = "1";
-      form.addEventListener("submit", (event) => {
-        if (!confirm(form.dataset.confirm)) event.preventDefault();
-      });
-    });
-  }
+  // form[data-confirm] is handled by ui.js with the shared confirmation dialog.
   const SERIES = ["#2563eb", "#8b5cf6", "#10b981", "#f59e0b", "#06b6d4", "#ef4444"];
   const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
   const ISO_MONTH = /^\d{4}-\d{2}$/;
@@ -223,11 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("pageshow", () => {
     document.querySelectorAll(".transaction-form").forEach((f) => {
       f.dataset.submitting = "0";
-      const button = f.querySelector(".form-footer button");
-      if (button) {
-        button.disabled = false;
-        button.textContent = document.documentElement.lang === "ar" ? "حفظ" : "Save";
-      }
+      window.StoreProUI?.busy(f.querySelector(".form-footer button"), false);
     });
   });
   function initTransactionForm(form) {
@@ -302,7 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ),
     );
     if (!match) {
-      toast("No exact product match. Choose a SKU from the suggestions.");
+      toast(form.dataset.noMatch || "No exact product match. Choose a SKU from the suggestions.", "warning");
       return;
     }
     let row = [...body.rows].find((r) => r.querySelector(".line-product").value === match.value);
@@ -320,21 +305,12 @@ document.addEventListener("DOMContentLoaded", () => {
     e.target.value = "";
     calculate();
   });
+  // Busy state and duplicate-submit protection come from the router, which
+  // also releases the button if the server rejects the order.
   form.addEventListener("submit", (e) => {
     if (!body.rows.length) {
       e.preventDefault();
-      toast("Add at least one product.");
-      return;
-    }
-    if (form.dataset.submitting === "1") {
-      e.preventDefault();
-      return;
-    }
-    form.dataset.submitting = "1";
-    const btn = form.querySelector("button[type=submit],.form-footer button");
-    if (btn) {
-      btn.disabled = true;
-      btn.textContent = "Saving…";
+      toast(form.dataset.noLines || "Add at least one product.", "warning");
     }
   });
   if (!body.rows.length) addLine();
@@ -345,7 +321,6 @@ document.addEventListener("DOMContentLoaded", () => {
     root = root || document;
     icons();
     sweepBrokenImages(root);
-    bindConfirms(root);
     initCharts(root);
     root.querySelectorAll(".transaction-form").forEach(initTransactionForm);
   };

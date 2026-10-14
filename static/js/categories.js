@@ -299,10 +299,20 @@ function spInitCategories() {
   $("cat-delete-confirm").addEventListener("click", async (e) => {
     const btn = e.currentTarget;
     const mode = document.querySelector('input[name="cat-delete-mode"]:checked')?.value;
-    if (mode === "purge" && !confirm(
-      `Permanently delete ${deleteTarget.total} archived product(s) and the category "${deleteTarget.name}"? This cannot be undone. Products with sales, purchase, stock-movement or price history cannot be purged.`
-    )) {
-      return;
+    if (btn.disabled) return;
+    if (mode === "purge") {
+      const ui = window.StoreProUI;
+      const tr = (text, values) => (ui ? ui.t(text, values) : text);
+      const opts = {
+        title: tr("Permanently delete this category?"),
+        message: tr(
+          "Permanently delete {count} archived product(s) and this category? This cannot be undone. Products with sales, purchase, stock-movement or price history cannot be purged.",
+          { count: deleteTarget.total },
+        ),
+        detail: deleteTarget.name,
+        confirmLabel: tr("Delete permanently"),
+      };
+      if (!(await (ui ? ui.confirm(opts) : Promise.resolve(window.confirm(opts.message))))) return;
     }
     btn.disabled = true;
     try {

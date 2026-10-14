@@ -6,7 +6,8 @@
 (() => {
   if (!document.getElementById("sidebar")) return;
 
-  function toast(text) {
+  function toast(text, type = "info") {
+    if (window.StoreProUI) return window.StoreProUI.toast(text, type);
     const el = document.getElementById("app-toast");
     if (!el || !text) return;
     el.querySelector(".toast-body").textContent = text;
@@ -14,6 +15,8 @@
       window.bootstrap?.Toast.getOrCreateInstance(el).show();
     } catch {}
   }
+  const failedText = () =>
+    document.getElementById("sp-ui-strings")?.dataset.failed || "The request failed. Check your connection and try again.";
 
   async function fetchHtml(url) {
     const response = await fetch(url, {
@@ -54,7 +57,7 @@
       document.dispatchEvent(new CustomEvent("storepro:region", { detail: { name } }));
       return true;
     } catch (error) {
-      toast(error.message);
+      toast(error instanceof TypeError ? failedText() : error.message, "error");
       return false;
     } finally {
       target.classList.remove("sp-region-loading");
@@ -71,6 +74,7 @@
       if (!holder) return;
       const a = e.target.closest("a[href]");
       if (!a || !holder.contains(a)) return;
+      if (a.hasAttribute("data-no-partial")) return; // needs the whole page (e.g. edit mode)
       let url;
       try {
         url = new URL(a.href, location.href);
@@ -104,7 +108,16 @@
   });
 
   // Same-page forms: submit via AJAX, toast the flash, refresh content fast.
-  async function ajaxReload(form) {
+  // The page only reloads once the server confirms; on failure the form keeps
+  // everything the user typed.
+  const TONES = { danger: "error", warning: "warning", success: "success", info: "info" };
+  function flashTone(el) {
+    const cls = [...el.classList].find((c) => c.startsWith("alert-") && TONES[c.slice(6)]);
+    return cls ? TONES[cls.slice(6)] : "info";
+  }
+  async function ajaxReload(form, submitter) {
+    const body = new FormData(form);
+    if (submitter?.name) body.append(submitter.name, submitter.value);
     const response = await fetch(form.action || location.href, {
       method: "post",
       credentials: "same-origin",
@@ -113,17 +126,20 @@
         "X-Requested-With": "XMLHttpRequest",
         "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')?.content || "",
       },
-      body: new FormData(form),
+      body,
     });
     if ((response.headers.get("content-type") || "").includes("application/json")) {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        toast(data.error || `Request failed (${response.status}).`);
+        if (data.code === "session_expired") {
+          location.href = "/login";
+          return;
+        }
+        toast(data.error || `Request failed (${response.status}).`, "error");
         return;
       }
-      if (window.StorePro && window.StorePro.reload) await window.StorePro.reload();
-      else location.reload();
-      if (data.message) toast(data.message);
+      await reloadAfterSave(form);
+      if (data.message) toast(data.message, "success");
       return;
     }
     const doc = new DOMParser().parseFromString(await response.text(), "text/html");
@@ -131,19 +147,41 @@
       const err =
         doc.querySelector("section.error-panel p")?.textContent.trim() ||
         `Request failed (${response.status}).`;
-      toast(err);
+      toast(err, "error");
       return;
     }
-    const flashes = [...doc.querySelectorAll("main.content .alert.sp-flash")].map((el) =>
-      el.textContent.trim().replace(/\s+/g, " ").slice(0, 200),
+    if (!doc.getElementById("sidebar")) {
+      location.href = response.url || "/login"; // signed out mid-session
+      return;
+    }
+    const flashes = [...doc.querySelectorAll("main.content .alert.sp-flash")].map((el) => ({
+      text: el.textContent.trim().replace(/\s+/g, " ").slice(0, 200),
+      tone: flashTone(el),
+    }));
+    const failure = flashes.find((f) => f.tone === "error");
+    if (failure) {
+      toast(failure.text, "error"); // nothing was saved: keep the form as typed
+      return;
+    }
+    await reloadAfterSave(form);
+    const shown = flashes.find((f) => f.tone === "warning") || flashes.find((f) => f.tone === "success") || flashes[0];
+    toast(
+      shown ? shown.text : document.getElementById("sp-ui-strings")?.dataset.saved || "Saved.",
+      shown ? (shown.tone === "info" ? "success" : shown.tone) : "success",
     );
-    if (window.StorePro && window.StorePro.reload) await window.StorePro.reload();
-    else location.reload();
-    const ok = flashes.find((t) => /saved|updated|received|completed|success/i.test(t)) || flashes[0];
-    toast(ok || (document.documentElement.lang === "ar" ? "تم الحفظ." : "Saved."));
     document.querySelectorAll("main.content .alert.sp-flash").forEach((el) => el.remove());
   }
 
+  // After a confirmed save, refresh this page (keeping search and paging), or
+  // the form's data-reload-url when the saved view should change (edit -> list).
+  async function reloadAfterSave(form) {
+    const next = form.dataset.reloadUrl;
+    if (next && window.StorePro?.replace) return window.StorePro.replace(next);
+    if (window.StorePro && window.StorePro.reload) return window.StorePro.reload();
+    location.reload();
+  }
+
+  const inflight = new WeakSet();
   document.addEventListener("submit", (e) => {
     const form = e.target;
     if (!(form instanceof HTMLFormElement) || e.defaultPrevented) return;
@@ -151,7 +189,16 @@
     if (!form.closest("[data-ajax-reload]")) return;
     e.preventDefault();
     e.stopPropagation();
-    ajaxReload(form).catch((error) => toast(error.message));
+    if (inflight.has(form)) return; // a second click while saving never sends twice
+    inflight.add(form);
+    const submitter = e.submitter && form.contains(e.submitter) ? e.submitter : form.querySelector("button[type=submit],button:not([type])");
+    window.StoreProUI?.busy(submitter, true);
+    ajaxReload(form, e.submitter)
+      .catch((error) => toast(error instanceof TypeError ? failedText() : error.message, "error"))
+      .finally(() => {
+        inflight.delete(form);
+        window.StoreProUI?.busy(submitter, false);
+      });
   });
 
   window.StorePro = window.StorePro || {};

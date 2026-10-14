@@ -36,12 +36,22 @@ function spInitShipmentModal() {
   const icons = () => { if (window.lucide) window.lucide.createIcons(); };
   const money = (v, cur) =>
     `${cur || ""} ${(Number(v || 0) / 100).toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  const toast = (msg) => {
-    const el = $("app-toast");
-    if (!el) return;
-    el.querySelector(".toast-body").textContent = msg;
-    if (window.bootstrap?.Toast) bootstrap.Toast.getOrCreateInstance(el).show();
-  };
+  const ui = () => window.StoreProUI;
+  const tr = (msg, values) => (ui() ? ui().t(msg, values) : msg);
+  const toast = (msg, type = "success") => ui()?.toast(msg, type);
+  // One request per form at a time; the submit button shows progress meanwhile.
+  function sending(form, run) {
+    if (form.dataset.spSending) return;
+    form.dataset.spSending = "1";
+    const submitter = form.querySelector("button[type=submit]");
+    ui()?.busy(submitter, true);
+    Promise.resolve()
+      .then(run)
+      .finally(() => {
+        delete form.dataset.spSending;
+        ui()?.busy(submitter, false);
+      });
+  }
   const say = (id, msg, isError) => {
     const box = $(id);
     if (!box) return;
@@ -417,7 +427,10 @@ function spInitShipmentModal() {
     }
   }
 
+  const applying = new Set();
   async function applyStatus(oid, target, extra) {
+    if (applying.has(String(oid))) return; // one status change per order at a time
+    applying.add(String(oid));
     try {
       const data = await request(`/api/shipping/${encodeURIComponent(oid)}/status`, "POST", {
         status: target,
@@ -429,17 +442,19 @@ function spInitShipmentModal() {
         current = fresh;
         render(fresh);
       }
-      toast(`Order moved to ${target}.`);
+      toast(tr("Order moved to {status}.", { status: tr(target) }));
     } catch (e) {
       console.error("Shipment status change failed:", e);
-      toast(e.message);
+      toast(e instanceof TypeError ? tr("The request failed. Check your connection and try again.") : e.message, "error");
+    } finally {
+      applying.delete(String(oid));
     }
   }
 
   function openInvoice() {
     const sid = current?.order.sale_id;
     if (!sid) {
-      toast("No linked invoice.");
+      toast(tr("No linked invoice."), "warning");
       return;
     }
     if (window.StoreProModal) {
@@ -455,7 +470,7 @@ function spInitShipmentModal() {
     if (!current) return;
     const o = current.order;
     if (o.status === "Delivered") {
-      toast("Delivered shipments are locked.");
+      toast(tr("Delivered shipments are locked."), "warning");
       return;
     }
     $("shipmentEditCourier").value = o.courier || "";
@@ -557,9 +572,17 @@ function spInitShipmentModal() {
           onConfirm: (reason) => applyStatus(oid, target, { cancel_reason: reason }),
         });
       } else {
-        const label = ACTION[target] || `Mark ${target}`;
-        if (!window.confirm(`${label} this shipment?`)) return;
-        applyStatus(oid, target);
+        const o = current?.order;
+        const opts = {
+          title: tr("Change shipment status?"),
+          message: tr("Move this order to {status}?", { status: tr(target) }),
+          detail: o?.order_number || "",
+          confirmLabel: tr(ACTION[target] || "Confirm"),
+          tone: target === "Returned" ? "danger" : "primary",
+        };
+        (ui() ? ui().confirm(opts) : Promise.resolve(window.confirm(opts.message))).then((yes) => {
+          if (yes && current?.order.id === oid) applyStatus(oid, target);
+        });
       }
     }
   });
@@ -575,6 +598,11 @@ function spInitShipmentModal() {
       say("shipmentShipError", "Enter the tracking code supplied by the courier.", true);
       return;
     }
+    const form = e.target;
+    if (form.dataset.spSending) return; // double click: one request only
+    form.dataset.spSending = "1";
+    const submitter = form.querySelector("button[type=submit]");
+    ui()?.busy(submitter, true);
     const body = { tracking_code: code, ship: true };
     const url = $("shipmentShipUrl").value.trim();
     if (url) body.tracking_url = url;
@@ -587,11 +615,15 @@ function spInitShipmentModal() {
       .then((fresh) => {
         current = fresh;
         render(fresh);
-        toast("Order marked as Shipped.");
+        toast(tr("Order marked as Shipped."));
       })
       .catch((err) => {
         console.error("Ship dialog save failed:", err);
         say("shipmentShipError", err.message, true);
+      })
+      .finally(() => {
+        delete form.dataset.spSending;
+        ui()?.busy(submitter, false);
       });
   });
 
@@ -614,7 +646,7 @@ function spInitShipmentModal() {
     const code = $("shipmentEditTracking").value.trim();
     if (code) body.tracking_code = code;
     body.tracking_url = $("shipmentEditUrl").value.trim();
-    request(`/api/shipping/${encodeURIComponent(oid)}`, "POST", body)
+    sending(e.target, () => request(`/api/shipping/${encodeURIComponent(oid)}`, "POST", body)
       .then((data) => {
         updateTableRow(data.order, data.transitions);
         hideModal("shipmentEditModal");
@@ -627,12 +659,12 @@ function spInitShipmentModal() {
       .then(({ fresh, shipped }) => {
         current = fresh;
         render(fresh);
-        toast(shipped ? "Tracking saved. Order marked as Shipped." : "Shipment saved.");
+        toast(tr(shipped ? "Tracking saved. Order marked as Shipped." : "Shipment saved."));
       })
       .catch((err) => {
         console.error("Shipment edit save failed:", err);
         say("shipmentEditError", err.message, true);
-      });
+      }));
   });
 
   document.addEventListener("submit", (e) => {
@@ -652,18 +684,18 @@ function spInitShipmentModal() {
       apartment: $("shipmentAddrApt").value,
       postal_code: $("shipmentAddrPostal").value,
     };
-    request(`/api/shipping/${encodeURIComponent(oid)}`, "POST", body)
+    sending(e.target, () => request(`/api/shipping/${encodeURIComponent(oid)}`, "POST", body)
       .then(() => request(`/api/shipping/${encodeURIComponent(oid)}`))
       .then((fresh) => {
         current = fresh;
         render(fresh);
         hideModal("shipmentAddressModal");
-        toast("Delivery address saved.");
+        toast(tr("Delivery address saved."));
       })
       .catch((err) => {
         console.error("Address save failed:", err);
         say("shipmentAddressError", err.message, true);
-      });
+      }));
   });
 
   window.StoreProShipment = { ...(window.StoreProShipment || {}), open, reload: () => current && open(current.order.id) };

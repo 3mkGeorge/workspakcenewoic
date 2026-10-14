@@ -1397,11 +1397,22 @@
     }
   }
 
-  function resumeHeldSale(holdId) {
+  async function resumeHeldSale(holdId) {
+    if (!getHeldSales().some(h => h.id === holdId)) return;
+    if (state.items.length) {
+      const ui = window.StoreProUI;
+      const tr = (text) => (ui ? ui.t(text) : text);
+      const opts = {
+        title: tr("Resume held sale?"),
+        message: tr("Replace the items currently in this invoice with the held sale?"),
+        confirmLabel: tr("Replace items"),
+      };
+      if (!(await (ui ? ui.confirm(opts) : Promise.resolve(window.confirm(opts.message))))) return;
+    }
+    // Re-read after the dialog: the hold may have been resumed or discarded meanwhile.
     const list = getHeldSales();
     const idx = list.findIndex(h => h.id === holdId);
     if (idx === -1) return;
-    if (state.items.length && !window.confirm("Replace the items currently in this invoice with the held sale?")) return;
     const hold = list[idx];
     list.splice(idx, 1);
     saveHeldSales(list);
@@ -1498,7 +1509,8 @@
   // Unsaved-invoice guard + teardown for SPA navigation.
   window.__storeproGuard = () =>
     dirty && !saved && state.items.length
-      ? "Unsaved invoice items will be lost. Leave anyway?"
+      ? document.getElementById("sp-ui-strings")?.dataset.leaveMessage ||
+        "You have unsaved changes. They will be lost if you leave."
       : null;
   document.addEventListener(
     "storepro:leave",

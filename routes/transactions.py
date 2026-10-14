@@ -203,7 +203,12 @@ def invoice(sid):
 def purchases():
     start, end = date_range()
     a, b = bounds(start, end)
-    query = Purchase.query.filter(Purchase.created_at >= a, Purchase.created_at < b)
+    status = request.args.get("status", "")
+    query = Purchase.query
+    # "open" (Pending + Processing) lists every open order, like the dashboard
+    # count it comes from, unless a date range is chosen explicitly.
+    if status != "open" or request.args.get("from") or request.args.get("to"):
+        query = query.filter(Purchase.created_at >= a, Purchase.created_at < b)
     q = request.args.get("q", "")[:100]
     if q:
         query = query.filter(
@@ -215,8 +220,10 @@ def purchases():
         )
     if request.args.get("supplier_id"):
         query = query.filter_by(supplier_id=integer(request.args["supplier_id"], 1))
-    if request.args.get("status"):
-        query = query.filter_by(status=request.args["status"])
+    if status == "open":
+        query = query.filter(Purchase.status.in_(("Pending", "Processing")))
+    elif status:
+        query = query.filter_by(status=status)
     rows = query.all()
     page = query.order_by(Purchase.id.desc()).paginate(
         page=max(1, request.args.get("page", 1, type=int)),
@@ -261,7 +268,7 @@ def purchases():
         start=start,
         end=end,
         suppliers=Supplier.query.filter_by(active=True).all(),
-        chart=trend(),
+        chart=trend((end - start).days + 1, end),  # follows the From/To filter
         top=top,
     )
 
