@@ -28,6 +28,41 @@ from services.dual_backup import validate_config
 from services.uploads import save_image
 
 
+def check_changed_backup_folders(root_dir, current_settings, values):
+    """Hold a changed backup folder to the same rules as Backup & Restore → Save Paths.
+
+    The folder must already exist (creating one needs the explicit confirmation
+    that Save Paths asks for) and be readable and writable.
+    """
+    import os
+    from pathlib import Path
+
+    from services.dual_backup import destinations, probe
+
+    trial = current_settings | {k: values[k].strip()[:500] for k in ("backup_primary", "backup_secondary") if k in values}
+    changed = [
+        k for k in ("backup_primary", "backup_secondary")
+        if k in values and trial[k] != current_settings.get(k, "")
+    ]
+    if not changed:
+        return
+    folders = destinations(Path(root_dir), trial)
+    for key in changed:
+        source = "Primary" if key == "backup_primary" else "Secondary"
+        folder = folders[source]
+        if not folder.is_dir():
+            raise ValueError(
+                f"The {source} backup folder does not exist: {folder}. "
+                "Create it from Backup & Restore → Save Paths, which asks before creating folders."
+            )
+        try:
+            if not os.access(folder, os.R_OK | os.W_OK):
+                raise OSError("read/write access denied")
+            probe(folder)
+        except OSError as exc:
+            raise ValueError(f"The {source} backup folder is not writable: {folder} ({exc}).")
+
+
 def update_store_settings(form, files, root_dir, current_settings):
     """Validate and persist store settings, updating logo and logging backup audits."""
     values = form
@@ -68,6 +103,7 @@ def update_store_settings(form, files, root_dir, current_settings):
     ):
         require("backups.edit")
     validate_config(root_dir, current_settings | values.to_dict())
+    check_changed_backup_folders(root_dir, current_settings, values)
     rate = cents(values.get("tax_rate"))
     if rate > 10000:
         raise ValueError("Tax must be between 0 and 100 percent.")
@@ -141,6 +177,13 @@ def save_managed_user(form):
     ensure_recovery_operator()
     audit("Save user", user.username)
     db.session.commit()
+    # Other sessions of this user end (version bump). Editing your own name or
+    # role keeps you signed in here; changing your own password still signs out.
+    from flask import g, has_request_context, session
+
+    me = getattr(g, "user", None) if has_request_context() else None
+    if me is not None and me.id == user.id and user.active and not form.get("password"):
+        session["version"] = user.version
     return user
 
 

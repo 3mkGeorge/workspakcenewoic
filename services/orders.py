@@ -48,7 +48,8 @@ def get_orders_hub_counters():
     shipped = ShippingOrder.query.filter_by(status="Shipped").count()
     out_for_delivery = ShippingOrder.query.filter_by(status="Out For Delivery").count()
     delivered = ShippingOrder.query.filter_by(status="Delivered").count()
-    total_all = ShippingOrder.query.count() + pickup
+    # The pipeline's "All" stage lists every shipment (pickups have their own tab).
+    total_all = ShippingOrder.query.count()
     return {
         "shipping": shipping,
         "pickup": pickup,

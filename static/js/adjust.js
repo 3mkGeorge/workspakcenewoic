@@ -116,6 +116,9 @@ function spInitAdjust() {
     qtyError.textContent = next < 0 ? "This would take stock below zero." : "";
     qtyError.hidden = next >= 0;
     saveBtn.disabled = bad;
+    // "Save & New" submits the same adjustment, so it follows the same rule.
+    const saveNew = form.querySelector('button[name="save_and_new"]');
+    if (saveNew) saveNew.disabled = bad;
   }
   const barcodeScanner = document.getElementById("adjust-barcode-scanner");
   const scanFeedback = document.getElementById("scan-feedback");

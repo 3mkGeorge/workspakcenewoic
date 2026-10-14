@@ -87,10 +87,11 @@ function spInitMedia() {
 
   // ---------- existing product API ----------
   async function api(url, opts = {}) {
+    // opts first: its own headers must be merged with the CSRF token, not replace it.
     const res = await fetch(url, {
+      ...opts,
       credentials: "same-origin",
       headers: { "X-CSRFToken": csrf, ...(opts.headers || {}) },
-      ...opts,
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw Error(data.error || data.message || "Image update failed.");
@@ -330,11 +331,22 @@ function spInitMedia() {
     form.addEventListener("submit", (e) => {
       if (!pending.length) return; // no staged files: normal submit
       e.preventDefault();
+      if (form.dataset.spSending) return; // one upload at a time: no duplicate products
+      form.dataset.spSending = "1";
+      const submitter = e.submitter && form.contains(e.submitter) ? e.submitter : form.querySelector("button[type=submit],button:not([type])");
+      window.StoreProUI?.busy(submitter, true);
+      const release = () => {
+        delete form.dataset.spSending;
+        window.StoreProUI?.busy(submitter, false);
+      };
       const body = new FormData(form);
+      if (e.submitter?.name) body.append(e.submitter.name, e.submitter.value);
       body.delete("images");
       pending.forEach((p) => body.append("images", p.file, p.file.name));
       const xhr = new XMLHttpRequest();
-      xhr.open("POST", form.action || window.location.href);
+      xhr.open("POST", form.getAttribute("action") || window.location.href);
+      xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+      xhr.setRequestHeader("Accept", "text/html");
       xhr.upload.onprogress = (ev) => {
         if (ev.lengthComputable) setProgress(ev.loaded / ev.total, "Saving product with images…");
       };
@@ -349,14 +361,24 @@ function spInitMedia() {
           }
           progress.hidden = true;
           showError(message || `Save failed (${xhr.status}).`);
+          window.StoreProUI?.toast(message || `Save failed (${xhr.status}).`, "error");
+          release();
           return;
         }
         setProgress(1, "Saved");
+        // The redirect already consumed the "Product saved." message: show it here.
+        const doc = new DOMParser().parseFromString(xhr.responseText || "", "text/html");
+        const flash = doc.querySelector("main.content .alert.sp-flash")?.textContent.trim().replace(/\s+/g, " ");
         const target = xhr.responseURL || "/products";
         if (window.StorePro && window.StorePro.navigate) window.StorePro.navigate(target);
         else window.location.assign(target);
+        if (flash) window.StoreProUI?.toast(flash, "success");
       };
-      xhr.onerror = () => showError("Save failed. Check your connection and try again.");
+      xhr.onerror = () => {
+        progress.hidden = true;
+        showError("Save failed. Check your connection and try again.");
+        release();
+      };
       setProgress(0, "Saving product with images…");
       xhr.send(body);
     });

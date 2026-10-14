@@ -152,7 +152,7 @@
     const box = document.querySelector(".global-search input[name=q]");
     const next = doc.querySelector(".global-search input[name=q]");
     if (box && next && document.activeElement !== box) box.value = next.value;
-    // Alert dot and store name follow the server's latest state.
+    // Alert dot follows the server's latest state.
     const bell = document.querySelector(".topbar .notification");
     const nextBell = doc.querySelector(".topbar .notification");
     if (bell && nextBell) {
@@ -160,9 +160,18 @@
       bell.querySelector("b")?.remove();
       if (dot) bell.append(document.importNode(dot, true));
     }
+    // Store name, the signed-in user's name/role, and the menu entries the
+    // user's permissions allow can all change on a settings save.
+    ["#sidebar .brand > span", "#sidebar nav", "#sidebar .user-card", ".topbar .header-user", "#user-menu .sp-menu-head"].forEach((sel) => {
+      const here = document.querySelector(sel);
+      const there = doc.querySelector(sel);
+      if (here && there && here.innerHTML !== there.innerHTML)
+        here.replaceChildren(...[...there.childNodes].map((n) => document.importNode(n, true)));
+    });
   }
 
-  async function render(url, { push = true, restoreScroll = false, formData = null, method = "GET", guard = true } = {}) {
+  async function render(url, { push = true, restoreScroll = false, formData = null, method = "GET", guard = true, keepScroll = false } = {}) {
+    const keptY = window.scrollY;
     const seq = ++navSeq;
     if (guard && !(await mayLeave(push ? url : null))) return false;
     if (seq !== navSeq) return false;
@@ -261,6 +270,8 @@
     const anchor = hash && document.getElementById(decodeURIComponent(hash.slice(1)));
     if (anchor) {
       anchor.scrollIntoView();
+    } else if (keepScroll) {
+      window.scrollTo(0, keptY);
     } else if (restoreScroll) {
       const y = scrollPos.get(location.pathname + location.search);
       window.scrollTo(0, y === undefined ? 0 : y);
@@ -281,6 +292,10 @@
     render(a.href, { push: true });
   });
 
+  // Read action/method as attributes: a field named "action" or "method" (an
+  // audit filter, a maintenance button) shadows the form's own properties.
+  const actionOf = (form) => new URL(form.getAttribute("action") || location.href, location.href).href;
+  const methodOf = (form) => (form.getAttribute("method") || "get").toLowerCase();
   const posting = new WeakSet();
   window.addEventListener("submit", (e) => {
     const form = e.target;
@@ -288,9 +303,9 @@
     const submitter = e.submitter && form.contains(e.submitter) ? e.submitter : null;
     const data = new FormData(form);
     if (submitter?.name) data.append(submitter.name, submitter.value);
-    if (form.method.toLowerCase() === "get") {
+    if (methodOf(form) === "get") {
       e.preventDefault();
-      const url = new URL(form.getAttribute("action") ? form.action : location.href, location.href);
+      const url = new URL(actionOf(form));
       url.search = new URLSearchParams(data).toString();
       render(url.toString(), { push: true });
     } else {
@@ -299,7 +314,7 @@
       posting.add(form);
       const button = submitter || form.querySelector("button[type=submit],button:not([type])");
       window.StoreProUI?.busy(button, true);
-      render(form.action || location.href, {
+      render(actionOf(form), {
         push: true,
         formData: data,
         method: "post",
@@ -329,4 +344,7 @@
   StorePro.notePage = () => (currentPage = location.pathname + location.search);
   StorePro.reload = () => render(location.href, { push: false, guard: false });
   StorePro.replace = (url) => render(url, { push: false, guard: false });
+  // Re-render the current page after an in-place change (counters, tabs, rows)
+  // without moving the user's scroll position.
+  StorePro.refreshInPlace = () => render(location.href, { push: false, guard: false, keepScroll: true });
 })();

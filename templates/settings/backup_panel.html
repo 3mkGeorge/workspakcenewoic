@@ -70,7 +70,7 @@
   <div class="backup-toolbar">{% if can("backups.create") %}<form action="/settings/backup" method="post" data-backup-action>{{ csrf() }}<button class="btn btn-primary btn-lg">{{ icon('database-backup') }}{{ t("Backup Now") }}</button></form>{% endif %}<span id="backup-message" role="status" aria-live="polite">{{ t("Checking backup health…") }}</span><button type="button" class="btn btn-light" id="backup-refresh">{{ t("Refresh status") }}</button></div>
   <h3 class="mt-4">{{ t("Available recovery points") }}</h3>
   <p class="muted small">{{ t("Choose either destination. Archive integrity is always checked again before restoring.") }}</p>
-  <label class="field"><span>{{ t("Source Location") }}</span><select id="backup-source-filter" class="form-select"><option value="">{{ t("Both locations") }}</option><option>{{ t("Primary") }}</option><option>{{ t("Secondary") }}</option></select></label>
+  <label class="field"><span>{{ t("Source Location") }}</span><select id="backup-source-filter" class="form-select"><option value="">{{ t("Both locations") }}</option><option value="Primary">{{ t("Primary") }}</option><option value="Secondary">{{ t("Secondary") }}</option></select></label>
   <div class="table-responsive backup-file-list"><table class="table"><thead><tr><th>{{ t("Date & Time") }}</th><th>{{ t("Size") }}</th><th>{{ t("Source Location") }}</th><th>{{ t("Backup ID") }}</th><th>{{ t("Actions") }}</th></tr></thead><tbody id="backup-files"></tbody></table></div>
   <section class="mt-4 backup-logs-section" id="backup-logs-panel">
     <div class="panel-header d-flex justify-content-between align-items-center">

@@ -45,7 +45,7 @@
 
     <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
       <a href="/" class="btn btn-primary">{{ icon('home') }} {{ t("Return to Dashboard") }}</a>
-      <button class="btn btn-light" onclick="window.history.back()">{{ icon('arrow-left') }} {{ t("Go Back") }}</button>
+      <button type="button" class="btn btn-light" data-action="back">{{ icon('arrow-left') }} {{ t("Go Back") }}</button>
       {% if can("settings.view") %}
       <a href="/settings/telemetry" class="btn btn-light">{{ icon('activity') }} {{ t("View System Telemetry") }}</a>
       {% endif %}

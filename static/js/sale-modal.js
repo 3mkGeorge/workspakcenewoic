@@ -220,7 +220,7 @@ function spInitSaleModal() {
     setHref("sale-modal-edit", `/sales/${d.id}/edit`);
     // Mutations only apply to completed invoices (mirrors server rules).
     const live = d.status === "Completed";
-    ["sale-modal-edit", "sale-modal-refund", "sale-modal-delete"].forEach((id) => {
+    ["sale-modal-edit", "sale-modal-refund", "sale-modal-refund-selected", "sale-modal-delete"].forEach((id) => {
       const el = $(id);
       if (el) el.hidden = !live;
     });
@@ -230,6 +230,14 @@ function spInitSaleModal() {
     const seq = ++requestSeq;
     const modalEl = $("saleDetailsModal");
     if (!modalEl) return;
+    // Until this invoice has loaded, no action may target the previous one.
+    delete modalEl.dataset.saleId;
+    delete modalEl.dataset.saleStatus;
+    ["sale-modal-edit", "sale-modal-refund", "sale-modal-refund-selected", "sale-modal-delete"].forEach((id) => {
+      const el = $(id);
+      if (el) el.hidden = true;
+    });
+    resetSelectionMode();
     $("sale-modal-inv").textContent = "…";
     $("sale-modal-sub").textContent = "";
     setLoading();

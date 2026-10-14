@@ -188,6 +188,20 @@
     popup.style.top = `${Math.round(top + (window.scrollY || 0))}px`;
   }
 
+  // On scroll, a popup follows its anchor; it closes only once the anchor has
+  // scrolled out of its scrolling container. (Focusing a half-hidden row button
+  // scrolls the table to reveal it; that must not close the menu it just opened.)
+  function followOnScroll(e, popup, anchor, align, close) {
+    if (!anchor?.isConnected) return close();
+    const box = e.target instanceof Element ? e.target : null;
+    if (box && box.contains(anchor)) {
+      const r = anchor.getBoundingClientRect();
+      const c = box.getBoundingClientRect();
+      if (r.bottom <= c.top || r.top >= c.bottom || r.right <= c.left || r.left >= c.right) return close();
+    }
+    placePopup(popup, anchor, align);
+  }
+
   // Arrow/Home/End move between items, Escape/Tab close and return focus.
   // Returns true when the key was handled.
   function menuKeys(e, popup, close, itemSelector = "[role=menuitem]") {
@@ -243,10 +257,25 @@
     doc.body.style.removeProperty("overflow");
     doc.body.style.removeProperty("padding-right");
   }
+  // Refresh the page in place after a change made from a list; when a dialog
+  // is open, wait until it closes so the dialog is not torn down mid-task.
+  let refreshPending = false;
+  function refreshView() {
+    if (!window.StorePro?.refreshInPlace) return;
+    if (doc.querySelector(".modal.show")) {
+      refreshPending = true;
+      return;
+    }
+    refreshPending = false;
+    window.StorePro.refreshInPlace();
+  }
+  doc.addEventListener("storepro:leave", () => (refreshPending = false));
+
   doc.addEventListener("hidden.bs.modal", (e) => {
     const trigger = returnTargets.get(e.target);
     returnTargets.delete(e.target);
     const under = openModal(e.target);
+    if (!under && refreshPending) setTimeout(refreshView, 0);
     if (under) {
       doc.body.classList.add("modal-open"); // the dialog underneath still owns the page
       if (e.target.id !== "sp-confirm-modal" && !(trigger && under.contains(trigger))) under.focus({ preventScroll: true });
@@ -257,8 +286,134 @@
     if (trigger && trigger.isConnected && (!under || under.contains(trigger))) trigger.focus({ preventScroll: true });
   });
   doc.addEventListener("storepro:leave", () => closeMenus());
+  // Bootstrap only hears Escape inside the dialog. When the focused control was
+  // removed or hidden (a list re-rendered, a drawer closed) focus falls back to
+  // <body>, so close the top dialog here unless it opted out of keyboard closing.
+  doc.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || e.defaultPrevented) return;
+    const top = [...doc.querySelectorAll(".modal.show")].sort(
+      (a, b) => (Number(getComputedStyle(a).zIndex) || 0) - (Number(getComputedStyle(b).zIndex) || 0),
+    ).at(-1);
+    if (!top || top.contains(doc.activeElement) || top.dataset.bsKeyboard === "false") return;
+    if (top.dataset.bsBackdrop === "static" && top.id !== "sp-confirm-modal") return;
+    window.bootstrap?.Modal.getInstance(top)?.hide();
+  });
   // After SPA navigation, dialogs from the previous page are gone; so must be their backdrops.
   doc.addEventListener("storepro:content", () => setTimeout(sweepBackdrops, 450));
 
-  window.StoreProUI = { toast, confirm: confirmDialog, busy, closeMenus, placePopup, menuKeys, t };
+  // ---- Declarative menus -----------------------------------------------------------
+  // <button data-sp-menu="ID" aria-haspopup="menu"> + <div id="ID" role="menu" hidden>.
+  // While open the menu is moved to <body> (so no container can clip it), placed
+  // beside its button, and returned to its place when it closes.
+  let declared = null;
+  function closeDeclared(restoreFocus = false) {
+    if (!declared) return;
+    const { menu, trigger, home, next } = declared;
+    declared = null;
+    menu.hidden = true;
+    menu.classList.remove("open");
+    menu.__spOwner = null;
+    if (home?.isConnected) home.insertBefore(menu, next && next.parentNode === home ? next : null);
+    else menu.remove();
+    trigger.setAttribute("aria-expanded", "false");
+    if (restoreFocus && trigger.isConnected) trigger.focus({ preventScroll: true });
+  }
+  function openDeclared(trigger, focus) {
+    const menu = doc.getElementById(trigger.dataset.spMenu);
+    if (!menu) return;
+    closeMenus(menu);
+    closeDeclared();
+    declared = { menu, trigger, home: menu.parentNode, next: menu.nextSibling };
+    doc.body.appendChild(menu);
+    menu.setAttribute("data-sp-popup", "");
+    menu.__spOwner = trigger;
+    menu.querySelectorAll("[role=menuitem]").forEach((el) => (el.tabIndex = -1));
+    menu.classList.add("open");
+    trigger.setAttribute("aria-expanded", "true");
+    placePopup(menu, trigger, menu.dataset.align || "start");
+    const items = [...menu.querySelectorAll("[role=menuitem]")];
+    if (focus === "first") items[0]?.focus();
+    else if (focus === "last") items.at(-1)?.focus();
+  }
+  doc.addEventListener("click", (e) => {
+    const trigger = e.target.closest("[data-sp-menu]");
+    if (trigger) {
+      e.preventDefault();
+      if (declared?.trigger === trigger) closeDeclared(true);
+      else openDeclared(trigger, e.detail === 0 ? "first" : null);
+      return;
+    }
+    if (!declared) return;
+    if (!declared.menu.contains(e.target)) closeDeclared();
+    else if (e.target.closest("[role=menuitem]")) setTimeout(() => closeDeclared(), 0);
+  });
+  doc.addEventListener("keydown", (e) => {
+    const trigger = e.target.closest?.("[data-sp-menu]");
+    if (trigger && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+      e.preventDefault();
+      if (declared?.trigger !== trigger) openDeclared(trigger, e.key === "ArrowDown" ? "first" : "last");
+      else declared.menu.querySelector("[role=menuitem]")?.focus();
+      return;
+    }
+    if (!declared) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeDeclared(true);
+    } else if (declared.menu.contains(e.target)) menuKeys(e, declared.menu, (restore) => closeDeclared(restore));
+  });
+  doc.addEventListener("storepro:menus-close", (e) => {
+    if (declared && e.detail?.except !== declared.menu) closeDeclared();
+  });
+  doc.addEventListener("storepro:leave", () => closeDeclared());
+  window.addEventListener("resize", () => closeDeclared());
+  doc.addEventListener(
+    "scroll",
+    (e) => {
+      if (!declared || declared.menu.contains(e.target)) return;
+      followOnScroll(e, declared.menu, declared.trigger, declared.menu.dataset.align || "start", () => closeDeclared());
+    },
+    true,
+  );
+
+  // ---- In-page section tabs ([data-sp-scrollspy] with href="#id" links) ----------
+  // The active tab follows both clicks and scrolling.
+  let spy = null;
+  function initScrollspy() {
+    spy?.disconnect();
+    spy = null;
+    const nav = doc.querySelector("[data-sp-scrollspy]");
+    if (!nav || !("IntersectionObserver" in window)) return;
+    const links = [...nav.querySelectorAll('a[href^="#"]')];
+    const mark = (id) =>
+      links.forEach((a) => {
+        const on = a.getAttribute("href") === `#${id}`;
+        a.classList.toggle("active", on);
+        if (on) a.setAttribute("aria-current", "true");
+        else a.removeAttribute("aria-current");
+      });
+    // A clicked tab wins while the page scrolls to it (a short last section may
+    // never reach the observer's band at the bottom of the page).
+    let pinnedUntil = 0;
+    nav.addEventListener("click", (e) => {
+      const a = e.target.closest('a[href^="#"]');
+      if (!a) return;
+      mark(a.getAttribute("href").slice(1));
+      pinnedUntil = performance.now() + 1200;
+    });
+    const sections = links.map((a) => doc.getElementById(a.getAttribute("href").slice(1))).filter(Boolean);
+    spy = new IntersectionObserver(
+      (entries) => {
+        if (performance.now() < pinnedUntil) return;
+        const top = entries.filter((en) => en.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (top) mark(top.target.id);
+      },
+      { rootMargin: "-20% 0px -70% 0px" },
+    );
+    sections.forEach((sec) => spy.observe(sec));
+  }
+  if (doc.readyState !== "loading") initScrollspy();
+  else doc.addEventListener("DOMContentLoaded", initScrollspy);
+  doc.addEventListener("storepro:content", initScrollspy);
+
+  window.StoreProUI = { toast, confirm: confirmDialog, busy, closeMenus, placePopup, followOnScroll, menuKeys, refreshView, t };
 })();

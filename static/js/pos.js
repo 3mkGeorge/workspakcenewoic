@@ -332,8 +332,10 @@
     refreshTotals();
   }
   function hasInvalidInputs() {
+    // Inputs in hidden panes (e.g. the delivery form of a saved invoice, whose
+    // fulfillment is locked) cannot be fixed by the cashier, so they never block Save.
     return [...root.querySelectorAll("input")].some(
-      (i) => !i.closest(".modal") && !i.validity.valid,
+      (i) => !i.closest(".modal") && !i.closest("[hidden]") && !i.validity.valid,
     );
   }
   function quantity(item, value) {
@@ -691,13 +693,12 @@
   );
   function setCustomer(customer) {
     state.customer = customer;
-    $("customer-label").textContent = customer?.name || "Walk-in customer";
+    $("customer-label").textContent = customer?.name || window.StoreProUI?.t("Walk-in customer") || "Walk-in customer";
     $("remove-customer").hidden = !customer;
     $("customer-search").value = "";
     $("customer-results").hidden = true;
     $("customer-search").setAttribute("aria-expanded", "false");
-    if (customer && state.fulfillment?.method === "delivery" && !cfg.initial)
-      autofillAddress();
+    if (state.fulfillment?.method === "delivery" && !cfg.initial) autofillAddress();
     refreshTotals();
   }
   let customerVersion = 0;
@@ -712,7 +713,7 @@
       box.replaceChildren();
       box.hidden = false;
       $("customer-search").setAttribute("aria-expanded", "true");
-      const walk = button("Walk-in customer", "", () => {
+      const walk = button(window.StoreProUI?.t("Walk-in customer") || "Walk-in customer", "", () => {
         setCustomer(null);
         changed(false);
       });
@@ -880,12 +881,28 @@
   async function autofillAddress() {
     const customer = state.customer;
     const f = state.fulfillment;
+    // Values we filled in for a previous customer are cleared when the customer
+    // changes (anything the cashier typed over is kept), then refilled below.
+    const owner = customer?.id ?? null;
+    if (f._autoFor !== owner) {
+      for (const [key, value] of Object.entries(f._auto || {})) {
+        const el = $(SHIP_IDS[key]);
+        if (el && el.value === value) {
+          el.value = "";
+          f[key] = "";
+        }
+      }
+      f._auto = {};
+      f._autoFor = owner;
+      f._autofilled_for = null;
+    }
+    const auto = f._auto || (f._auto = {});
     if (customer?.name && !$("ship-name").value) {
-      f.name = customer.name;
+      f.name = auto.name = customer.name;
       $("ship-name").value = customer.name;
     }
     if (customer?.phone && !$("ship-phone").value) {
-      f.phone = customer.phone;
+      f.phone = auto.phone = customer.phone;
       $("ship-phone").value = customer.phone;
     }
     if (!customer?.id || f._autofilled_for === customer.id) return;
@@ -907,7 +924,7 @@
       for (const [serverKey, key] of Object.entries(serverToCompact)) {
         const id = SHIP_IDS[key];
         if ($(id) && !$(id).value && data.address[serverKey]) {
-          f[key] = data.address[serverKey];
+          f[key] = auto[key] = data.address[serverKey];
           $(id).value = data.address[serverKey];
         }
       }
@@ -1228,6 +1245,16 @@
         return;
       }
       if (event.key === "Escape" && event.target !== $("product-search")) {
+        // Escape inside the customer picker only closes its list; it must
+        // never start discarding the sale.
+        if (event.target.closest?.("#customer-search, #customer-results, .pos-customer-search")) {
+          event.preventDefault();
+          $("customer-results").hidden = true;
+          $("customer-search").setAttribute("aria-expanded", "false");
+          if (event.target !== $("customer-search")) $("customer-search").focus();
+          return;
+        }
+        if (document.querySelector("[data-sp-popup]:not([hidden])")) return; // a menu closes first
         event.preventDefault();
         cancel();
         return;

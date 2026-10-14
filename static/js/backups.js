@@ -124,8 +124,9 @@ function spInitBackups() {
         const data = await send(false);
         if (data) {
           syncSettingsForm(destValues());
-          message(data.message);
           await refresh();
+          message(tr(data.message)); // after refresh, so the result is not overwritten
+          ui?.toast(tr(data.message), "success");
         }
       } catch (error) {
         message(error.message);
@@ -173,8 +174,9 @@ function spInitBackups() {
         document.querySelector('[data-dest-input="Primary"]').value = "";
         document.querySelector('[data-dest-input="Secondary"]').value = "";
         syncSettingsForm({ backup_primary: "", backup_secondary: "" });
-        message(data.message);
         await refresh();
+        message(tr(data.message));
+        ui?.toast(tr(data.message), "success");
       } catch (error) {
         message(error.message);
       } finally {
@@ -478,7 +480,7 @@ function spInitBackups() {
       buttons.forEach((b) => (b.disabled = true));
       ui?.busy(submitter, true);
       try {
-        const response = await fetch(form.action, {
+        const response = await fetch(new URL(form.getAttribute("action") || location.href, location.href).href, {
           method: "POST",
           body: new FormData(form),
           headers: { Accept: "application/json" },

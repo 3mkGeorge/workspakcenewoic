@@ -364,6 +364,7 @@ function spInitShipmentModal() {
 
   async function open(oid) {
     const seq = ++requestSeq;
+    current = null; // nothing acts on the previous shipment while this one loads
     if (!showModal("shipmentModal")) return;
     $("shipmentModalNo").textContent = "…";
     $("shipmentModalSub").textContent = "";
@@ -443,6 +444,7 @@ function spInitShipmentModal() {
         render(fresh);
       }
       toast(tr("Order moved to {status}.", { status: tr(target) }));
+      ui()?.refreshView(); // list refreshes once the dialog closes
     } catch (e) {
       console.error("Shipment status change failed:", e);
       toast(e instanceof TypeError ? tr("The request failed. Check your connection and try again.") : e.message, "error");
@@ -473,7 +475,8 @@ function spInitShipmentModal() {
       toast(tr("Delivered shipments are locked."), "warning");
       return;
     }
-    $("shipmentEditCourier").value = o.courier || "";
+    $("shipmentEditCourier").value = o.courier && o.courier !== "—" ? o.courier : "";
+    $("shipmentEditForm").dataset.oid = o.id; // save goes to the order shown here
     $("shipmentEditTracking").value = o.tracking_code || "";
     $("shipmentEditUrl").value = o.tracking_url || "";
     $("shipmentEditCost").value = (Number(o.shipping_cost || 0) / 100).toFixed(2);
@@ -494,6 +497,7 @@ function spInitShipmentModal() {
     $("shipmentAddrFloor").value = a.floor || "";
     $("shipmentAddrApt").value = a.apartment || "";
     $("shipmentAddrPostal").value = a.postal_code || "";
+    $("shipmentAddressForm").dataset.oid = current.order.id;
     say("shipmentAddressError", "");
     showModal("shipmentAddressModal");
   }
@@ -520,6 +524,7 @@ function spInitShipmentModal() {
     $("shipmentShipDate").textContent = o.shipment_date || NA;
     $("shipmentShipTracking").value = "";
     $("shipmentShipUrl").value = "";
+    $("shipmentShipForm").dataset.oid = o.id;
     say("shipmentShipError", "");
     showModal("shipmentShipModal");
   }
@@ -591,8 +596,8 @@ function spInitShipmentModal() {
     if (!(e.target instanceof HTMLFormElement)) return;
     if (e.target.id !== "shipmentShipForm") return;
     e.preventDefault();
-    const oid = current?.order.id;
-    if (!oid) return;
+    const oid = Number(e.target.dataset.oid);
+    if (!oid || current?.order.id !== oid) return; // details changed underneath: never save onto another order
     const code = $("shipmentShipTracking").value.trim();
     if (!code) {
       say("shipmentShipError", "Enter the tracking code supplied by the courier.", true);
@@ -616,6 +621,7 @@ function spInitShipmentModal() {
         current = fresh;
         render(fresh);
         toast(tr("Order marked as Shipped."));
+        ui()?.refreshView(); // list refreshes once the dialog closes
       })
       .catch((err) => {
         console.error("Ship dialog save failed:", err);
@@ -631,8 +637,8 @@ function spInitShipmentModal() {
     if (!(e.target instanceof HTMLFormElement)) return;
     if (e.target.id !== "shipmentEditForm") return;
     e.preventDefault();
-    const oid = current?.order.id;
-    if (!oid) return;
+    const oid = Number(e.target.dataset.oid);
+    if (!oid || current?.order.id !== oid) return; // details changed underneath: never save onto another order
     const cost = parseCost($("shipmentEditCost").value);
     if (cost === null) {
       say("shipmentEditError", "Enter a valid shipping cost.", true);
@@ -660,6 +666,7 @@ function spInitShipmentModal() {
         current = fresh;
         render(fresh);
         toast(tr(shipped ? "Tracking saved. Order marked as Shipped." : "Shipment saved."));
+        ui()?.refreshView(); // list refreshes once the dialog closes
       })
       .catch((err) => {
         console.error("Shipment edit save failed:", err);
@@ -671,8 +678,8 @@ function spInitShipmentModal() {
     if (!(e.target instanceof HTMLFormElement)) return;
     if (e.target.id !== "shipmentAddressForm") return;
     e.preventDefault();
-    const oid = current?.order.id;
-    if (!oid) return;
+    const oid = Number(e.target.dataset.oid);
+    if (!oid || current?.order.id !== oid) return; // details changed underneath: never save onto another order
     const body = {
       governorate: $("shipmentAddrGov").value,
       city: $("shipmentAddrCity").value,
@@ -691,6 +698,7 @@ function spInitShipmentModal() {
         render(fresh);
         hideModal("shipmentAddressModal");
         toast(tr("Delivery address saved."));
+        ui()?.refreshView(); // list refreshes once the dialog closes
       })
       .catch((err) => {
         console.error("Address save failed:", err);
@@ -699,7 +707,13 @@ function spInitShipmentModal() {
   });
 
   window.StoreProShipment = { ...(window.StoreProShipment || {}), open, reload: () => current && open(current.order.id) };
-  window.StoreProShipmentModal = { open, refresh: refreshCurrent };
+  // Shipping needs a tracking code, so "Move to Shipped" from the table opens
+  // the shipment and its tracking dialog instead of posting a bare status.
+  async function openForShip(oid) {
+    await open(oid);
+    if (current && current.order.id === Number(oid)) openShipDialog();
+  }
+  window.StoreProShipmentModal = { open, refresh: refreshCurrent, ship: openForShip };
 }
 document.addEventListener("DOMContentLoaded", spInitShipmentModal);
 document.addEventListener("storepro:content", spInitShipmentModal);

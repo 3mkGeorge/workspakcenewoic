@@ -27,12 +27,7 @@ function spInitDetailsDrawer() {
     return el.innerHTML;
   };
   const icons = () => { if (window.lucide) window.lucide.createIcons(); };
-  const toast = (text) => {
-    const el = document.getElementById("app-toast");
-    if (!el) return;
-    el.querySelector(".toast-body").textContent = text;
-    if (window.bootstrap?.Toast) bootstrap.Toast.getOrCreateInstance(el).show();
-  };
+  const toast = (text, type = "success") => window.StoreProUI?.toast(text, type);
 
   function setOpen(open) {
     const { drawer, backdrop, closeBtn } = nodes();

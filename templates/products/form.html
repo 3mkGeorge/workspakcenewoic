@@ -21,7 +21,7 @@
 <section class="panel inv-card" aria-labelledby="inv-heading">
 <div class="media-heading"><h2 id="inv-heading">{{ icon('warehouse') }}{{ t('Inventory & Stock') }}</h2>{{ badge(product.status) }}</div>
 <div class="inv-grid">
-<label class="field inv-current"><span>{{ t('Current Stock Count') }}</span><input class="form-control" type="number" name="current_stock" id="current_stock" value="{{ product.stock }}" min="0" step="1" required><input type="hidden" name="stock_baseline" value="{{ product.stock }}"><small class="inv-error" id="stock-error" hidden></small></label>
+<label class="field inv-current"><span>{{ t('Current Stock Count') }}</span><input class="form-control" type="number" name="current_stock" id="current_stock" value="{{ product.stock }}" min="0" step="1" required{% if not can('inventory.stock_adjustment') %} readonly aria-readonly="true" title="{{ t('Changing stock requires the stock adjustment permission.') }}"{% endif %}><input type="hidden" name="stock_baseline" value="{{ product.stock }}"><small class="inv-error" id="stock-error" hidden></small></label>
 <dl class="detail-list inv-history">
 <dt>{{ t('Current Stock') }}</dt><dd>{{ product.stock }}</dd>
 <dt>{{ t('Previous Stock') }}</dt><dd>{{ prev_stock }}</dd>

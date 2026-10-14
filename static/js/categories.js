@@ -222,7 +222,8 @@ function spInitCategories() {
   async function openDelete(c) {
     deleteTarget = c;
     $("cat-delete-name").textContent = c.name;
-    $("cat-delete-count").textContent = "…";
+    const count = $("cat-delete-count"); // optional in the markup
+    if (count) count.textContent = "…";
     $("cat-delete-archived").hidden = true;
     $("cat-delete-blocking").hidden = true;
     showView("cat-delete-view");

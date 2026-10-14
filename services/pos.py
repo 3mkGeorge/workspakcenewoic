@@ -348,6 +348,11 @@ def apply_fulfillment(payload, sale, is_new):
     if cost < 0 or cost > 1000000000:
         raise ValueError("Shipping cost is out of range.")
     if data.get("update_profile") and sale.customer_id:
+        from services.permissions import require
+
+        # Same rule as the Customers page: changing a customer's contact
+        # details needs customers.edit, whichever screen asks for it.
+        require("customers.edit")
         customer = db.session.get(Customer, sale.customer_id)
         if customer and customer.active:
             if address["phone"]:

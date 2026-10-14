@@ -20,7 +20,7 @@ function spInitRowMenu() {
   let currentTrigger = null;
   const items = () =>
     [...menu.querySelectorAll(".rf-item")].filter(
-      (el) => !el.disabled && el.getAttribute("aria-disabled") !== "true",
+      (el) => !el.disabled && !el.hidden && el.getAttribute("aria-disabled") !== "true",
     );
 
   function close({ restoreFocus = false } = {}) {
@@ -138,17 +138,23 @@ function spInitRowMenu() {
     if (!menu.hidden && currentTrigger) position(currentTrigger);
   });
 
-  // Table scroll containers clip fixed-position math: close instead of detaching.
+  // The menu follows its button while the page or table scrolls, and closes
+  // once the button has scrolled out of sight.
   document.addEventListener(
     "scroll",
     (e) => {
-      if (menu.hidden) return;
-      if (menu.contains(e.target)) return;
-      if (e.target === document || e.target === document.body) {
-        if (currentTrigger) position(currentTrigger);
-        return;
+      if (menu.hidden || menu.contains(e.target) || !currentTrigger) return;
+      const trigger = currentTrigger;
+      const box = e.target instanceof Element ? e.target : null;
+      if (box && box.contains(trigger)) {
+        const r = trigger.getBoundingClientRect();
+        const c = box.getBoundingClientRect();
+        if (r.bottom <= c.top || r.top >= c.bottom || r.right <= c.left || r.left >= c.right) {
+          close();
+          return;
+        }
       }
-      close();
+      position(trigger);
     },
     true,
   );

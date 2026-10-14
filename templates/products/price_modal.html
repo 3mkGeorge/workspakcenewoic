@@ -44,10 +44,10 @@
           </div>
           <div class="ph-section-heading ph-history-heading">
             <h4>{{ t('Price History') }} <span class="ph-count" id="pm-count">0</span></h4>
-            <div class="ph-export">
-              <a href="#" id="pm-export-xlsx">{{ icon('sheet') }}Excel</a>
-              <a href="#" id="pm-export-pdf">{{ icon('file-down') }}PDF</a>
-            </div>
+            {% if can("products.export") %}<div class="ph-export">
+              <a href="#" id="pm-export-xlsx" download>{{ icon('sheet') }}Excel</a>
+              <a href="#" id="pm-export-pdf" download>{{ icon('file-down') }}PDF</a>
+            </div>{% endif %}
           </div>
           <div class="ph-adjust-drawer panel" id="pm-adjust-drawer" hidden style="background:var(--bg-elevated, #f8fafc);border:1px solid var(--border-color, #e2e8f0);border-radius:8px;padding:16px;margin:16px 0;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -85,7 +85,7 @@
         {% if can("products.price_change") %}
         <button type="button" class="btn btn-outline-primary" id="pm-adjust-toggle">{{ icon('pencil') }}{{ t('Adjust Price Now') }}</button>
         {% endif %}
-        <a class="btn btn-light" id="pm-export-history" href="#">{{ icon('download') }}{{ t('Export History') }}</a>
+        {% if can("products.export") %}<a class="btn btn-light" id="pm-export-history" href="#" download>{{ icon('download') }}{{ t('Export History') }}</a>{% endif %}
         <button type="button" class="btn btn-primary" data-bs-dismiss="modal">{{ t('Close') }}</button>
       </div>
     </div>

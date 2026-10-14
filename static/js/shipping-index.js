@@ -181,6 +181,7 @@ function spInitShippingIndex() {
       syncRow(rowFor(oid), data.order, data.transitions);
       closeStatusMenu();
       toast(tr("Order moved to {status}.", { status: label(target) }));
+      ui()?.refreshView(); // tabs, pipeline counters and filtered rows follow the change
     } catch (e) {
       console.error("Shipping status change failed:", e);
       throw e;
@@ -264,7 +265,7 @@ function spInitShippingIndex() {
       const count = $("ship-table-count");
       if (count) count.textContent = Math.max(0, Number(count.textContent || 0) - 1);
       toast(tr("Shipment deleted."));
-      if (window.StorePro?.reload) window.StorePro.reload();
+      ui()?.refreshView();
     } catch (e) {
       console.error("Shipment delete failed:", e);
       fail(e);
@@ -281,6 +282,9 @@ function spInitShippingIndex() {
       if (target === "Delivered") {
         closeStatusMenu();
         openDeliver(oid);
+      } else if (target === "Shipped" && window.StoreProShipmentModal?.ship) {
+        closeStatusMenu();
+        window.StoreProShipmentModal.ship(oid);
       } else if (target === "Cancelled" && window.StoreProCancel) {
         closeStatusMenu();
         window.StoreProCancel.open({
@@ -315,8 +319,10 @@ function spInitShippingIndex() {
       return;
     }
     if (!e.target.closest("#ship-status-menu")) closeStatusMenu();
+    // shipment-modal.js opens [data-ship-view]/[data-ship-menu-view] itself;
+    // opening here too sent every request twice.
     const openShipment = (oid) => {
-      if (window.StoreProShipment?.open) window.StoreProShipment.open(oid);
+      if (!window.StoreProShipmentModal && window.StoreProShipment?.open) window.StoreProShipment.open(oid);
     };
     const view = e.target.closest("[data-ship-view]");
     if (view) {
@@ -399,6 +405,7 @@ function spInitShippingIndex() {
         });
       }
       toast(tr("Pickup order moved to {status}.", { status: tr(data.status) }));
+      ui()?.refreshView();
     } catch (e) {
       console.error("Pickup status change failed:", e);
       fail(e);
@@ -454,11 +461,8 @@ function spInitShippingIndex() {
     (e) => {
       const menu = $("ship-status-menu");
       if (!menu || menu.hidden || menu.contains(e.target)) return;
-      if (e.target === document || e.target === document.body) {
-        if (menu.__spOwner?.isConnected) ui()?.placePopup(menu, menu.__spOwner, "start");
-        return;
-      }
-      closeStatusMenu();
+      if (ui()?.followOnScroll) ui().followOnScroll(e, menu, menu.__spOwner, "start", () => closeStatusMenu());
+      else closeStatusMenu();
     },
     true,
   );

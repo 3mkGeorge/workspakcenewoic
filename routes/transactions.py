@@ -148,29 +148,33 @@ def pickup_status(sid):
 def sale_action(sid, action):
     if action not in ("refund", "delete"):
         raise ValueError("Unknown sale action.")
-    sale = db.get_or_404(Sale, sid)
+    payload = request.get_json(silent=True) or {}
+    reason = payload.get("cancel_reason", request.form.get("cancel_reason", ""))
+    if action == "delete" and (not isinstance(reason, str) or not reason.strip()):
+        raise ValueError("A cancellation reason is required.")
     is_itemized_refund = False
-    if action == "refund":
-        payload = request.get_json(silent=True) or {}
-        items = payload.get("items")
-        if items and isinstance(items, list):
-            from services.sales import refund_sale_items
+    # Serialize refunds/voids: the invoice is loaded and its status checked only
+    # once any concurrent request on it has committed, so a double submit (two
+    # tabs, a retry) cannot restore the same stock twice.
+    with current_app.config["DB_LOCK"]:
+        db.session.expire_all()
+        sale = db.get_or_404(Sale, sid)
+        if action == "refund":
+            items = payload.get("items")
+            if items and isinstance(items, list):
+                from services.sales import refund_sale_items
 
-            refund_sale_items(sale, items)
-            is_itemized_refund = True
-        else:
-            reverse_sale(sale, "Refunded")
-    elif action == "delete":
-        reverse_sale(sale, "Voided")
-        from models import now as model_now
+                refund_sale_items(sale, items)
+                is_itemized_refund = True
+            else:
+                reverse_sale(sale, "Refunded")
+        elif action == "delete":
+            reverse_sale(sale, "Voided")
+            from models import now as model_now
 
-        payload = request.get_json(silent=True) or {}
-        reason = payload.get("cancel_reason", request.form.get("cancel_reason", ""))
-        if not isinstance(reason, str) or not reason.strip():
-            raise ValueError("A cancellation reason is required.")
-        sale.cancel_reason = reason.strip()[:200]
-        sale.cancelled_at = model_now()
-    db.session.commit()
+            sale.cancel_reason = reason.strip()[:200]
+            sale.cancelled_at = model_now()
+        db.session.commit()
     if request.is_json and is_itemized_refund:
         return jsonify(
             success=True,

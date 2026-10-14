@@ -2926,6 +2926,38 @@ button.is-busy::after {
   background: var(--danger-soft);
   color: var(--danger-ink);
 }
+.sp-menu {
+  min-width: 230px;
+}
+.sp-menu-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-2) var(--sp-3);
+  min-width: 0;
+}
+.sp-menu-head b {
+  color: var(--ink);
+  font-weight: var(--fw-semibold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sp-menu-head small {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+}
+.user-menu {
+  display: inline-flex;
+}
+button.header-user {
+  background: none;
+  cursor: pointer;
+}
+button.header-user[aria-expanded="true"] {
+  background: var(--soft);
+  border-color: var(--line);
+}
 .rf-divider {
   border: 0;
   border-top: 1px solid var(--line);

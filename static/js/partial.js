@@ -31,6 +31,10 @@
     return new DOMParser().parseFromString(await response.text(), "text/html");
   }
 
+  // Attributes, not properties: a field named "action" or "method" shadows them.
+  const actionOf = (form) => new URL(form.getAttribute("action") || location.href, location.href).href;
+  const methodOf = (form) => (form.getAttribute("method") || "get").toLowerCase();
+
   function region(name, doc) {
     const scope = doc || document;
     return scope.querySelector(`[data-partial="${name}"]`);
@@ -99,10 +103,10 @@
     const form = e.target;
     if (!(form instanceof HTMLFormElement) || e.defaultPrevented) return;
     const name = form.dataset ? form.dataset.partialForm : undefined;
-    if (!name || form.method.toLowerCase() !== "get") return;
+    if (!name || methodOf(form) !== "get") return;
     e.preventDefault();
     e.stopPropagation();
-    const url = new URL(form.action || location.href, location.href);
+    const url = new URL(actionOf(form));
     url.search = new URLSearchParams(new FormData(form)).toString();
     loadPartial(url.toString(), name, { push: true });
   });
@@ -118,7 +122,7 @@
   async function ajaxReload(form, submitter) {
     const body = new FormData(form);
     if (submitter?.name) body.append(submitter.name, submitter.value);
-    const response = await fetch(form.action || location.href, {
+    const response = await fetch(actionOf(form), {
       method: "post",
       credentials: "same-origin",
       headers: {
@@ -163,7 +167,13 @@
       toast(failure.text, "error"); // nothing was saved: keep the form as typed
       return;
     }
-    await reloadAfterSave(form);
+    // data-follow-redirect: go where the server sent us (e.g. Save → the
+    // inventory list; Save & New → the same product again), not back to the
+    // page as it was before saving.
+    if (form.hasAttribute("data-follow-redirect") && response.redirected && window.StorePro?.navigate) {
+      if (new URL(response.url).href === location.href) await window.StorePro.reload();
+      else await window.StorePro.navigate(response.url);
+    } else await reloadAfterSave(form);
     const shown = flashes.find((f) => f.tone === "warning") || flashes.find((f) => f.tone === "success") || flashes[0];
     toast(
       shown ? shown.text : document.getElementById("sp-ui-strings")?.dataset.saved || "Saved.",
@@ -185,7 +195,7 @@
   document.addEventListener("submit", (e) => {
     const form = e.target;
     if (!(form instanceof HTMLFormElement) || e.defaultPrevented) return;
-    if (form.method.toLowerCase() === "get") return;
+    if (methodOf(form) === "get") return;
     if (!form.closest("[data-ajax-reload]")) return;
     e.preventDefault();
     e.stopPropagation();

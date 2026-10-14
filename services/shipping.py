@@ -300,6 +300,8 @@ def update_shipping_order_details(order, data, actor_name):
         if not isinstance(courier, str):
             raise ValueError("Courier must be text.")
         courier = courier.strip()[:80]
+        if courier == "—":
+            courier = ""  # the display placeholder for "no courier" is not a courier name
         if courier != order.courier:
             order.courier = courier
             changed.append(f"courier {courier or '—'}")

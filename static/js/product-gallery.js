@@ -8,11 +8,18 @@
   }
 
   function initGallery() {
-    if (window.__spGallery) return;
-    window.__spGallery = true;
+    // Bind once per rendered modal pair: in-app navigation brings fresh copies,
+    // and the previous page's document listeners must not keep driving the old ones.
     const previewEl = document.getElementById("productPreviewModal");
     const galleryEl = document.getElementById("productGalleryModal");
     if (!previewEl && !galleryEl) return;
+    const anchor = previewEl || galleryEl;
+    if (anchor.dataset.spBound) return;
+    anchor.dataset.spBound = "1";
+    window.__spGalleryAbort?.abort();
+    const binding = (window.__spGalleryAbort = new AbortController());
+    const { signal } = binding;
+    document.addEventListener("storepro:leave", () => binding.abort(), { signal });
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content || "";
 
     async function getJSON(url) {
@@ -85,7 +92,7 @@
       function syncCounters() {
         const top = document.getElementById("gal-counter-top");
         const bottom = document.getElementById("gal-counter-bottom");
-        if (prefix === "gal-") {
+        if (prefix === "gal") {
           if (top) top.textContent = label();
           if (bottom) bottom.textContent = label();
         }
@@ -121,7 +128,7 @@
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (galleryEl?.classList.contains("show") && gal) gal.go(e.key === "ArrowRight" ? 1 : -1);
       else if (previewEl?.classList.contains("show") && pp) pp.go(e.key === "ArrowRight" ? 1 : -1);
-    });
+    }, { signal });
 
     let previewImages = [];
     let previewId = null;
@@ -181,7 +188,7 @@
         const idx = pp ? pp.state.index : 0;
         openGallery(previewImages, title, idx);
       }
-    });
+    }, { signal });
 
     // Public hook for the Price Analytics "View Gallery" button.
     window.StoreProGallery = {

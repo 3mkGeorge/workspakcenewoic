@@ -15,6 +15,19 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   syncThemeIcon();
   icons();
+  // Saving Appearance in Settings sets the store theme; drop this browser's
+  // own toggle choice so the saved setting actually takes effect.
+  document.addEventListener(
+    "submit",
+    (e) => {
+      const form = e.target;
+      if (!(form instanceof HTMLFormElement) || !form.querySelector('select[name="theme"]')) return;
+      try {
+        localStorage.removeItem("storepro-theme");
+      } catch {}
+    },
+    true,
+  );
   document.addEventListener("storepro:theme", () => {
     syncThemeIcon();
     icons();
@@ -32,11 +45,27 @@ document.addEventListener("DOMContentLoaded", () => {
       document.dispatchEvent(new CustomEvent("storepro:theme"));
     }
     if (el.dataset.action === "sidebar")
-      document.getElementById("sidebar").classList.toggle("is-open");
+      setDrawer(!document.getElementById("sidebar").classList.contains("is-open"), e.detail === 0);
     if (el.dataset.action === "print") window.print();
     if (el.dataset.action === "back")
       window.history.length > 1 ? history.back() : location.assign("/");
   });
+  // Mobile navigation drawer: the toggle reports its state, Escape closes it
+  // and returns focus, and keyboard users land on the current page's link.
+  function setDrawer(open, moveFocus = false) {
+    const bar = document.getElementById("sidebar");
+    if (!bar) return;
+    bar.classList.toggle("is-open", open);
+    const toggle = document.querySelector('[data-action="sidebar"]');
+    toggle?.setAttribute("aria-expanded", String(open));
+    if (!moveFocus) return;
+    // The drawer becomes focusable only once it is rendered visible.
+    if (open)
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => (bar.querySelector(".nav-item.active") || bar.querySelector(".nav-item"))?.focus()),
+      );
+    else toggle?.focus();
+  }
   document.addEventListener("click", (e) => {
     const bar = document.getElementById("sidebar");
     if (
@@ -44,8 +73,16 @@ document.addEventListener("DOMContentLoaded", () => {
       !bar.contains(e.target) &&
       !e.target.closest('[data-action="sidebar"]')
     )
-      bar.classList.remove("is-open");
+      setDrawer(false);
   });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && document.getElementById("sidebar")?.classList.contains("is-open")) {
+      e.preventDefault();
+      setDrawer(false, true);
+    }
+  });
+  document.addEventListener("storepro:content", () => setDrawer(false));
+  document.querySelector('[data-action="sidebar"]')?.setAttribute("aria-expanded", "false");
   document.addEventListener("keydown", (e) => {
     if (
       e.key === "/" &&

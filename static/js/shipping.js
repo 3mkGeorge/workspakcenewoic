@@ -231,7 +231,8 @@ function spInitShipping() {
     set("ship-courier-view", formatShipmentValue(order.courier));
     renderTracking(order.tracking_code || "");
     renderTrackingUrl(order.tracking_url || "");
-    if (order.status === "Delivered") {
+    // Closed shipments (delivered, cancelled, returned) cannot be edited.
+    if (order.status === "Delivered" || !(data.transitions || []).length) {
       document.getElementById("courier-edit-toggle")?.setAttribute("hidden", "");
       setCourierMode(false);
     }
@@ -240,7 +241,7 @@ function spInitShipping() {
       const el = document.getElementById(id);
       if (el) el.value = value;
     };
-    syncInput("courier-name", order.courier || "");
+    syncInput("courier-name", order.courier && order.courier !== "—" ? order.courier : "");
     syncInput("courier-tracking", order.tracking_code || "");
     syncInput("courier-tracking-url", order.tracking_url || "");
     if (typeof order.shipping_cost === "number")

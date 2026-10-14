@@ -200,6 +200,9 @@ def product_form(pid=None):
             baseline = request.form.get("stock_baseline")
             baseline = integer(baseline, 0) if baseline not in (None, "") else p.stock
             if new_stock != baseline:
+                # Same permission as Inventory → Adjust Stock: the edit form is
+                # not a way around it.
+                require("inventory.stock_adjustment")
                 if p.stock != baseline:
                     raise ValueError(
                         f"Stock changed to {p.stock} since this page was opened. Reload before editing the stock count."
