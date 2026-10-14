@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Vortek V1 Air (demo render)">
+<defs>
+  <radialGradient id="bgvortekv1air2" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#1b1f25"/><stop offset="1" stop-color="#0a0b0d"/></radialGradient>
+  <linearGradient id="bodyvortekv1air2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#313337"/><stop offset="0.55" stop-color="#17191d"/><stop offset="1" stop-color="#000000"/></linearGradient>
+  <linearGradient id="sheenvortekv1air2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <linearGradient id="accvortekv1air2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b8f53b"/><stop offset="1" stop-color="#8ac70d"/></linearGradient>
+  <pattern id="gridvortekv1air2" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity=".035"/></pattern>
+  <filter id="shadowvortekv1air2" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".55"/></filter>
+</defs>
+<rect width="800" height="800" fill="url(#bgvortekv1air2)"/>
+<rect width="800" height="800" fill="url(#gridvortekv1air2)"/>
+<ellipse cx="400" cy="700" rx="250" ry="26" fill="#85c208" opacity=".08"/>
+<g transform="rotate(-14 400 400) translate(10 6) scale(.94)"><clipPath id="clipvortekv1air2"><path d="M400 160C505 160 548 262 548 382C548 524 506 646 400 646C294 646 252 524 252 382C252 262 295 160 400 160Z"/></clipPath>
+  <g filter="url(#shadowvortekv1air2)">
+    <path d="M400 160C505 160 548 262 548 382C548 524 506 646 400 646C294 646 252 524 252 382C252 262 295 160 400 160Z" fill="url(#bodyvortekv1air2)" stroke="#3a4048" stroke-width="2"/>
+    
+    <path d="M400 171V352" stroke="#000000" stroke-width="3"/>
+    <path d="M262 352C330 372 470 372 538 352" fill="none" stroke="#000000" stroke-width="3"/>
+    <rect x="390" y="217" width="20" height="56" rx="10" fill="#0d0f12" stroke="#b8f53b" stroke-width="2"/>
+    <rect x="396" y="227" width="8" height="36" rx="4" fill="url(#accvortekv1air2)"/>
+    <path d="M400 160C505 160 548 262 548 382C548 524 506 646 400 646C294 646 252 524 252 382C252 262 295 160 400 160Z" fill="url(#sheenvortekv1air2)"/>
+    <g transform="translate(400 566)"><rect x="-13" y="-13" width="26" height="26" rx="5" fill="none" stroke="#b8f53b" stroke-width="2.5"/><rect x="-5" y="-5" width="10" height="10" rx="2" fill="#b8f53b"/></g>
+  </g></g>
+<text x="772" y="776" text-anchor="end" font-family="Arial, sans-serif" font-size="13" letter-spacing="2" fill="#ffffff" fill-opacity=".28">DEMO RENDER</text>
+</svg>

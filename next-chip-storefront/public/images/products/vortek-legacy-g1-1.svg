@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Vortek Legacy G1 (demo render)">
+<defs>
+  <radialGradient id="bgvorteklegacyg11" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#1b1f25"/><stop offset="1" stop-color="#0a0b0d"/></radialGradient>
+  <linearGradient id="bodyvorteklegacyg11" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#313337"/><stop offset="0.55" stop-color="#17191d"/><stop offset="1" stop-color="#000000"/></linearGradient>
+  <linearGradient id="sheenvorteklegacyg11" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <linearGradient id="accvorteklegacyg11" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff5d6c"/><stop offset="1" stop-color="#d12f3e"/></linearGradient>
+  <pattern id="gridvorteklegacyg11" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity=".035"/></pattern>
+  <filter id="shadowvorteklegacyg11" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".55"/></filter>
+</defs>
+<rect width="800" height="800" fill="url(#bgvorteklegacyg11)"/>
+<rect width="800" height="800" fill="url(#gridvorteklegacyg11)"/>
+<ellipse cx="400" cy="700" rx="250" ry="26" fill="#ff5d6c" opacity=".08"/>
+<g transform="translate(-40 -40) scale(1.1)"><clipPath id="clipvorteklegacyg11"><path d="M378 160C505 152 566 252 556 404C547 546 486 648 390 648C296 648 246 566 250 432C254 300 286 166 378 160Z"/></clipPath>
+  <g filter="url(#shadowvorteklegacyg11)"><rect x="243" y="350" width="14" height="44" rx="6" fill="#000000" stroke="#3a4048"/><rect x="243" y="404" width="14" height="40" rx="6" fill="#000000" stroke="#3a4048"/>
+    <path d="M378 160C505 152 566 252 556 404C547 546 486 648 390 648C296 648 246 566 250 432C254 300 286 166 378 160Z" fill="url(#bodyvorteklegacyg11)" stroke="#3a4048" stroke-width="2"/>
+    
+    <path d="M400 171V352" stroke="#000000" stroke-width="3"/>
+    <path d="M262 352C330 372 470 372 538 352" fill="none" stroke="#000000" stroke-width="3"/>
+    <rect x="390" y="217" width="20" height="56" rx="10" fill="#0d0f12" stroke="#ff5d6c" stroke-width="2"/>
+    <rect x="396" y="227" width="8" height="36" rx="4" fill="url(#accvorteklegacyg11)"/>
+    <path d="M378 160C505 152 566 252 556 404C547 546 486 648 390 648C296 648 246 566 250 432C254 300 286 166 378 160Z" fill="url(#sheenvorteklegacyg11)"/>
+    <g transform="translate(400 566)"><rect x="-13" y="-13" width="26" height="26" rx="5" fill="none" stroke="#ff5d6c" stroke-width="2.5"/><rect x="-5" y="-5" width="10" height="10" rx="2" fill="#ff5d6c"/></g>
+  </g></g>
+<text x="772" y="776" text-anchor="end" font-family="Arial, sans-serif" font-size="13" letter-spacing="2" fill="#ffffff" fill-opacity=".28">DEMO RENDER</text>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Halcyon Audio Duet IEM (demo render)">
+<defs>
+  <radialGradient id="bghalcyonduetiem2" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#1b1f25"/><stop offset="1" stop-color="#0a0b0d"/></radialGradient>
+  <linearGradient id="bodyhalcyonduetiem2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#313337"/><stop offset="0.55" stop-color="#17191d"/><stop offset="1" stop-color="#000000"/></linearGradient>
+  <linearGradient id="sheenhalcyonduetiem2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <linearGradient id="acchalcyonduetiem2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#795dcc"/></linearGradient>
+  <pattern id="gridhalcyonduetiem2" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity=".035"/></pattern>
+  <filter id="shadowhalcyonduetiem2" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".55"/></filter>
+</defs>
+<rect width="800" height="800" fill="url(#bghalcyonduetiem2)"/>
+<rect width="800" height="800" fill="url(#gridhalcyonduetiem2)"/>
+<ellipse cx="400" cy="700" rx="250" ry="26" fill="#7458c7" opacity=".08"/>
+<g transform="rotate(-14 400 400) translate(10 6) scale(.94)"><g filter="url(#shadowhalcyonduetiem2)">
+    <path d="M300 440C300 560 360 600 400 640C440 600 500 560 500 440" fill="none" stroke="#2f343c" stroke-width="7"/>
+    <path d="M400 640V700" stroke="#2f343c" stroke-width="7"/><rect x="386" y="700" width="28" height="44" rx="6" fill="#20242a" stroke="#a78bfa" stroke-width="2"/>
+    <g transform="translate(300 380)">
+      <path d="M-70 -40C-70 -110 40 -120 70 -60C96 -6 64 70 0 78C-50 84 -70 30 -70 -40Z" fill="#1f2229" stroke="#3a4048" stroke-width="2"/>
+      <path d="M-46 -44C-46 -86 26 -92 46 -54C60 -24 44 26 2 32C-30 36 -46 4 -46 -44Z" fill="url(#acchalcyonduetiem2)" opacity="0.85"/>
+      <rect x="44" y="-12" width="44" height="26" rx="12" fill="#2b3038" transform="rotate(24 44 0)"/>
+      <path d="M-46 -44C-46 -86 26 -92 46 -54" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="4"/>
+    </g><g transform="translate(500 380) scale(-1 1)">
+      <path d="M-70 -40C-70 -110 40 -120 70 -60C96 -6 64 70 0 78C-50 84 -70 30 -70 -40Z" fill="#1f2229" stroke="#3a4048" stroke-width="2"/>
+      <path d="M-46 -44C-46 -86 26 -92 46 -54C60 -24 44 26 2 32C-30 36 -46 4 -46 -44Z" fill="url(#acchalcyonduetiem2)" opacity="0.85"/>
+      <rect x="44" y="-12" width="44" height="26" rx="12" fill="#2b3038" transform="rotate(24 44 0)"/>
+      <path d="M-46 -44C-46 -86 26 -92 46 -54" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="4"/>
+    </g>
+  </g></g>
+<text x="772" y="776" text-anchor="end" font-family="Arial, sans-serif" font-size="13" letter-spacing="2" fill="#ffffff" fill-opacity=".28">DEMO RENDER</text>
+</svg>

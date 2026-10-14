@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Sonaris Cast XLR (demo render)">
+<defs>
+  <radialGradient id="bgsonariscastxlr1" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#1b1f25"/><stop offset="1" stop-color="#0a0b0d"/></radialGradient>
+  <linearGradient id="bodysonariscastxlr1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#313337"/><stop offset="0.55" stop-color="#17191d"/><stop offset="1" stop-color="#000000"/></linearGradient>
+  <linearGradient id="sheensonariscastxlr1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <linearGradient id="accsonariscastxlr1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff9a3b"/><stop offset="1" stop-color="#d16c0d"/></linearGradient>
+  <pattern id="gridsonariscastxlr1" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity=".035"/></pattern>
+  <filter id="shadowsonariscastxlr1" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".55"/></filter>
+</defs>
+<rect width="800" height="800" fill="url(#bgsonariscastxlr1)"/>
+<rect width="800" height="800" fill="url(#gridsonariscastxlr1)"/>
+<ellipse cx="400" cy="700" rx="250" ry="26" fill="#ff9a3b" opacity=".08"/>
+<g transform="translate(-40 -40) scale(1.1)"><g filter="url(#shadowsonariscastxlr1)">
+    <path d="M304 440V540M496 440V540" stroke="#2f343c" stroke-width="12" stroke-linecap="round"/>
+    <rect x="340" y="170" width="120" height="330" rx="60" fill="url(#bodysonariscastxlr1)" stroke="#3a4048" stroke-width="2"/>
+    <rect x="358" y="192" width="84" height="6" rx="3" fill="#0b0c0e" opacity=".75"/><rect x="358" y="208" width="84" height="6" rx="3" fill="#0b0c0e" opacity=".75"/><rect x="358" y="224" width="84" height="6" rx="3" fill="#0b0c0e" opacity=".75"/><rect x="358" y="240" width="84" height="6" rx="3" fill="#0b0c0e" opacity=".75"/><rect x="358" y="256" width="84" height="6" rx="3" fill="#0b0c0e" opacity=".75"/><rect x="358" y="272" width="84" height="6" rx="3" fill="#0b0c0e" opacity=".75"/><rect x="358" y="288" width="84" height="6" rx="3" fill="#0b0c0e" opacity=".75"/><rect x="358" y="304" width="84" height="6" rx="3" fill="#0b0c0e" opacity=".75"/>
+    <rect x="340" y="390" width="120" height="10" fill="#ff9a3b"/>
+    <rect x="340" y="170" width="120" height="330" rx="60" fill="url(#sheensonariscastxlr1)"/>
+    <path d="M304 540H496" stroke="#2f343c" stroke-width="12" stroke-linecap="round"/>
+    <rect x="330" y="560" width="140" height="26" rx="13" fill="#1d2127" stroke="#2f343c"/>
+  </g></g>
+<text x="772" y="776" text-anchor="end" font-family="Arial, sans-serif" font-size="13" letter-spacing="2" fill="#ffffff" fill-opacity=".28">DEMO RENDER</text>
+</svg>

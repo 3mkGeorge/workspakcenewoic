@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Sonaris Boom Arm Lite (demo render)">
+<defs>
+  <radialGradient id="bgsonarisboomarm1" cx="50%" cy="42%" r="70%"><stop offset="0" stop-color="#1b1f25"/><stop offset="1" stop-color="#0a0b0d"/></radialGradient>
+  <linearGradient id="bodysonarisboomarm1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#313337"/><stop offset="0.55" stop-color="#17191d"/><stop offset="1" stop-color="#000000"/></linearGradient>
+  <linearGradient id="sheensonarisboomarm1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <linearGradient id="accsonarisboomarm1" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e9edf1"/><stop offset="1" stop-color="#bbbfc3"/></linearGradient>
+  <pattern id="gridsonarisboomarm1" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity=".035"/></pattern>
+  <filter id="shadowsonarisboomarm1" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity=".55"/></filter>
+</defs>
+<rect width="800" height="800" fill="url(#bgsonarisboomarm1)"/>
+<rect width="800" height="800" fill="url(#gridsonarisboomarm1)"/>
+<ellipse cx="400" cy="700" rx="250" ry="26" fill="#e9edf1" opacity=".08"/>
+<g transform="translate(-40 -40) scale(1.1)"><g filter="url(#shadowsonarisboomarm1)" stroke-linecap="round">
+      <rect x="180" y="610" width="90" height="40" rx="8" fill="#20242a" stroke="#3a4048"/>
+      <path d="M225 610L300 420L520 300" fill="none" stroke="#000000" stroke-width="22"/>
+      <path d="M225 610L300 420L520 300" fill="none" stroke="#e9edf1" stroke-width="4" stroke-opacity=".7"/>
+      <circle cx="300" cy="420" r="20" fill="#0d0f12" stroke="#e9edf1" stroke-width="4"/>
+      <rect x="505" y="285" width="70" height="30" rx="10" fill="#20242a" stroke="#e9edf1" stroke-width="2"/>
+    </g></g>
+<text x="772" y="776" text-anchor="end" font-family="Arial, sans-serif" font-size="13" letter-spacing="2" fill="#ffffff" fill-opacity=".28">DEMO RENDER</text>
+</svg>
