@@ -1,93 +1,93 @@
 <section class="panel mt-3 backup-center" id="backup" data-backup-center data-can-export="{{ 1 if can('backups.export') else 0 }}" data-can-restore="{{ 1 if can('backups.approve') else 0 }}">
-  <div class="panel-header"><h2>{{ icon('database-backup') }}Dual Backup &amp; Restore</h2><a href="/settings/backup-logs" class="btn btn-light">{{ icon('scroll-text') }}Backup Logs</a></div>
-  <p class="muted">One consistent snapshot. Two independently verified copies. Automatic backups run while StorePro is open.</p>
+  <div class="panel-header"><h2>{{ icon('database-backup') }}{{ t("Dual Backup & Restore") }}</h2><a href="/settings/backup-logs" class="btn btn-light">{{ icon('scroll-text') }}{{ t("Backup Logs") }}</a></div>
+  <p class="muted">{{ t("One consistent snapshot. Two independently verified copies. Automatic backups run while StorePro is open.") }}</p>
   <div id="backup-warnings" role="alert"></div>
   <div class="backup-metrics">
-    <div><small>Last Backup</small><strong id="backup-last">—</strong></div>
-    <div><small>Next Scheduled Backup</small><strong id="backup-next">—</strong></div>
-    <div><small>Latest Backup Size</small><strong id="backup-size">—</strong></div>
-    <div><small>Total Backup Copies</small><strong id="backup-count">0</strong></div>
+    <div><small>{{ t("Last Backup") }}</small><strong id="backup-last">—</strong></div>
+    <div><small>{{ t("Next Scheduled Backup") }}</small><strong id="backup-next">—</strong></div>
+    <div><small>{{ t("Latest Backup Size") }}</small><strong id="backup-size">—</strong></div>
+    <div><small>{{ t("Total Backup Copies") }}</small><strong id="backup-count">0</strong></div>
   </div>
   <div id="backup-locations" class="backup-locations"></div>
   <section class="backup-destinations" aria-labelledby="dest-heading">
-    <div class="panel-header"><h2 id="dest-heading">{{ icon('folder-cog') }}Backup Destinations</h2>{% if can("backups.edit") %}<span class="muted small">Changes apply immediately — no restart needed.</span>{% endif %}</div>
+    <div class="panel-header"><h2 id="dest-heading">{{ icon('folder-cog') }}{{ t("Backup Destinations") }}</h2>{% if can("backups.edit") %}<span class="muted small">{{ t("Changes apply immediately — no restart needed.") }}</span>{% endif %}</div>
     <div class="dest-grid">
       <div class="dest-card" data-dest="Primary">
-        <div class="dest-title"><strong>Primary Destination</strong><span class="badge text-bg-secondary" data-dest-badge>Checking…</span></div>
+        <div class="dest-title"><strong>{{ t("Primary Destination") }}</strong><span class="badge text-bg-secondary" data-dest-badge>{{ t("Checking…") }}</span></div>
         <div class="dest-path-row">
           <input class="form-control" data-dest-input="Primary" value="{{ config.backup_primary }}" placeholder="Installation backups folder" aria-label="Primary Backup Path" {{ '' if can("backups.edit") else 'disabled' }}>
-          {% if can("backups.edit") %}<button type="button" class="btn btn-light" data-browse="Primary">{{ icon('folder-open') }}Browse Folder</button>{% endif %}
+          {% if can("backups.edit") %}<button type="button" class="btn btn-light" data-browse="Primary">{{ icon('folder-open') }}{{ t("Browse Folder") }}</button>{% endif %}
         </div>
         <dl class="dest-meta">
-          <div><dt>Status</dt><dd data-dest-status>—</dd></div>
-          <div><dt>Last Backup Time</dt><dd data-dest-last>—</dd></div>
-          <div><dt>Free Disk Space</dt><dd data-dest-free>—</dd></div>
-          <div><dt>Backup Files</dt><dd data-dest-count>—</dd></div>
+          <div><dt>{{ t("Status") }}</dt><dd data-dest-status>—</dd></div>
+          <div><dt>{{ t("Last Backup Time") }}</dt><dd data-dest-last>—</dd></div>
+          <div><dt>{{ t("Free Disk Space") }}</dt><dd data-dest-free>—</dd></div>
+          <div><dt>{{ t("Backup Files") }}</dt><dd data-dest-count>—</dd></div>
         </dl>
       </div>
       <div class="dest-card" data-dest="Secondary">
-        <div class="dest-title"><strong>Secondary Destination</strong><span class="badge text-bg-secondary" data-dest-badge>Checking…</span></div>
+        <div class="dest-title"><strong>{{ t("Secondary Destination") }}</strong><span class="badge text-bg-secondary" data-dest-badge>{{ t("Checking…") }}</span></div>
         <div class="dest-path-row">
           <input class="form-control" data-dest-input="Secondary" value="{{ config.backup_secondary }}" placeholder="Installation backups-secondary folder" aria-label="Secondary Backup Path" {{ '' if can("backups.edit") else 'disabled' }}>
-          {% if can("backups.edit") %}<button type="button" class="btn btn-light" data-browse="Secondary">{{ icon('folder-open') }}Browse Folder</button>{% endif %}
+          {% if can("backups.edit") %}<button type="button" class="btn btn-light" data-browse="Secondary">{{ icon('folder-open') }}{{ t("Browse Folder") }}</button>{% endif %}
         </div>
         <dl class="dest-meta">
-          <div><dt>Status</dt><dd data-dest-status>—</dd></div>
-          <div><dt>Last Backup Time</dt><dd data-dest-last>—</dd></div>
-          <div><dt>Free Disk Space</dt><dd data-dest-free>—</dd></div>
-          <div><dt>Backup Files</dt><dd data-dest-count>—</dd></div>
+          <div><dt>{{ t("Status") }}</dt><dd data-dest-status>—</dd></div>
+          <div><dt>{{ t("Last Backup Time") }}</dt><dd data-dest-last>—</dd></div>
+          <div><dt>{{ t("Free Disk Space") }}</dt><dd data-dest-free>—</dd></div>
+          <div><dt>{{ t("Backup Files") }}</dt><dd data-dest-count>—</dd></div>
         </dl>
       </div>
     </div>
     {% if can("backups.edit") %}
     <div class="dest-controls">
       <div class="dest-buttons">
-        <button type="button" class="btn btn-primary" id="dest-save">{{ icon('save') }}Save Paths</button>
-        <button type="button" class="btn btn-light" id="dest-test">{{ icon('plug-zap') }}Test Paths</button>
-        <button type="button" class="btn btn-light" id="dest-defaults">{{ icon('rotate-ccw') }}Restore Default Paths</button>
+        <button type="button" class="btn btn-primary" id="dest-save">{{ icon('save') }}{{ t("Save Paths") }}</button>
+        <button type="button" class="btn btn-light" id="dest-test">{{ icon('plug-zap') }}{{ t("Test Paths") }}</button>
+        <button type="button" class="btn btn-light" id="dest-defaults">{{ icon('rotate-ccw') }}{{ t("Restore Default Paths") }}</button>
       </div>
     </div>
-    <p class="muted small">Leave a path blank to use the installation folder. Use Browse Folder for the native Windows picker, or type an absolute path. Path changes are recorded in the audit log.</p>
+    <p class="muted small">{{ t("Leave a path blank to use the installation folder. Use Browse Folder for the native Windows picker, or type an absolute path. Path changes are recorded in the audit log.") }}</p>
     {% endif %}
   </section>
   <section class="backup-retention" aria-labelledby="retention-heading">
     <div class="retention-grid">
       <div class="retention-card">
-        <div class="panel-header"><h2 id="retention-heading">{{ icon('infinity') }}Retention Policy</h2><span class="badge text-bg-success">Unlimited Retention</span></div>
-        <p class="muted small">All backup copies are preserved permanently until manually deleted.</p>
+        <div class="panel-header"><h2 id="retention-heading">{{ icon('infinity') }}{{ t("Retention Policy") }}</h2><span class="badge text-bg-success">{{ t("Unlimited Retention") }}</span></div>
+        <p class="muted small">{{ t("All backup copies are preserved permanently until manually deleted.") }}</p>
       </div>
       <div class="retention-card">
-        <div class="panel-header"><h2>{{ icon('archive') }}Backup History</h2></div>
+        <div class="panel-header"><h2>{{ icon('archive') }}{{ t("Backup History") }}</h2></div>
         <dl class="dest-meta">
-          <div><dt>Total Backup Copies</dt><dd id="retention-count">—</dd></div>
-          <div><dt>Storage Used</dt><dd id="retention-size">—</dd></div>
-          <div><dt>Oldest Backup</dt><dd id="retention-oldest">—</dd></div>
-          <div><dt>Newest Backup</dt><dd id="retention-newest">—</dd></div>
+          <div><dt>{{ t("Total Backup Copies") }}</dt><dd id="retention-count">—</dd></div>
+          <div><dt>{{ t("Storage Used") }}</dt><dd id="retention-size">—</dd></div>
+          <div><dt>{{ t("Oldest Backup") }}</dt><dd id="retention-oldest">—</dd></div>
+          <div><dt>{{ t("Newest Backup") }}</dt><dd id="retention-newest">—</dd></div>
         </dl>
       </div>
     </div>
   </section>
-  <div class="backup-toolbar">{% if can("backups.create") %}<form action="/settings/backup" method="post" data-backup-action>{{ csrf() }}<button class="btn btn-primary btn-lg">{{ icon('database-backup') }}Backup Now</button></form>{% endif %}<span id="backup-message" role="status" aria-live="polite">Checking backup health…</span><button type="button" class="btn btn-light" id="backup-refresh">Refresh status</button></div>
-  <h3 class="mt-4">Available recovery points</h3>
-  <p class="muted small">Choose either destination. Archive integrity is always checked again before restoring.</p>
-  <label class="field"><span>Source Location</span><select id="backup-source-filter" class="form-select"><option value="">Both locations</option><option>Primary</option><option>Secondary</option></select></label>
-  <div class="table-responsive backup-file-list"><table class="table"><thead><tr><th>Date &amp; Time</th><th>Size</th><th>Source Location</th><th>Backup ID</th><th>Actions</th></tr></thead><tbody id="backup-files"></tbody></table></div>
+  <div class="backup-toolbar">{% if can("backups.create") %}<form action="/settings/backup" method="post" data-backup-action>{{ csrf() }}<button class="btn btn-primary btn-lg">{{ icon('database-backup') }}{{ t("Backup Now") }}</button></form>{% endif %}<span id="backup-message" role="status" aria-live="polite">{{ t("Checking backup health…") }}</span><button type="button" class="btn btn-light" id="backup-refresh">{{ t("Refresh status") }}</button></div>
+  <h3 class="mt-4">{{ t("Available recovery points") }}</h3>
+  <p class="muted small">{{ t("Choose either destination. Archive integrity is always checked again before restoring.") }}</p>
+  <label class="field"><span>{{ t("Source Location") }}</span><select id="backup-source-filter" class="form-select"><option value="">{{ t("Both locations") }}</option><option>{{ t("Primary") }}</option><option>{{ t("Secondary") }}</option></select></label>
+  <div class="table-responsive backup-file-list"><table class="table"><thead><tr><th>{{ t("Date & Time") }}</th><th>{{ t("Size") }}</th><th>{{ t("Source Location") }}</th><th>{{ t("Backup ID") }}</th><th>{{ t("Actions") }}</th></tr></thead><tbody id="backup-files"></tbody></table></div>
   <section class="mt-4 backup-logs-section" id="backup-logs-panel">
     <div class="panel-header d-flex justify-content-between align-items-center">
-      <h3>{{ icon('scroll-text') }}Backup Activity &amp; Verification Logs</h3>
-      <a href="/settings/backup-logs" class="btn btn-light btn-sm">{{ icon('list') }}View All Paginated Logs</a>
+      <h3>{{ icon('scroll-text') }}{{ t("Backup Activity & Verification Logs") }}</h3>
+      <a href="/settings/backup-logs" class="btn btn-light btn-sm">{{ icon('list') }}{{ t("View All Paginated Logs") }}</a>
     </div>
     <div class="table-responsive">
       <table class="table table-sm">
         <thead>
           <tr>
-            <th>Backup ID</th>
-            <th>Date &amp; Time</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Size</th>
-            <th>Source / Location</th>
-            <th>Details / Error</th>
+            <th>{{ t("Backup ID") }}</th>
+            <th>{{ t("Date & Time") }}</th>
+            <th>{{ t("Type") }}</th>
+            <th>{{ t("Status") }}</th>
+            <th>{{ t("Size") }}</th>
+            <th>{{ t("Source / Location") }}</th>
+            <th>{{ t("Details / Error") }}</th>
           </tr>
         </thead>
         <tbody>
@@ -98,18 +98,18 @@
               <td>{{ row.created_at|backup_date if row.created_at else '—' }}</td>
               <td><span class="badge text-bg-light">{{ row.kind }}</span><small class="d-block text-muted">{{ row.reason }}</small></td>
               <td><span class="badge {{ 'text-bg-success' if row.status=='Success' else 'text-bg-danger' }}">{{ row.status }}</span></td>
-              <td>{{ '%.2f'|format(row.file_size/1048576) if row.file_size else '0.00' }} MB</td>
+              <td>{{ '%.2f'|format(row.file_size/1048576) if row.file_size else '0.00' }} {{ t("MB") }}</td>
               <td>{{ row.source }}<small class="d-block text-break text-muted">{{ row.location }}</small></td>
               <td><span class="{{ 'text-danger small' if row.error else 'text-muted small' }}">{{ row.error or 'Verified healthy' }}</span></td>
             </tr>
             {% endfor %}
           {% else %}
-            <tr><td colspan="7" class="text-muted text-center p-3">No backup logs recorded yet. Automated and manual backups will be logged here.</td></tr>
+            <tr><td colspan="7" class="text-muted text-center p-3">{{ t("No backup logs recorded yet. Automated and manual backups will be logged here.") }}</td></tr>
           {% endif %}
         </tbody>
       </table>
     </div>
   </section>
-  {% if can("backups.approve") %}<details class="mt-3"><summary>Restore an uploaded StorePro archive</summary><form action="/settings/restore" method="post" enctype="multipart/form-data" data-backup-action data-restore-form class="mt-3">{{ csrf() }}<label class="field"><span>Backup ZIP (up to 32 MB; use a backup folder for larger archives)</span><input class="form-control" name="backup" type="file" accept=".zip" required></label><div class="form-grid two">{{ field('Administrator password','password','','password',true) }}{{ field('Type RESTORE','confirm','',required=true) }}</div><button class="btn btn-danger">Verify &amp; Restore</button></form></details>{% endif %}
+  {% if can("backups.approve") %}<details class="mt-3"><summary>{{ t("Restore an uploaded StorePro archive") }}</summary><form action="/settings/restore" method="post" enctype="multipart/form-data" data-backup-action data-restore-form class="mt-3">{{ csrf() }}<label class="field"><span>{{ t("Backup ZIP (up to 32 MB; use a backup folder for larger archives)") }}</span><input class="form-control" name="backup" type="file" accept=".zip" required></label><div class="form-grid two">{{ field('Administrator password','password','','password',true) }}{{ field('Type RESTORE','confirm','',required=true) }}</div><button class="btn btn-danger">{{ t("Verify & Restore") }}</button></form></details>{% endif %}
 </section>
-<div class="modal fade" id="backup-restore-modal" tabindex="-1" aria-labelledby="restore-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="restore-title">Restore recovery point</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button></div><form action="/settings/restore" method="post" data-backup-action data-restore-form>{{ csrf() }}<div class="modal-body"><p class="alert alert-warning">This replaces the current store data and signs everyone out. A local recovery snapshot is saved first. Finish active sales before continuing.</p><p id="restore-selection" class="text-break"></p><input type="hidden" name="source"><input type="hidden" name="name">{{ field('Administrator password','password','','password',true) }}{{ field('Type RESTORE','confirm','',required=true) }}</div><div class="modal-footer"><button class="btn btn-light" type="button" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger">Verify &amp; Restore</button></div></form></div></div></div>
+<div class="modal fade" id="backup-restore-modal" tabindex="-1" aria-labelledby="restore-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="restore-title">{{ t("Restore recovery point") }}</h2><button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button></div><form action="/settings/restore" method="post" data-backup-action data-restore-form>{{ csrf() }}<div class="modal-body"><p class="alert alert-warning">{{ t("This replaces the current store data and signs everyone out. A local recovery snapshot is saved first. Finish active sales before continuing.") }}</p><p id="restore-selection" class="text-break"></p><input type="hidden" name="source"><input type="hidden" name="name">{{ field('Administrator password','password','','password',true) }}{{ field('Type RESTORE','confirm','',required=true) }}</div><div class="modal-footer"><button class="btn btn-light" type="button" data-bs-dismiss="modal">{{ t("Cancel") }}</button><button class="btn btn-danger">{{ t("Verify & Restore") }}</button></div></form></div></div></div>

@@ -62,21 +62,23 @@
 }
 .ship-step.done {
   color: var(--ink);
-  border-color: #00a14f55;
+  border-color: color-mix(in srgb, var(--success) 35%, var(--line));
+  background: var(--success-soft);
 }
 .ship-step.done .ship-step-dot {
-  background: #00a14f;
-  border-color: #00a14f;
+  background: var(--success);
+  border-color: var(--success);
   color: #fff;
 }
 .ship-step.current {
   color: var(--ink);
-  border-color: var(--pos-blue, #1266ed);
-  box-shadow: 0 0 0 3px #1266ed22;
+  background: var(--panel);
+  border-color: var(--blue);
+  box-shadow: var(--ring);
 }
 .ship-step.current .ship-step-dot {
-  background: var(--pos-blue, #1266ed);
-  border-color: var(--pos-blue, #1266ed);
+  background: var(--blue);
+  border-color: var(--blue);
   color: #fff;
 }
 .ship-step-label {
@@ -89,16 +91,13 @@
   align-items: center;
   gap: 8px;
   margin: 12px 0 0;
-  font-size: 12px;
-  color: #ae690c;
+  font-size: var(--fs-sm);
+  color: var(--warning-ink);
 }
 .ship-exception .lucide {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-}
-[data-bs-theme="dark"] .ship-exception {
-  color: #f3bd69;
 }
 /* Shipment status actions. */
 .ship-action-bar {
@@ -108,8 +107,7 @@
   margin: 12px 0;
 }
 .ship-ship-btn {
-  font-weight: 700;
-  box-shadow: 0 4px 14px #1266ed44;
+  font-weight: var(--fw-bold);
 }
 /* Courier view/edit modes. */
 .ship-courier-form {
@@ -126,8 +124,8 @@
   margin-top: 10px;
 }
 .ship-error {
-  color: #ed6e7e;
-  font-size: 12px;
+  color: var(--danger-ink);
+  font-size: var(--fs-sm);
   margin-top: 10px;
 }
 #shipmentModalMessage.ship-error,
@@ -233,7 +231,7 @@
   height: 12px;
   border-radius: 50%;
   background: var(--panel);
-  border: 3px solid var(--pos-blue, #1266ed);
+  border: 3px solid var(--blue);
 }
 .ship-timeline b {
   display: block;
@@ -306,16 +304,13 @@ code {
   gap: 8px;
   margin: 12px 0 0;
   font-size: 12px;
-  font-weight: 600;
-  color: #ae690c;
+  font-weight: var(--fw-semibold);
+  color: var(--warning-ink);
 }
 .ship-incomplete .lucide {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-}
-[data-bs-theme="dark"] .ship-incomplete {
-  color: #f3bd69;
 }
 .ship-confirm-list {
   margin: 0 0 12px;
@@ -358,9 +353,12 @@ code {
   color: inherit;
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
+.ship-table .ship-tracking {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
 .ship-table .ship-tracking:hover {
   border-color: var(--blue);
-  transform: translateY(-1px);
 }
 .ship-table .ship-tracking .lucide {
   width: 13px;
@@ -372,8 +370,7 @@ code {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .ship-table .ship-status-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
+  box-shadow: 0 0 0 2px var(--blue-glow);
 }
 .ship-table .ship-link:focus-visible,
 .ship-table .ship-customer-link:focus-visible,
@@ -393,9 +390,9 @@ code {
   background: var(--panel);
   color: var(--ink);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  box-shadow: 0 12px 32px rgba(10, 25, 50, 0.22);
-  padding: 6px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: var(--sp-1);
 }
 .ship-status-menu[hidden] {
   display: none;
@@ -425,85 +422,160 @@ code {
   font-size: 12px;
   color: var(--muted);
 }
-[data-bs-theme="dark"] .ship-status-menu {
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
-}
 @media (prefers-reduced-motion: reduce) {
   .ship-table .ship-tracking,
   .ship-table .ship-status-btn {
     transition: none;
   }
 }
-/* Orders hub: counters + tabs. */
+/* Orders hub: category tab-cards + pipeline switcher. */
 .orders-counters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
-  gap: 12px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
 }
 .orders-counter {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  align-items: center;
+  gap: var(--sp-3);
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 14px 16px;
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.16s ease, transform 0.16s ease;
+  border-radius: var(--radius-lg);
+  padding: var(--sp-3) var(--sp-4);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  min-width: 0;
 }
 .orders-counter:hover {
-  border-color: var(--blue);
-  transform: translateY(-1px);
-  color: inherit;
-}
-.orders-counter b {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: -0.4px;
-}
-.orders-counter span {
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: 600;
+  color: var(--ink);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-md);
 }
 .orders-counter.active {
   border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue), var(--shadow-sm);
 }
-.orders-tabs {
-  margin-bottom: 12px;
+.orders-counter-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--soft);
+  color: var(--muted);
+  flex-shrink: 0;
 }
-.orders-tabs a {
-  text-decoration: none;
+.orders-counter.active .orders-counter-icon {
+  background: var(--blue-light);
+  color: var(--blue);
 }
-@media (prefers-reduced-motion: reduce) {
-  .orders-counter {
-    transition: none;
-  }
+.orders-counter-icon .lucide {
+  width: 18px;
+  height: 18px;
 }
-
-/* Fulfillment pipeline scroll indicator for narrow screens */
+.orders-counter-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.orders-counter-text span {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  font-weight: var(--fw-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.orders-counter-text b {
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-bold);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
 .fulfillment-pipeline-panel {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+  min-width: 0;
 }
-@media (max-width: 768px) {
+.pipeline-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.pipeline-title .lucide {
+  width: 16px;
+  height: 16px;
+}
+.fulfillment-pipeline {
+  flex: 0 1 auto;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.fulfillment-pipeline-panel {
+  flex-wrap: wrap;
+}
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--fs-2xs);
+  font-weight: var(--fw-bold);
+  font-variant-numeric: tabular-nums;
+}
+.fulfillment-pipeline a.active .count-pill {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #fff;
+}
+@media (max-width: 1100px) {
+  .orders-counters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .fulfillment-pipeline-panel {
-    overflow: hidden;
+    flex-direction: column;
+    align-items: stretch;
   }
   .fulfillment-pipeline {
     display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-    mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent 100%);
-  }
-  [dir="rtl"] .fulfillment-pipeline {
-    mask-image: linear-gradient(to left, black calc(100% - 32px), transparent 100%);
-    -webkit-mask-image: linear-gradient(to left, black calc(100% - 32px), transparent 100%);
+    max-width: 100%;
   }
 }
-
+@media (max-width: 760px) {
+  .orders-counters {
+    gap: var(--sp-2);
+  }
+  .orders-counter {
+    padding: var(--sp-2) var(--sp-3);
+  }
+  .orders-counter-icon {
+    width: 30px;
+    height: 30px;
+  }
+  .orders-counter-text b {
+    font-size: var(--fs-lg);
+  }
+  .fulfillment-pipeline {
+    flex-wrap: nowrap;
+    mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  }
+  [dir="rtl"] .fulfillment-pipeline {
+    mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent);
+    -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 28px), transparent);
+  }
+}

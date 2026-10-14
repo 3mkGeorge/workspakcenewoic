@@ -258,26 +258,29 @@
 .cat-modal-foot {
   justify-content: space-between;
 }
-/* filter bar: category select + gear button */
+/* filter bar: category select + gear button + optional option filter, one row */
 .category-filter-wrap {
   display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  min-width: 170px;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 2 1 300px;
+  min-width: max-content;
 }
 .category-select-row {
   display: flex;
-  gap: 6px;
+  gap: var(--sp-2);
   align-items: center;
+  flex: 1 1 auto;
 }
-.category-select-row .form-select {
+.filters .category-select-row .form-select {
   flex: 1;
+  min-width: 140px;
 }
 .cat-gear-btn {
   flex-shrink: 0;
-  min-height: 34px;
-  min-width: 38px;
+  width: var(--control-h);
+  min-height: var(--control-h);
+  padding: 0;
 }
 .cat-gear-btn .lucide,
 .cat-gear-btn svg {
@@ -285,8 +288,21 @@
   height: 16px;
   margin: 0;
 }
-.category-search {
-  font-size: 0.78rem;
+.filters .category-filter-wrap .category-search {
+  flex: 0 1 130px;
+  min-width: 96px;
+  min-height: var(--control-h);
+  font-size: var(--fs-sm);
+}
+@media (max-width: 760px) {
+  .category-filter-wrap {
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .filters .category-filter-wrap .category-search {
+    flex: 1 1 100%;
+  }
 }
 /* dashboard widget */
 .metric-link {

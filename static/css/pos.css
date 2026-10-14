@@ -1,13 +1,13 @@
 .pos-page {
-  --pos-blue: #468bff;
-  --pos-green: #2fc995;
-  font-size: 13px;
+  --pos-blue: var(--blue);
+  --pos-green: var(--success);
+  font-size: var(--fs-base);
   padding-bottom: 20px;
 }
 .pos-page h1 {
-  font-size: 29px;
-  letter-spacing: -0.8px;
-  margin: 8px 0;
+  font-size: var(--fs-2xl);
+  letter-spacing: -0.02em;
+  margin: var(--sp-1) 0;
 }
 .pos-page h2 {
   font-size: 15px;
@@ -176,8 +176,16 @@
 #pickup-pane .pos-compact-grid,
 #delivery-pane .pos-compact-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+.pos-compact-grid > * {
+  min-width: 0;
+}
+.pos-compact-grid input,
+.pos-compact-grid select {
+  width: 100%;
+  min-width: 0;
 }
 #delivery-pane .pos-compact-grid .span-2 {
   grid-column: 1 / -1;
@@ -1238,7 +1246,7 @@
 @media (max-width: 850px) {
   #pickup-pane .pos-compact-grid,
   #delivery-pane .pos-compact-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   #delivery-pane .pos-compact-grid .span-2 {
     grid-column: auto;
@@ -1457,5 +1465,27 @@
   }
   .pos-items-table td:last-child {
     padding-inline-end: 10px;
+  }
+}
+@media (max-width: 760px) {
+  .pos-heading {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pos-heading-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    padding-top: 0;
+  }
+  .pos-heading-actions .pos-button {
+    flex: 1 1 auto;
+  }
+  #draft-status {
+    order: 9;
+    flex-basis: 100%;
+    max-width: none;
+    text-align: start;
   }
 }

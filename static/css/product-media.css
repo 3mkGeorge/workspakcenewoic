@@ -404,3 +404,17 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 760px) {
+  .media-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+  .media-card .media-row {
+    justify-content: space-between;
+  }
+  .media-card .media-row .icon-button {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+}

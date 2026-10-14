@@ -140,7 +140,7 @@
     if (window.StorePro && window.StorePro.reload) await window.StorePro.reload();
     else location.reload();
     const ok = flashes.find((t) => /saved|updated|received|completed|success/i.test(t)) || flashes[0];
-    if (ok) toast(ok);
+    toast(ok || (document.documentElement.lang === "ar" ? "تم الحفظ." : "Saved."));
     document.querySelectorAll("main.content .alert.sp-flash").forEach((el) => el.remove());
   }
 

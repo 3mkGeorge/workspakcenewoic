@@ -38,15 +38,20 @@
     if (action) b.addEventListener("click", action);
     return b;
   }
+  const PACKAGE_ICON =
+    '<svg class="lucide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="m7.5 4.27 9 5.15"/></svg>';
+  function placeholder() {
+    const span = el("span", "pos-product-symbol");
+    span.innerHTML = PACKAGE_ICON;
+    return span;
+  }
   function image(p) {
-    if (!p.image) return el("span", "pos-product-symbol", "▣");
+    if (!p.image) return placeholder();
     const im = el("img", "pos-product-image");
     im.src = p.image;
     im.alt = "";
     im.loading = "lazy";
-    im.addEventListener("error", () => im.replaceWith(el("span", "pos-product-symbol", "▣")), {
-      once: true,
-    });
+    im.addEventListener("error", () => im.replaceWith(placeholder()), { once: true });
     return im;
   }
   let state = {
@@ -208,7 +213,7 @@
     }))
       $(id).textContent = money(value);
     $("profit-margin").textContent = `${lastTotals.margin.toFixed(1)}%`;
-    $("tax-label").textContent = `VAT (${cfg.tax_rate / 100}%)`;
+    $("tax-label").textContent = `${$("tax-label").dataset.label || "VAT"} (${cfg.tax_rate / 100}%)`;
     $("item-count").textContent = state.items.length;
     $("units-count").textContent = `${state.items.reduce((s, i) => s + i.quantity, 0)} units`;
     const paid = state.payments.reduce((s, p) => s + p.amount, 0),
