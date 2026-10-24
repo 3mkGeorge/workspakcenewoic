@@ -11,11 +11,13 @@ import "@/styles/layout.css";
 import "@/styles/pages.css";
 
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import { I18nProvider } from "@/components/client/I18nProvider";
 import { Toaster } from "@/components/client/Toaster";
 import type { NavCategory } from "@/components/client/header";
 import { Footer } from "@/components/Footer";
 import { DemoBar, Header } from "@/components/Header";
+import { SyncBar } from "@/components/client/sync-bar";
 import { SITE } from "@/content/site";
 import { getDictionary } from "@/i18n";
 import { dirOf, LOCALES } from "@/i18n/config";
@@ -54,10 +56,12 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   const locale = await resolveLocale(params);
   const t = getDictionary(locale);
   const mode = commerceMode();
+  // A synchronized catalog changes without rebuilds: render the shell (category menu) per request.
+  if (mode === "synced") await connection();
   // The shell must render even when the catalog backend is down; pages show their own error state.
   let categories: NavCategory[] = [];
   try {
-    categories = (await storefront().listCategories()).map((c) => ({
+    categories = (await (await storefront()).listCategories()).map((c) => ({
       slug: c.slug,
       name: pick(c.name, locale),
       description: pick(c.description, locale),
@@ -76,6 +80,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
         <I18nProvider locale={locale} dict={t}>
           <Toaster>
             {mode === "demo" && <DemoBar t={t} />}
+            {mode === "synced" && <SyncBar />}
             <Header locale={locale} t={t} categories={categories} />
             <main id="main" tabIndex={-1}>
               {children}

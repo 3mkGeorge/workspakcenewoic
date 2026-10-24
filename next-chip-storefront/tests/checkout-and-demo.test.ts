@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { normalizeEgyptianMobile, validateCustomer } from "@/lib/commerce/checkout-validation";
 import { createDemoCommerce, resetDemoOrders } from "@/lib/commerce/demo/providers";
-import { createStoreProCommerce } from "@/lib/commerce/storepro/providers";
 import { ProviderUnavailableError } from "@/lib/commerce/providers";
 import { createStorefrontService } from "@/lib/commerce/service";
 import { PLACEHOLDER_IMAGE, safeImageSrc } from "@/lib/commerce/safe-image";
@@ -75,11 +74,6 @@ describe("demo checkout", () => {
 });
 
 describe("demo mode honesty and provider boundary", () => {
-  it("the StorePro mode fails loudly instead of showing demo data", async () => {
-    const live = createStorefrontService(createStoreProCommerce());
-    expect(live.mode).toBe("storepro");
-    await expect(live.queryCatalog({})).rejects.toBeInstanceOf(ProviderUnavailableError);
-  });
 
   it("home data only includes valid promotions and real sections", async () => {
     const home = await service.getHome();

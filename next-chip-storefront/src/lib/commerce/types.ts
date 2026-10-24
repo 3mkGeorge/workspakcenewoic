@@ -8,7 +8,7 @@ export type Locale = "en" | "ar";
 export type LocalizedText = Record<Locale, string>;
 export type Piastres = number;
 
-export type CategoryIcon = "mouse" | "mousepad" | "skates" | "keyboard" | "headset" | "microphone" | "cable";
+export type CategoryIcon = "mouse" | "mousepad" | "skates" | "keyboard" | "headset" | "microphone" | "cable" | "box";
 
 export interface Category {
   /** Stable storefront id; mapped to a StorePro category id in the integration. */
@@ -45,8 +45,10 @@ export interface Product {
   /** StorePro SKU: the key used to map storefront products to StorePro inventory. */
   sku: string;
   slug: string;
-  name: string;
-  brandId: string;
+  /** Product name per language (StorePro may only configure one; then both are equal). */
+  name: LocalizedText;
+  /** Null when the product has no brand in StorePro. */
+  brandId: string | null;
   categoryId: string;
   summary: LocalizedText;
   description: LocalizedText;
@@ -79,13 +81,17 @@ export type StockStatus = "in_stock" | "low_stock" | "out_of_stock" | "discontin
 export interface Availability {
   productId: string;
   status: StockStatus;
-  /** Units that can be sold right now (0 when unavailable). */
+  /**
+   * Units a shopper may buy right now (0 when unavailable). For the synchronized
+   * catalog this is already capped by the per-order limit, so exact stock
+   * levels never leave StorePro.
+   */
   quantity: number;
 }
 
 /** A product joined with everything a page needs to render it. */
 export interface CatalogItem extends Product {
-  brand: Brand;
+  brand: Brand | null;
   category: Category;
   price: Price;
   availability: Availability;
@@ -173,7 +179,7 @@ export type LineIssue = "unavailable" | "insufficient_stock" | "max_per_order" |
 export interface PricedLine {
   productId: string;
   sku: string;
-  name: string;
+  name: LocalizedText;
   slug: string;
   image?: ProductImage;
   quantity: number;

@@ -41,14 +41,14 @@ export function createStorefrontService(commerce: Commerce, now: () => Date = ()
     return products.flatMap((p) => {
       const price = prices.get(p.id);
       const category = cat.get(p.categoryId);
-      const b = brand.get(p.brandId);
-      // A product without a price or taxonomy is not shown rather than shown wrong.
-      if (!price || !category || !b) return [];
+      // A product without a price or category is not shown rather than shown wrong.
+      // A missing brand only hides the brand label.
+      if (!price || !category) return [];
       return [
         {
           ...p,
           category,
-          brand: b,
+          brand: (p.brandId && brand.get(p.brandId)) || null,
           price,
           availability: stock.get(p.id) ?? { productId: p.id, status: "out_of_stock", quantity: 0 },
         },
@@ -89,6 +89,9 @@ export function createStorefrontService(commerce: Commerce, now: () => Date = ()
 
   return {
     mode: commerce.mode,
+    capabilities: commerce.capabilities,
+    /** Synchronized catalogs: when StorePro last delivered a snapshot (null for demo). */
+    freshness: async () => (commerce.freshness ? commerce.freshness() : null),
 
     listCategories: () => commerce.categories.listCategories(),
     getCategory: (slug: string) => commerce.categories.getCategory(slug),

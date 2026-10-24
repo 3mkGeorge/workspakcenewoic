@@ -2,16 +2,22 @@
 
 The public online store for Next Chip (gaming mice, mousepads, skates, keyboards, audio, microphones, cables), in Arabic (RTL) and English (LTR).
 
-StorePro stays the back office for inventory, prices and orders. This app never touches StorePro's database. It talks to commerce data only through provider interfaces. Right now those are **demo providers** that read local fixtures. The StorePro-backed providers are stubbed until StorePro exposes an API: see [`STStorePro_INTEGRATION.md`](./STStorePro_INTEGRATION.md).
+StorePro stays the back office for inventory, prices and orders. This app never touches StorePro's database. It talks to commerce data only through provider interfaces, in one of two modes:
+
+- **`demo`** (default): sample products from local fixtures, for development, tests and previews.
+- **`synced`**: the real catalog that StorePro pushes to this site. StorePro sends HMAC-signed snapshots over outbound HTTPS, and they are stored in PostgreSQL. This is **Stage 1**: checkout, shipping rates and payment options are still demo, so no order reaches StorePro. Every page says so.
+
+Architecture, data mapping, signing format and operations are in [`STStorePro_INTEGRATION.md`](./STStorePro_INTEGRATION.md).
 
 > **Demo mode is honest.** Every page shows a "Demo" banner. Products, prices, stock and shipping rates are samples. Product images are generated illustrations marked "DEMO RENDER". Checkout creates a demo order in server memory only: nothing is charged, nothing is sent to StorePro, nothing is shipped, and the confirmation page says so. Search engines are told not to index the site (`robots.txt` disallows everything and pages send `noindex`).
 
 ## Requirements
 
-- Node.js ≥ 20.9 (developed on Node 22)
+- Node.js ≥ 22.18 (developed on Node 22.22). The `db:migrate` script relies on Node's built-in TypeScript support.
 - npm
+- PostgreSQL 14+ for `synced` mode only. Demo mode needs no database.
 
-No database and no external services. Fonts are bundled through `@fontsource`, so nothing loads from a CDN.
+Fonts are bundled through `@fontsource`, so nothing loads from a CDN.
 
 ## Setup and run
 
@@ -25,6 +31,15 @@ npm run dev                       # http://localhost:3100 (hot reload)
 npm run build && npm start        # http://localhost:3100
 ```
 
+To run the synchronized catalog locally:
+
+```bash
+export COMMERCE_MODE=synced DATABASE_URL=postgres://user:pass@127.0.0.1:5432/nextchip_dev NEXT_CHIP_SYNC_SECRET=<32+ chars>
+npm run db:migrate && npm run build && npm start
+```
+
+Then configure StorePro to publish to `http://127.0.0.1:3100` (see the integration doc, §7). Until StorePro sends its first snapshot, the home page says "Catalog coming soon". It never falls back to sample products.
+
 `/` redirects to `/en` or `/ar`. It uses the `NEXT_LOCALE` cookie first, then the browser's `Accept-Language`, then English.
 
 | Script | What it does |
@@ -32,7 +47,8 @@ npm run build && npm start        # http://localhost:3100
 | `npm run dev` | Development server on port 3100 |
 | `npm run build` / `npm start` | Production build / server on port 3100 |
 | `npm run typecheck` | `next typegen` + `tsc --noEmit` |
-| `npm test` | Unit tests (Vitest) |
+| `npm test` | Unit and integration tests (Vitest; sync tests use an in-process PostgreSQL engine) |
+| `npm run db:migrate` | Apply `db/migrations/*.sql` to `DATABASE_URL` (safe to repeat) |
 | `npm run art` | Regenerates the demo product SVGs in `public/images/products/` |
 
 ## Environment
@@ -41,10 +57,16 @@ See [`.env.example`](./.env.example).
 
 | Variable | Default | Notes |
 | --- | --- | --- |
-| `COMMERCE_MODE` | `demo` | `demo` = fixtures and simulated checkout. `storepro` = StorePro providers. These currently throw `ProviderUnavailableError`, so pages show the "something went wrong / try again" state. Next.js reads it at build time and at run time, so rebuild after you change it. |
+| `COMMERCE_MODE` | `demo` | `demo` or `synced`. Any other value is a configuration error (pages show the "something went wrong" state, never demo data). Read at build time as well as run time: rebuild after changing it. |
 | `SITE_URL` | `http://localhost:3100` | Canonical URLs, sitemap, structured data |
-| `NEXT_PUBLIC_IMAGE_HOSTS` | *(empty)* | Comma-separated https hosts allowed for product images (for example a future StorePro media host). Every other remote URL falls back to a placeholder. |
-| `STOREPRO_API_URL`, `STOREPRO_API_TOKEN`, `STOREPRO_API_TIMEOUT_MS` | — | Reserved for the integration. **Server-side only.** Never prefix them with `NEXT_PUBLIC_`. |
+| `DATABASE_URL` | — | `synced` only. PostgreSQL connection string. **Server-side only.** |
+| `DATABASE_SSL`, `DATABASE_POOL_MAX` | — / `5` | `require` verifies the database's TLS certificate. |
+| `NEXT_CHIP_SYNC_SECRET` | — | HMAC secret shared with StorePro (32+ characters). **Server-side only.** The sync endpoints answer `503` until it is set. |
+| `NEXT_CHIP_SYNC_SECRET_PREVIOUS` | — | Second accepted secret, used only during rotation. |
+| `NEXT_CHIP_CATALOG_STALE_MINUTES` | `120` | After this long without a successful sync, shoppers see a "may have changed" notice. |
+| `NEXT_CHIP_SYNC_MAX_BYTES` | 8 MB | Largest accepted snapshot body. |
+| `NEXT_CHIP_ALLOW_INDEXING` | `false` | `synced` only. Lets search engines index the site; keep it off while checkout is a demo. |
+| `NEXT_PUBLIC_IMAGE_HOSTS` | *(empty)* | Comma-separated https hosts allowed for remote product images. Synced photos are served from `/media/` and need no entry. Every other remote URL falls back to a placeholder. |
 
 ## What's in the box
 
@@ -83,7 +105,12 @@ src/
     types.ts               domain types (money = integer piastres, like StorePro)
     providers.ts           Catalog/Category/Pricing/Availability/ShippingQuote/Payment/Promotion/Order provider interfaces
     demo/providers.ts      demo implementation over fixtures (in-memory orders)
-    storepro/providers.ts  StorePro stub (throws until the API exists)
+    synced/providers.ts    catalog from the synchronized PostgreSQL tables (Stage 1: shipping/orders still demo)
+  lib/catalog-db/          PostgreSQL access, migrations runner, catalog store (snapshot apply + reads)
+  lib/sync/                snapshot protocol + validation, HMAC signing, request guard, handlers
+  app/api/storepro/…       signed StorePro endpoints: catalog-sync, media/check, media/[hash], status
+  app/media/[file]         public product photos by content hash
+  db/migrations/           SQL migrations (npm run db:migrate)
     service.ts             use-cases: catalog query, home, cart quote, place order
     catalog-query.ts, cart-math.ts, pricing.ts, checkout-validation.ts, money.ts, safe-image.ts
   data/demo/               the only place demo data lives (products.json, catalog-meta.ts)
@@ -99,7 +126,12 @@ Trust boundaries:
 - **The browser never decides money.** Cart lines sent to the server are only `{ productId, quantity }`. `/api/cart/quote` and `/api/checkout` re-price everything from the providers. Any price or total in a request body is ignored, and a test asserts the checkout request contains only customer details, lines, the payment method and an idempotency key.
 - `/api/checkout` refuses cross-origin and non-JSON requests and caps the body size. Order ids are unguessable (`DEMO-1001-3fa9c2d1`).
 - A success screen appears only after the provider returns `201`. Network or server errors keep the form filled and say that nothing was placed.
-- Security headers: CSP (`self` only; no third-party script, style, font or image sources), `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy` and `Permissions-Policy`. Product image URLs pass through `safeImageSrc` (local `/images/…` or allow-listed https hosts only). JSON-LD escapes `<`.
+- Security headers: CSP (`self` only; no third-party script, style, font or image sources), `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy` and `Permissions-Policy`. Product image URLs pass through `safeImageSrc` (local `/images/…`, synced `/media/<sha256>.<ext>`, or allow-listed https hosts only). JSON-LD escapes `<`.
+- **StorePro sync endpoints.**
+  - Every request is authenticated with HMAC-SHA256 over method, path, timestamp, nonce and body hash, within a ±5-minute window, and each nonce is accepted once.
+  - The whole snapshot is validated before anything is written, then applied in one database transaction. A bad batch never replaces the last good catalog.
+  - Nothing is deleted; products StorePro stops publishing are unpublished.
+  - Exact stock levels are never sent: StorePro sends an availability status and a quantity capped at the per-order limit.
 
 ## Design system
 
@@ -136,19 +168,33 @@ Interaction rules every component follows:
 ## Tests and verification
 
 ```bash
-npm test          # 40 unit tests
+npm test          # 68 tests
 npm run typecheck
 npm run build
 ```
 
-The unit tests in `tests/` cover:
+The tests in `tests/` cover:
 
 - Catalog filters, search (including Arabic), sorting, pagination and URL parsing.
 - Sale validity, promotions, cart math, stock and per-order limits, server-side quotes.
 - Checkout validation (Egyptian mobiles, Arabic digits), demo order idempotency, and that client prices are ignored.
-- StorePro mode failing loudly, and image URL safety.
+- Image URL safety.
 - Dictionary parity: every Arabic key present, same placeholders.
 - Arabic plurals and digits, catalog URL helpers, and locale negotiation in the proxy.
+- **Catalog sync** (`tests/catalog-sync.test.ts`). These run the real route handlers and the real migration on an in-process PostgreSQL engine:
+  - Request security: HMAC signing and secret rotation, expired timestamps, replayed nonces, wrong secrets and tampered bodies, unconfigured secret, content type and size limits.
+  - Validation: one malformed record rejects the batch.
+  - Applying snapshots:
+    - complete versus partial snapshots;
+    - idempotent redelivery;
+    - snapshot id reuse and out-of-order rejection;
+    - price updates in place;
+    - unpublishing without deletion;
+    - rollback on a database conflict;
+    - the unchanged fast path refreshing freshness.
+  - Media verification and serving.
+  - Catalog queries for home, search, categories, product pages and deals.
+  - Mode selection with no demo fallback, the stale threshold, and an empty synced catalog.
 
 Browser verification was run against the production build with Playwright and Chromium. It does not ship with the project because it depends on a local browser install.
 
@@ -166,6 +212,21 @@ Browser verification was run against the production build with Playwright and Ch
   - 404 pages.
 
 Screenshots from that run are in [`docs/screenshots/`](./docs/screenshots/).
+
+Synchronized-catalog verification (local PostgreSQL 16 plus an isolated copy of StorePro):
+
+- **End-to-end:** 52 checks pass. StorePro's real **Settings › Website** page publishes products, and its real scheduler runs. The checks cover:
+  - images and EGP prices;
+  - category mapping;
+  - Arabic names and RTL;
+  - per-order caps;
+  - a price change without duplicate rows;
+  - unpublishing and archiving;
+  - a rejected invalid snapshot with the last good catalog intact;
+  - the stale-catalog warning;
+  - a website outage, then recovery;
+  - checkout staying demo, with no StorePro invoice or customer created.
+- **Crawl:** 10 synced pages at all 6 viewports in English and Arabic (120 page loads), with zero layout, console or image issues.
 
 ## Not included (on purpose)
 

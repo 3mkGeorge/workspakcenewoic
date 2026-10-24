@@ -24,6 +24,11 @@ const ar: Dictionary = {
     or: "أو",
   },
   demo: {
+    syncedBadge: "معاينة",
+    syncedBanner: "كتالوج حقيقي من نظام متجر نكست تشيب. الطلب أونلاين غير متاح بعد: صفحة الدفع تجريبية ولا تنشئ أي طلبات.",
+    staleNotice: "آخر تحديث للأسعار والتوفر كان {time} وقد تكون تغيرت.",
+    neverSynced: "لم يتم نشر الكتالوج بعد.",
+    catalogUnavailable: "تعذر الوصول إلى الكتالوج حاليًا.",
     banner: "متجر تجريبي: منتجات وأسعار نموذجية. إتمام الطلب محاكاة فقط — لا يُرسل أي طلب إلى StorePro ولا يُشحن.",
     badge: "تجريبي",
   },
@@ -53,6 +58,8 @@ const ar: Dictionary = {
     browseAll: "تصفح الكتالوج كاملًا",
   },
   home: {
+    emptyTitle: "الكتالوج قريبًا",
+    emptyBody: "ستظهر المنتجات هنا فور نشرها من نظام المتجر.",
     itemsCount: plural({ zero: "لا توجد منتجات", one: "منتج واحد", two: "منتجان", few: "{count} منتجات", many: "{count} منتجًا", other: "{count} منتج" }),
     eyebrow: "معدات ألعاب لمصر",
     heroTitle: "معدات تواكب سرعة تصويبك.",
@@ -125,6 +132,8 @@ const ar: Dictionary = {
     searchEmpty: "اكتب اسم منتج أو علامة تجارية أو رمز SKU للبحث.",
   },
   product: {
+    stockUpdated: "آخر تحديث للتوفر {time}.",
+    stockStale: "آخر تحديث للتوفر {time} — قد يكون تغيّر.",
     saleEnds: "ينتهي الخصم",
     zoomIn: "تكبير",
     zoomOut: "تصغير",
@@ -137,7 +146,7 @@ const ar: Dictionary = {
     sku: "رمز SKU",
     brand: "العلامة التجارية",
     inStock: "متوفر",
-    lowStock: "متبقٍ {count} فقط",
+    lowStock: "الكمية محدودة — اطلبه قريبًا",
     outOfStock: "نفدت الكمية",
     unavailable: "غير متاح",
     save: "وفّر {percent}٪",
@@ -282,6 +291,7 @@ const ar: Dictionary = {
     noOrders: "لا توجد طلبات تجريبية بعد.",
   },
   footer: {
+    synced: "كتالوج حقيقي · الطلب أونلاين قريبًا",
     tagline: "معدات وإكسسوارات ألعاب للاعبين في مصر.",
     shop: "تسوّق",
     help: "المساعدة",

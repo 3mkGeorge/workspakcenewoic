@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     .slice(0, 100);
   if (!ids.length) return json({ items: [] });
   try {
-    const items = await storefront().getProductsByIds(ids);
+    const items = await (await storefront()).getProductsByIds(ids);
     return json({ items: items.filter((i) => i.availability.status !== "discontinued") });
   } catch (e) {
     return failure(e);

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { CatalogView } from "@/components/catalog/CatalogView";
 import { Icon } from "@/components/Icon";
 import { getDictionary } from "@/i18n";
@@ -26,7 +26,12 @@ export default async function CategoryPage({ params, searchParams }: PageProps<"
   const t = getDictionary(locale);
   const category = await (await liveStorefront()).getCategory(slug);
   if (!category) notFound();
-  const { ctx, result, filters } = await loadCatalog(locale, `/categories/${category.slug}`, await searchParams, category.slug);
+  const sp = await searchParams;
+  if (category.slug !== slug) {
+    const qs = new URLSearchParams(Object.entries(sp).flatMap(([k, v]) => (Array.isArray(v) ? v.map((x) => [k, x]) : v ? [[k, v]] : [])));
+    permanentRedirect(localePath(locale, `/categories/${category.slug}`) + (qs.size ? `?${qs}` : ""));
+  }
+  const { ctx, result, filters } = await loadCatalog(locale, `/categories/${category.slug}`, sp, category.slug);
   const name = pick(category.name, locale);
   return (
     <CatalogView

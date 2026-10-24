@@ -19,10 +19,30 @@ from services.startup import (
 )
 
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def isolated_config(tmp_path, **extra):
+    """Boot against a private copy of instance/store.db.
+
+    Starting the app runs schema upgrades, so tests must never open the live
+    store database directly. The copy is made with plain file reads.
+    """
+    import shutil
+
+    target = tmp_path / "instance" / "store.db"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    live = PROJECT_ROOT / "instance" / "store.db"
+    for suffix in ("", "-wal"):
+        if Path(str(live) + suffix).exists():
+            shutil.copyfile(str(live) + suffix, str(target) + suffix)
+    return {"TESTING": True, "ROOT": PROJECT_ROOT, "SQLALCHEMY_DATABASE_URI": "sqlite:///" + str(target), **extra}
+
+
 @pytest.fixture
-def auth_client():
+def auth_client(tmp_path):
     """Client authenticated with admin privileges for permission-protected routes."""
-    app = create_app({"TESTING": True, "WTF_CSRF_ENABLED": False})
+    app = create_app(isolated_config(tmp_path, WTF_CSRF_ENABLED=False))
     client = app.test_client()
     with app.app_context():
         user = User.query.filter_by(username="george").first()
@@ -75,9 +95,9 @@ def test_startup_directory_validation_canonical_env_mismatch(monkeypatch):
     assert "directory mismatch" in str(exc_info.value).lower()
 
 
-def test_startup_identity_metadata():
+def test_startup_identity_metadata(tmp_path):
     """Startup identity correctly reports project root, version, db path, host and port."""
-    app = create_app({"TESTING": True})
+    app = create_app(isolated_config(tmp_path))
     identity = get_startup_identity(app, host="127.0.0.1", port=5000)
     assert identity["version"] == STOREPRO_VERSION
     assert identity["host"] == "127.0.0.1"
@@ -87,9 +107,9 @@ def test_startup_identity_metadata():
     assert "store.db" in identity["database_path"]
 
 
-def test_print_startup_banner(capsys):
+def test_print_startup_banner(capsys, tmp_path):
     """Banner prints required startup identity lines."""
-    app = create_app({"TESTING": True})
+    app = create_app(isolated_config(tmp_path))
     print_startup_banner(app, host="127.0.0.1", port=5000)
     captured = capsys.readouterr().out
     assert f"StorePro Local Store Management - v{STOREPRO_VERSION}" in captured

@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% from 'macros.html' import icon, csrf, product_image, empty with context %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>{{ t('Website') }}</h1>
+    <p>{{ t('Choose which products appear on the Next Chip website and check catalog synchronization.') }}</p>
+  </div>
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <a href="/settings" class="btn btn-light">{{ icon('settings') }}{{ t('Back to Settings') }}</a>
+    {% if can('settings.edit') %}
+    <form method="post" action="/settings/website/sync" class="inline-form">{{ csrf() }}
+      <button class="btn btn-primary" type="submit" {{ 'disabled' if not (sync_config.enabled and sync_config.url and sync_config.secret_configured and not sync_config.problems) else '' }}>{{ icon('refresh-cw') }}{{ t('Sync now') }}</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<section class="panel" aria-labelledby="sync-status">
+  <div class="panel-header"><h2 id="sync-status">{{ icon('activity') }}{{ t('Synchronization status') }}</h2><a href="/settings/website?check=1">{{ t('Check website') }}</a></div>
+  <div class="table-responsive">
+    <table class="table">
+      <tbody>
+        <tr><th scope="row">{{ t('Sync') }}</th><td class="wrap text-break">{% if sync_config.enabled %}<span class="badge-status success">{{ t('Enabled') }}</span>{% else %}<span class="badge-status warning">{{ t('Disabled') }}</span> <small class="text-muted">{{ t('Set NEXT_CHIP_SYNC_ENABLED=true to allow syncing.') }}</small>{% endif %}</td></tr>
+        <tr><th scope="row">{{ t('Website address') }}</th><td class="wrap text-break" dir="ltr">{{ sync_config.url or '—' }}{% if not sync_config.url %} <small class="text-muted">{{ t('Not configured') }}</small>{% endif %}</td></tr>
+        <tr><th scope="row">{{ t('Shared secret') }}</th><td class="wrap text-break">{{ t('Configured') if sync_config.secret_configured else t('Not configured') }}</td></tr>
+        {% for problem in sync_config.problems %}<tr><th scope="row">{{ t('Configuration issue') }}</th><td class="wrap text-break text-danger">{{ problem }}</td></tr>{% endfor %}
+        <tr><th scope="row">{{ t('Last successful sync') }}</th><td class="wrap text-break">{% if when.last_success_at %}<time datetime="{{ state.last_success_at }}">{{ when.last_success_at|date(True) }}</time>{% else %}{{ state.last_success_at or t('Never') }}{% endif %}</td></tr>
+        <tr><th scope="row">{{ t('Last result') }}</th><td class="wrap text-break">{% if state.last_ok is sameas true %}<span class="badge-status success">{{ t('Completed') }}</span>{% elif state.last_ok is sameas false %}<span class="badge-status danger">{{ t('Failed') }}</span>{% else %}—{% endif %}</td></tr>
+        <tr><th scope="row">{{ t('Last failure') }}</th><td class="wrap text-break">{% if when.last_failure_at %}<time datetime="{{ state.last_failure_at }}">{{ when.last_failure_at|date(True) }}</time>{% else %}{{ state.last_failure_at or '—' }}{% endif %}{% if state.last_error %}<br><small class="text-danger">{{ state.last_error }}</small>{% endif %}</td></tr>
+        <tr><th scope="row">{{ t('Products published') }}</th><td class="wrap text-break">{{ state.last_product_count if state.last_product_count is not none else '—' }}</td></tr>
+        <tr><th scope="row">{{ t('Snapshot version') }}</th><td class="wrap text-break" dir="ltr"><code>{{ state.last_snapshot_id or '—' }}</code></td></tr>
+        <tr><th scope="row">{{ t('Complete snapshot') }}</th><td class="wrap text-break">{{ (t('Yes') if state.last_complete else t('No')) if state.last_complete is defined else '—' }}</td></tr>
+        {% if checked %}
+        <tr><th scope="row">{{ t('Website reports') }}</th><td class="wrap text-break">{% if remote %}{{ remote.publishedProducts }} {{ t('products') }} · {{ t('last update') }} {% if remote_when %}<time datetime="{{ remote.lastSuccessAt }}">{{ remote_when|date(True) }}</time>{% else %}{{ remote.lastSuccessAt or '—' }}{% endif %}{% if remote.stale %} · <span class="badge-status warning">{{ t('Stale') }}</span>{% endif %}{% if remote.lastError %}<br><small class="text-danger">{{ remote.lastError }}</small>{% endif %}{% else %}<span class="text-danger">{{ remote_error }}</span>{% endif %}</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  {% if state.last_warnings %}
+  <details class="mt-2"><summary>{{ t('Warnings from the last sync') }} ({{ state.last_warnings|length }})</summary><ul>{% for w in state.last_warnings %}<li>{{ w }}</li>{% endfor %}</ul></details>
+  {% endif %}
+</section>
+
+<section class="panel" aria-labelledby="publish-title">
+  <div class="panel-header"><h2 id="publish-title">{{ icon('globe') }}{{ t('Products on the website') }}</h2></div>
+  <p class="text-muted">{{ t('Only ticked products are sent to the website. Prices, stock status and photos come from StorePro; cost, suppliers and exact stock are never sent.') }}</p>
+  {% if rows %}
+  <form method="post" action="/settings/website/publish">{{ csrf() }}
+    <div class="table-responsive">
+      <table class="table">
+        <thead><tr><th scope="col">{{ t('On website') }}</th><th scope="col">{{ t('Product') }}</th><th scope="col">{{ t('Category') }}</th><th scope="col">{{ t('Price') }}</th><th scope="col">{{ t('Stock') }}</th><th scope="col">{{ t('Images') }}</th><th scope="col">{{ t('Status') }}</th><th scope="col"><span class="visually-hidden">{{ t('Actions') }}</span></th></tr></thead>
+        <tbody>
+        {% for row in rows %}{% set p = row.product %}
+          <tr>
+            <td><input type="hidden" name="product_ids" value="{{ p.id }}"><input class="form-check-input" type="checkbox" name="published" value="{{ p.id }}" aria-label="{{ t('On website') }}: {{ p.name }}" {{ 'checked' if row.published else '' }} {{ 'disabled' if not can('products.edit') else '' }}></td>
+            <td><div style="display:flex;gap:8px;align-items:center">{{ product_image(p) }}<div><strong>{{ p.name }}</strong><br><small class="text-muted" dir="ltr">{{ p.sku }}</small></div></div></td>
+            <td>{{ p.category.name if p.category else '—' }}</td>
+            <td>{{ p.price|money }}</td>
+            <td>{{ t(p.status) }}</td>
+            <td>{{ row.images }}</td>
+            <td>{% if row.published and row.problem %}<span class="badge-status warning">{{ t(row.problem) }}</span>{% elif row.published %}<span class="badge-status success">{{ t('Published') }}</span>{% else %}<span class="text-muted">—</span>{% endif %}</td>
+            <td><a class="btn btn-light btn-sm" href="/settings/website/products/{{ p.id }}">{{ icon('pencil') }}{{ t('Web details') }}</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if can('products.edit') %}<button class="btn btn-primary mt-2" type="submit">{{ icon('save') }}{{ t('Save publication') }}</button>{% endif %}
+  </form>
+  {% else %}
+  {{ empty('No products yet', 'Add products in StorePro before publishing them to the website.', 'package') }}
+  {% endif %}
+</section>
+{% endblock %}

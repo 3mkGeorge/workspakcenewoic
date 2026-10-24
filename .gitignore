@@ -5,3 +5,5 @@ instance/
 backups/*.zip
 static/uploads/*.png
 *.pyc
+.env
+.env.local

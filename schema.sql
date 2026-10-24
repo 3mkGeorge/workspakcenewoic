@@ -438,5 +438,21 @@ CREATE TABLE shipping_events (
 ;
 CREATE INDEX ix_shipping_events_order_id ON shipping_events (order_id);
 CREATE INDEX ix_shipping_events_created_at ON shipping_events (created_at);
+CREATE TABLE web_listings (
+	product_id INTEGER NOT NULL, 
+	published BOOLEAN DEFAULT '0' NOT NULL, 
+	name_en VARCHAR(160) DEFAULT '' NOT NULL, 
+	name_ar VARCHAR(160) DEFAULT '' NOT NULL, 
+	description_en VARCHAR(4000) DEFAULT '' NOT NULL, 
+	description_ar VARCHAR(4000) DEFAULT '' NOT NULL, 
+	max_per_order INTEGER DEFAULT '0' NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (product_id), 
+	CHECK (max_per_order >= 0 AND max_per_order <= 99), 
+	FOREIGN KEY(product_id) REFERENCES products (id) ON DELETE CASCADE
+)
+
+;
+
 CREATE TRIGGER IF NOT EXISTS price_history_no_update BEFORE UPDATE ON price_history BEGIN SELECT RAISE(ABORT, 'Price history is append-only'); END;
 CREATE TRIGGER IF NOT EXISTS price_history_no_delete BEFORE DELETE ON price_history BEGIN SELECT RAISE(ABORT, 'Price history is append-only'); END;

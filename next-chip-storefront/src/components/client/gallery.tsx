@@ -15,7 +15,7 @@ export interface GalleryImage {
 }
 
 /** Product gallery: main image, thumbnails, and a full-screen lightbox with zoom. */
-export function Gallery({ images, name }: { images: GalleryImage[]; name: string }) {
+export function Gallery({ images, name, demoArt = false }: { images: GalleryImage[]; name: string; demoArt?: boolean }) {
   const { locale, t } = useI18n();
   const [index, setIndex] = useState(0);
   const [zoom, setZoom] = useState(false);
@@ -101,7 +101,7 @@ export function Gallery({ images, name }: { images: GalleryImage[]; name: string
         </span>
       </button>
       {thumbs(76, (i) => fill(t.product.openImage, { index: i + 1, count }))}
-      <p className="demo-render-note">{t.common.demoRender}</p>
+      {demoArt && <p className="demo-render-note">{t.common.demoRender}</p>}
 
       <dialog ref={ref} className="lightbox" aria-label={`${name} — ${t.product.gallery}`}>
         {open && (

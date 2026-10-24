@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { localePath } from "@/i18n/config";
+import { pick } from "@/i18n/format";
 import { validateCustomer, type CheckoutErrors, type FieldError } from "@/lib/commerce/checkout-validation";
 import { formatEGP } from "@/lib/commerce/money";
 import { safeImageSrc } from "@/lib/commerce/safe-image";
@@ -35,7 +36,8 @@ type SubmitState =
   | { kind: "error"; message: string; focus: "field" | "alert" }
   | { kind: "placed"; orderId: string };
 
-export function CheckoutView({ governorates, payments, mode }: { governorates: GovernorateOption[]; payments: PaymentOption[]; mode: "demo" | "storepro" }) {
+/** `ordersLive` is false until real order ingestion into StorePro is implemented and enabled. */
+export function CheckoutView({ governorates, payments, ordersLive }: { governorates: GovernorateOption[]; payments: PaymentOption[]; ordersLive: boolean }) {
   const { locale, t } = useI18n();
   const router = useRouter();
   const store = useStore();
@@ -239,7 +241,7 @@ export function CheckoutView({ governorates, payments, mode }: { governorates: G
   return (
     <div className="checkout-layout">
       <form ref={formRef} className="checkout-form" noValidate onSubmit={onSubmit} aria-describedby="co-demo">
-        {mode === "demo" && (
+        {!ordersLive && (
           <div className="alert alert-demo" id="co-demo">
             <Icon name="info" />
             <span>{t.checkout.demoNotice}</span>
@@ -372,7 +374,7 @@ export function CheckoutView({ governorates, payments, mode }: { governorates: G
             data-testid="place-order"
           >
             {busy && <span className="spinner" aria-hidden="true" />}
-            {busy ? t.checkout.placing : mode === "demo" ? t.checkout.placeOrder : t.checkout.placeRealOrder}
+            {busy ? t.checkout.placing : ordersLive ? t.checkout.placeRealOrder : t.checkout.placeOrder}
           </button>
           <p className="buy-hint" style={{ textAlign: "center" }}>
             {t.checkout.secureNote}
@@ -388,7 +390,7 @@ export function CheckoutView({ governorates, payments, mode }: { governorates: G
               <li key={line.productId}>
                 <Image src={safeImageSrc(line.image?.src)} alt="" width={52} height={52} sizes="52px" />
                 <div style={{ minWidth: 0 }}>
-                  <span className="name">{line.name || t.cart.unknownItem}</span>
+                  <span className="name">{pick(line.name, locale) || t.cart.unknownItem}</span>
                   <span className="qty-x">
                     {line.quantity} × {formatEGP(line.unitPrice, locale)}
                   </span>

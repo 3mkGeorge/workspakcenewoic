@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { localePath } from "@/i18n/config";
-import { countText, fill } from "@/i18n/format";
+import { countText, fill, pick } from "@/i18n/format";
 import { formatEGP } from "@/lib/commerce/money";
 import { safeImageSrc } from "@/lib/commerce/safe-image";
 import type { CartQuote, LineIssue, PricedLine } from "@/lib/commerce/types";
@@ -199,7 +199,7 @@ function CartLine({ line, entry }: { line: PricedLine; entry: CartEntry }) {
   const { locale, t } = useI18n();
   const notify = useToast();
   const href = line.slug ? localePath(locale, `/products/${line.slug}`) : undefined;
-  const name = line.name || t.cart.unknownItem;
+  const name = pick(line.name, locale) || t.cart.unknownItem;
   const remove = () => {
     removeFromCart(line.productId);
     notify(fill(t.cart.removed, { name }));

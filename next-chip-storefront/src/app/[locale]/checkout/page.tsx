@@ -26,7 +26,7 @@ export default async function CheckoutPage({ params }: PageProps<"/[locale]/chec
         <h1>{t.checkout.title}</h1>
       </header>
       <CheckoutView
-        mode={sf.mode}
+        ordersLive={sf.capabilities.orders === "live"}
         governorates={govs.map((g) => ({ id: g.id, name: pick(g.name, locale) }))}
         payments={methods.map((m) => ({ id: m.id, label: pick(m.label, locale), description: pick(m.description, locale) }))}
       />

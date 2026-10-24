@@ -8,11 +8,21 @@ from models import db, User
 
 def main():
     parser = argparse.ArgumentParser(description="StorePro maintenance")
-    parser.add_argument("command", choices=["demo", "schema", "backup", "verify"])
+    parser.add_argument("command", choices=["demo", "schema", "backup", "verify", "web-sync"])
     parser.add_argument(
         "--confirm-demo",
         action="store_true",
         help="Confirm sample data should be added to an empty catalog",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="web-sync: build and check the website snapshot without sending anything",
+    )
+    parser.add_argument(
+        "--status",
+        action="store_true",
+        help="web-sync: show configuration (without the secret) and the last sync result",
     )
     args = parser.parse_args()
     app = create_app({"BACKUP_WORKER": False})
@@ -42,6 +52,38 @@ def main():
             text += "\n".join(sql + ";" for sql in PRICE_TRIGGERS.values()) + "\n"
             Path("schema.sql").write_text(text, encoding="utf-8")
             print("schema.sql generated.")
+        elif args.command == "web-sync":
+            from services.web_catalog_sync import load_config, load_state, run_sync, website_status
+
+            cfg = load_config()
+            if args.status:
+                public = cfg.public()
+                print(f"Enabled:            {'yes' if public['enabled'] else 'no'}")
+                print(f"Website URL:        {public['url'] or '(not configured)'}")
+                print(f"Secret configured:  {'yes' if public['secret_configured'] else 'no'}")
+                for problem in public["problems"]:
+                    print(f"Configuration issue: {problem}")
+                state = load_state()
+                for key in ("last_success_at", "last_failure_at", "last_error", "last_snapshot_id", "last_product_count", "last_result"):
+                    print(f"{key + ':':<20}{state.get(key, '—')}")
+                remote, error = website_status(cfg)
+                print(f"Website reports:    {remote if remote else error}")
+                return
+            result = run_sync("cli", dry_run=args.dry_run)
+            if args.dry_run:
+                print(
+                    f"Dry run: {result['products']} products, {result['categories']} categories, "
+                    f"{result['brands']} brands, {result['images']} images (snapshot {result['snapshot_id']})."
+                )
+            elif result.get("ok"):
+                state = result["state"]
+                print(f"Website sync {state.get('last_result')}: {state.get('last_product_count')} products published (snapshot {state.get('last_snapshot_id')}).")
+            else:
+                print(f"Website sync failed: {result.get('error')}")
+            for warning in result.get("warnings") or result.get("state", {}).get("last_warnings", []):
+                print(f"  warning: {warning}")
+            if not result.get("ok"):
+                raise SystemExit(1)
         elif args.command == "verify":
             from services.dual_backup import check_database
             import sqlite3

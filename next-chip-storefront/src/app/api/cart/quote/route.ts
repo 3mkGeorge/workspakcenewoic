@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   const body = (parsed.body && typeof parsed.body === "object" ? parsed.body : {}) as Record<string, unknown>;
   const governorate = typeof body.governorate === "string" && /^[a-z-]{1,40}$/.test(body.governorate) ? body.governorate : undefined;
   try {
-    const sf = storefront();
+    const sf = await storefront();
     if (governorate && !(await sf.listGovernorates()).some((g) => g.id === governorate)) {
       return json({ quote: await sf.quoteCart(body.lines), shippingError: "unknown_governorate" });
     }

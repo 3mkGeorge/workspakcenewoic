@@ -34,6 +34,7 @@ const { orders, byRequest } = store;
 export function createDemoCommerce(): Commerce {
   return {
     mode: "demo",
+    capabilities: { catalog: "demo", shipping: "demo", orders: "demo" },
     catalog: {
       async listProducts() {
         return clone(DEMO_PRODUCTS);

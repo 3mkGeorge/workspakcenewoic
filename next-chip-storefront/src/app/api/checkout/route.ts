@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   const parsed = await readJson(request);
   if (!parsed.ok) return parsed.response;
   try {
-    const result = await storefront().placeOrder(parsed.body);
+    const result = await (await storefront()).placeOrder(parsed.body);
     if (result.ok) {
       const { order } = result;
       return json({ ok: true, order: { id: order.id, status: order.status, demo: order.demo, createdAt: order.createdAt, totals: order.totals } }, 201);

@@ -25,9 +25,10 @@ export function matchesSearch(item: CatalogItem, q: string): boolean {
   if (!terms.length) return true;
   const haystack = normalize(
     [
-      item.name,
+      item.name.en,
+      item.name.ar,
       item.sku,
-      item.brand.name,
+      item.brand?.name ?? "",
       item.category.name.en,
       item.category.name.ar,
       item.summary.en,
@@ -44,11 +45,11 @@ export const isPurchasable = (item: CatalogItem) =>
 function compare(sort: CatalogSort) {
   switch (sort) {
     case "price-asc":
-      return (a: CatalogItem, b: CatalogItem) => a.price.amount - b.price.amount || a.name.localeCompare(b.name);
+      return (a: CatalogItem, b: CatalogItem) => a.price.amount - b.price.amount || a.name.en.localeCompare(b.name.en);
     case "price-desc":
-      return (a: CatalogItem, b: CatalogItem) => b.price.amount - a.price.amount || a.name.localeCompare(b.name);
+      return (a: CatalogItem, b: CatalogItem) => b.price.amount - a.price.amount || a.name.en.localeCompare(b.name.en);
     case "newest":
-      return (a: CatalogItem, b: CatalogItem) => b.publishedAt.localeCompare(a.publishedAt) || a.name.localeCompare(b.name);
+      return (a: CatalogItem, b: CatalogItem) => b.publishedAt.localeCompare(a.publishedAt) || a.name.en.localeCompare(b.name.en);
     case "featured":
     default:
       // Featured first, then best sellers by rank, then in-stock, then newest.
@@ -119,8 +120,9 @@ export function runCatalogQuery(all: CatalogItem[], query: CatalogQuery, now = n
   if (query.q) scoped = scoped.filter((i) => matchesSearch(i, query.q!));
   if (query.category) scoped = scoped.filter((i) => i.category.slug === query.category);
 
-  const brandCounts = new Map<string, { brand: CatalogItem["brand"]; count: number }>();
+  const brandCounts = new Map<string, { brand: NonNullable<CatalogItem["brand"]>; count: number }>();
   for (const i of scoped) {
+    if (!i.brand) continue;
     const entry = brandCounts.get(i.brand.slug) ?? { brand: i.brand, count: 0 };
     entry.count++;
     brandCounts.set(i.brand.slug, entry);
@@ -131,7 +133,7 @@ export function runCatalogQuery(all: CatalogItem[], query: CatalogQuery, now = n
     : { min: 0, max: 0 };
 
   let items = scoped;
-  if (query.brands?.length) items = items.filter((i) => query.brands!.includes(i.brand.slug));
+  if (query.brands?.length) items = items.filter((i) => !!i.brand && query.brands!.includes(i.brand.slug));
   if (query.minPrice !== undefined) items = items.filter((i) => effectiveSale(i.price, now).amount >= query.minPrice! * 100);
   if (query.maxPrice !== undefined) items = items.filter((i) => effectiveSale(i.price, now).amount <= query.maxPrice! * 100);
   if (query.stock === "in-stock") items = items.filter(isPurchasable);

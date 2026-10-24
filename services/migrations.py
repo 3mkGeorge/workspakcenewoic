@@ -13,7 +13,8 @@ from pathlib import Path
 #   2 = shipping_orders.landmark
 #   3 = shipping_orders.tracking_code nullable (no code generated at creation)
 #   4 = shipping_orders.tracking_url (courier-supplied link, optional)
-SCHEMA_VERSION = 5
+#   6 = web_listings (opt-in Next Chip website publication; additive table)
+SCHEMA_VERSION = 6
 
 PAYMENTS_DDL = """CREATE TABLE IF NOT EXISTS sale_payments (
  id INTEGER PRIMARY KEY,
@@ -247,6 +248,7 @@ def upgrade_sqlite(path, backup=False):
                 sales_columns
             )
             and {"cancel_reason", "cancelled_at"}.issubset(shipping_columns)
+            and ("web_listings" in tables or "products" not in tables)
             and connection.execute("PRAGMA user_version").fetchone()[0]
             >= SCHEMA_VERSION
         ):
@@ -286,6 +288,20 @@ def upgrade_sqlite(path, backup=False):
                 connection.execute(
                     "ALTER TABLE products ADD COLUMN price_alerts BOOLEAN NOT NULL DEFAULT 1"
                 )
+            if "products" in tables and "web_listings" not in tables:
+                # Additive: older databases and backups gain the empty table;
+                # no existing row is touched.
+                from sqlalchemy.schema import CreateTable, CreateIndex
+                from sqlalchemy.dialects.sqlite import dialect
+                from models import WebListing
+
+                connection.execute(
+                    str(CreateTable(WebListing.__table__).compile(dialect=dialect()))
+                )
+                for index in WebListing.__table__.indexes:
+                    connection.execute(
+                        str(CreateIndex(index).compile(dialect=dialect()))
+                    )
             if "price_history" not in tables:
                 from sqlalchemy.schema import CreateTable, CreateIndex
                 from sqlalchemy.dialects.sqlite import dialect
@@ -318,13 +334,26 @@ def upgrade_sqlite(path, backup=False):
             if "shipping_orders" in tables and not tracking_nullable:
                 # One-way rebuild for nullable tracking_code (data-preserving;
                 # indexes recreated explicitly: SQLite drops them with the table).
-                cols = (
-                    "id, order_number, sale_id, tracking_code, tracking_url, status, customer_id,"
-                    " customer_name, phone, alt_phone, governorate, city, district,"
-                    " landmark, street, building, floor, apartment, postal_code,"
-                    " address_snapshot, notes, courier, cancel_reason, cancelled_at,"
-                    " shipping_cost, shipment_date,"
-                    " delivered_by, delivered_at, user_id, created_at, updated_at"
+                # Pre-v3 tables lack columns that later steps add (tracking_url,
+                # cancel_reason, cancelled_at): copy the columns that exist and
+                # let the new table's defaults fill the rest, as those steps would.
+                existing = {
+                    r[1]
+                    for r in connection.execute("PRAGMA table_info(shipping_orders)")
+                }
+                cols = ", ".join(
+                    c
+                    for c in (
+                        "id", "order_number", "sale_id", "tracking_code", "tracking_url",
+                        "status", "customer_id", "customer_name", "phone", "alt_phone",
+                        "governorate", "city", "district", "landmark", "street",
+                        "building", "floor", "apartment", "postal_code",
+                        "address_snapshot", "notes", "courier", "cancel_reason",
+                        "cancelled_at", "shipping_cost", "shipment_date",
+                        "delivered_by", "delivered_at", "user_id", "created_at",
+                        "updated_at",
+                    )
+                    if c in existing
                 )
                 connection.execute(SHIPPING_TRACKING_REBUILD)
                 connection.execute(
