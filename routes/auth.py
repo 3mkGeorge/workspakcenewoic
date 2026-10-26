@@ -1,3 +1,4 @@
+import hmac
 import time
 from collections import defaultdict
 from flask import (
@@ -55,7 +56,21 @@ def password(value):
 def setup():
     if User.query.first():
         return redirect(url_for("auth.login"))
+    expected = current_app.config.get("SETUP_TOKEN") or ""
+    needs_token = bool(expected)
     if request.method == "POST":
+        if needs_token and not hmac.compare_digest(
+            request.form.get("setup_token", "").encode("utf-8"), expected.encode("utf-8")
+        ):
+            return (
+                render_template(
+                    "auth.html",
+                    setup=True,
+                    needs_token=True,
+                    error="Enter the setup code configured for this deployment.",
+                ),
+                403,
+            )
         roles = [Role(name=n) for n in ("Admin", "Manager", "Cashier")]
         db.session.add_all(roles)
         db.session.flush()
@@ -70,7 +85,7 @@ def setup():
         db.session.commit()
         flash("Your administrator account is ready. Please sign in.", "success")
         return redirect(url_for("auth.login"))
-    return render_template("auth.html", setup=True)
+    return render_template("auth.html", setup=True, needs_token=needs_token)
 
 
 @auth.route("/login", methods=["GET", "POST"])

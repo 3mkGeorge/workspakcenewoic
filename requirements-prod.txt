@@ -1,0 +1,6 @@
+# Production dependencies for Linux hosts (Render, Docker, any WSGI server).
+# The lock file is the same fully pinned set used by the Windows launcher.
+-r requirements-lock.txt
+
+# Gunicorn is Linux-only; the Windows launcher uses Waitress from the lock file.
+gunicorn==26.2.0

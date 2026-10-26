@@ -231,6 +231,8 @@ store-app/
 
 The app uses Waitress for Windows serving, following the [Flask deployment documentation](https://flask.palletsprojects.com/en/stable/deploying/waitress/). The Flask debug server is not used by the launcher.
 
+For the Linux/Render deployment (Gunicorn, persistent disk, HTTPS settings and migration steps), see [`RENDER_DEPLOYMENT.md`](RENDER_DEPLOYMENT.md).
+
 
 
 ```powershell

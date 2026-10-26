@@ -1,9 +1,14 @@
 .venv/
 __pycache__/
 .pytest_cache/
+.pytest_temp/
+.pytest_run/
 instance/
 backups/*.zip
-static/uploads/*.png
+backups-secondary/*.zip
+static/uploads/*
 *.pyc
+*.log
 .env
 .env.local
+pytest_baseline.log

@@ -49,6 +49,7 @@ PUBLIC = {
     "auth.login",
     "backup_admin.recovery",
     "backup_admin.recovery_status",
+    "healthz",
     "main.debug_crash",
 }
 PERSONAL = {"auth.logout", "admin.account", "main.search", "main.notifications"}

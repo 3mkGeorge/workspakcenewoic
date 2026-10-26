@@ -1,0 +1,46 @@
+# Render Blueprint for StorePro.
+#
+# This service uses SQLite on a persistent disk. StorePro's backup, restore,
+# schema upgrade and integrity tooling operate on the SQLite file itself, so a
+# managed PostgreSQL database is not a drop-in replacement.
+#
+# A persistent disk requires a paid Render instance type. On the free plan the
+# filesystem (database, uploads, backups) is erased on every restart/deploy.
+
+services:
+  - type: web
+    name: storepro
+    runtime: python
+    plan: 0.5c-512mb
+    region: frankfurt
+    branch: main
+    buildCommand: pip install -r requirements-prod.txt
+    startCommand: bash scripts/render_start.sh
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    disk:
+      name: storepro-data
+      mountPath: /var/data
+      sizeGB: 5
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.15
+      - key: STOREPRO_DATA_DIR
+        value: /var/data
+      - key: STOREPRO_DATABASE_URI
+        value: sqlite:////var/data/instance/store.db
+      # Generated once by Render and kept across deploys. Never hardcode secrets.
+      - key: STOREPRO_SECRET_KEY
+        generateValue: true
+      - key: STOREPRO_AUTH_EPOCH
+        generateValue: true
+      # Required once, on the public first-run setup page. View it under
+      # Environment in the Render dashboard.
+      - key: STOREPRO_SETUP_TOKEN
+        generateValue: true
+      - key: STOREPRO_SECURE_COOKIES
+        value: "1"
+      - key: STOREPRO_TRUST_PROXY
+        value: "1"
+      - key: STOREPRO_THREADS
+        value: "4"

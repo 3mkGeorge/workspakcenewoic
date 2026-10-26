@@ -13,10 +13,39 @@ from flask import (
     jsonify,
 )
 from flask_wtf.csrf import CSRFProtect
-from sqlalchemy import event
+from sqlalchemy import event, text
 from sqlalchemy.engine import Engine
+from werkzeug.exceptions import SecurityError
+from werkzeug.middleware.proxy_fix import ProxyFix
 from models import db, User, now
 from services.core import settings
+
+
+def env_flag(name, default=False):
+    """Read a boolean environment switch (1/true/yes/on)."""
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in ("1", "true", "yes", "on")
+
+
+def trusted_hosts():
+    """Host names accepted by Flask's Host-header validation.
+
+    Local defaults keep the existing Windows behaviour. A hosted deployment
+    adds its public hostname through the environment instead of disabling the
+    check.
+    """
+    hosts = ["localhost", "127.0.0.1", "[::1]"]
+    configured = os.environ.get("STOREPRO_TRUSTED_HOSTS", "")
+    hosts.extend(host.strip() for host in configured.split(",") if host.strip())
+    render_host = (os.environ.get("RENDER_EXTERNAL_HOSTNAME") or "").strip()
+    if render_host:
+        hosts.append(render_host)
+    if env_flag("STOREPRO_TRUST_PROXY") or "RENDER" in os.environ:
+        # A Render service is always reachable at its own onrender.com name.
+        hosts.append(".onrender.com")
+    return list(dict.fromkeys(hosts))
 
 
 @event.listens_for(Engine, "connect")
@@ -47,12 +76,19 @@ def create_app(test_config=None):
         MAX_CONTENT_LENGTH=default_max_content,
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Strict",
+        SESSION_COOKIE_SECURE=env_flag("STOREPRO_SECURE_COOKIES"),
         WTF_CSRF_TIME_LIMIT=default_csrf_timeout,
         ROOT=root,
         DB_LOCK=threading.RLock(),
         AUTH_EPOCH=(os.environ.get("STOREPRO_AUTH_EPOCH") or "").strip() or secrets.token_hex(16),
-        TRUSTED_HOSTS=["localhost", "127.0.0.1", "[::1]"],
+        SETUP_TOKEN=(os.environ.get("STOREPRO_SETUP_TOKEN") or "").strip(),
+        TRUSTED_HOSTS=trusted_hosts(),
     )
+    if env_flag("STOREPRO_TRUST_PROXY") or "RENDER" in os.environ:
+        # Render terminates TLS at its edge proxy. Trust exactly one hop so
+        # request.is_secure, redirects and the login limiter see the real values.
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+
     if test_config:
         app.config.update(test_config)
         if "ROOT" in test_config:
@@ -85,6 +121,10 @@ def create_app(test_config=None):
     @app.before_request
     def prepare():
         import time as _t
+        # An unexpected Host header has no URL adapter, so redirecting would
+        # crash. Reject it before templates or sessions are touched.
+        if isinstance(request.routing_exception, SecurityError):
+            return "Bad Request: untrusted Host header.", 400
         g.request_id = secrets.token_hex(8)
         g.start_time = _t.perf_counter()
         g.user = None
@@ -95,6 +135,7 @@ def create_app(test_config=None):
             if request.endpoint not in (
                 "backup_admin.recovery",
                 "backup_admin.recovery_status",
+                "healthz",
                 "static",
             ):
                 return redirect(url_for("backup_admin.recovery"))
@@ -119,11 +160,11 @@ def create_app(test_config=None):
                     session["last_seen"] = now().timestamp()
             else:
                 session.clear()
-        if not User.query.first() and request.endpoint not in ("auth.setup", "static"):
+        if not User.query.first() and request.endpoint not in ("auth.setup", "healthz", "static"):
             return redirect(url_for("auth.setup"))
         if (
             request.endpoint
-            and request.endpoint not in ("auth.login", "auth.setup", "static")
+            and request.endpoint not in ("auth.login", "auth.setup", "healthz", "static")
             and not g.user
         ):
             if request.path.startswith("/api/"):
@@ -136,6 +177,25 @@ def create_app(test_config=None):
             enforce_request()
 
     csrf.init_app(app)
+
+    @app.get("/healthz")
+    def healthz():
+        """Unauthenticated liveness probe used by the hosting platform."""
+        healthy = True
+        database = "ok"
+        try:
+            db.session.execute(text("SELECT 1"))
+        except Exception:
+            db.session.rollback()
+            healthy = False
+            database = "unavailable"
+        if app.config.get("RECOVERY_MODE"):
+            healthy = False
+            database = "recovery"
+        return (
+            jsonify(status="ok" if healthy else "error", database=database),
+            200 if healthy else 503,
+        )
 
     @app.teardown_request
     def finish(error=None):
